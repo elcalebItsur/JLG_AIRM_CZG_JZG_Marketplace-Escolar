@@ -1,12 +1,12 @@
+export type ProductStatus = 'ACTIVE' | 'SOLD' | 'ARCHIVED';
+
 export interface Product {
   id: string;
   title: string;
-  price: number;
   description: string;
-  category: string;
+  price: number;
   images: string[];
-  sellerId: string;
-  sellerName: string;
+  ownerId: string;
+  status: ProductStatus;
   createdAt: string; // ISO
-  status: 'active' | 'sold' | 'inactive';
 }
