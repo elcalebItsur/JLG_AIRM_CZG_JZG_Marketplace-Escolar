@@ -38,4 +38,7 @@ export const colors = {
 
   // Card
   cardShadow: '#B0BEC5',
+
+  // Compat aliases
+  secondary: '#F0A500',  // same as accent
 };

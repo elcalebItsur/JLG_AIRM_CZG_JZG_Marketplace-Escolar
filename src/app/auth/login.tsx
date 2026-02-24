@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, KeyboardAvoidingView, Platform, TextInput
 } from 'react-native';
 import { Link } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
@@ -20,9 +21,23 @@ export default function Login() {
     // Refs for chaining inputs
     const passwordRef = useRef<TextInput>(null);
 
+    // Reset fields every time the screen comes into focus (e.g. after logout).
+    // This prevents stale state and frozen autofill interactions.
+    useFocusEffect(
+        useCallback(() => {
+            setEmail('');
+            setPassword('');
+            setShowPassword(false);
+            return () => {
+                // Blur any focused input when leaving so keyboard is dismissed cleanly
+                passwordRef.current?.blur();
+            };
+        }, [])
+    );
+
     const handleLogin = async () => {
         if (!email || !password) return;
-        const { error } = await login(email, password);
+        const { error } = await login(email.trim(), password);
         if (error) {
             console.warn(error);
         }
@@ -31,11 +46,12 @@ export default function Login() {
     return (
         <KeyboardAvoidingView
             style={styles.root}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled" // Crucial for iOS tap reliability
+                keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header gradient block */}
@@ -58,10 +74,17 @@ export default function Login() {
                         placeholder="1234@alumnos.itsur.edu.mx"
                         autoCapitalize="none"
                         keyboardType="email-address"
+                        // iOS autofill — tells the system this field is for an email address
+                        textContentType="emailAddress"
+                        // Android autofill
+                        autoComplete="email"
                         leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
                         returnKeyType="next"
                         onSubmitEditing={() => passwordRef.current?.focus()}
                         blurOnSubmit={false}
+                        // Disable spellcheck and autocorrect on email fields
+                        autoCorrect={false}
+                        spellCheck={false}
                     />
 
                     <AppInput
@@ -71,6 +94,11 @@ export default function Login() {
                         onChangeText={setPassword}
                         placeholder="••••••••"
                         secureTextEntry={!showPassword}
+                        // iOS autofill — tells the system this is a password field
+                        // "password" lets iOS offer Keychain autofill
+                        textContentType={showPassword ? 'none' : 'password'}
+                        // Android autofill
+                        autoComplete={showPassword ? 'off' : 'password'}
                         leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
                         rightIcon={
                             <Ionicons
@@ -82,6 +110,8 @@ export default function Login() {
                         onRightIconPress={() => setShowPassword(v => !v)}
                         returnKeyType="done"
                         onSubmitEditing={handleLogin}
+                        autoCorrect={false}
+                        spellCheck={false}
                     />
 
                     <AppButton
@@ -143,9 +173,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 12,
     },
-    logoEmoji: {
-        fontSize: 36,
-    },
+    logoEmoji: { fontSize: 36 },
     appName: {
         ...typography.presets.screenTitle,
         color: '#fff',

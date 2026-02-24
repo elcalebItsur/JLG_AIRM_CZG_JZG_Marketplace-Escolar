@@ -37,7 +37,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(
 
                     <TextInput
                         ref={ref}
-                        style={[styles.input, leftIcon && styles.inputWithLeftIcon, style]}
+                        style={[styles.input, leftIcon ? styles.inputWithLeftIcon : null, style]}
                         placeholderTextColor={colors.textMuted}
                         // These defaults give the best cross-platform focus behaviour:
                         // - blurOnSubmit=false → don't dismiss keyboard on "Next"

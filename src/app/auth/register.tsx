@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, KeyboardAvoidingView, Platform, Alert, TextInput
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
@@ -25,6 +25,21 @@ export default function Register() {
     const passwordRef = useRef<TextInput>(null);
     const confirmPasswordRef = useRef<TextInput>(null);
 
+    // Clear all fields every time the screen gains focus.
+    // Prevents stale autofill state after navigating back from login.
+    useFocusEffect(
+        useCallback(() => {
+            setName('');
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+            setShowPassword(false);
+            return () => {
+                confirmPasswordRef.current?.blur();
+            };
+        }, [])
+    );
+
     const handleRegister = async () => {
         if (!name || !email || !password || !confirmPassword) {
             Alert.alert('Campos requeridos', 'Por favor completa todos los campos');
@@ -39,14 +54,15 @@ export default function Register() {
             Alert.alert('Dominio inválido', domainValidation.message);
             return;
         }
-        const { error } = await register(email, password, name);
+        const { error } = await register(email.trim(), password, name.trim());
         if (error) Alert.alert('Error de registro', error);
     };
 
     return (
         <KeyboardAvoidingView
             style={styles.root}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
@@ -79,6 +95,9 @@ export default function Register() {
                         value={name}
                         onChangeText={setName}
                         placeholder="Juan Pérez García"
+                        // iOS: name autofill
+                        textContentType="name"
+                        autoComplete="name"
                         leftIcon={<Ionicons name="person-outline" size={18} color={colors.textMuted} />}
                         returnKeyType="next"
                         onSubmitEditing={() => emailRef.current?.focus()}
@@ -93,6 +112,11 @@ export default function Register() {
                         placeholder="1234@alumnos.itsur.edu.mx"
                         autoCapitalize="none"
                         keyboardType="email-address"
+                        // iOS: email autofill
+                        textContentType="emailAddress"
+                        autoComplete="email"
+                        autoCorrect={false}
+                        spellCheck={false}
                         leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
                         returnKeyType="next"
                         onSubmitEditing={() => passwordRef.current?.focus()}
@@ -106,6 +130,11 @@ export default function Register() {
                         onChangeText={setPassword}
                         placeholder="Mínimo 6 caracteres"
                         secureTextEntry={!showPassword}
+                        // iOS: "newPassword" lets iOS suggest a strong password
+                        textContentType={showPassword ? 'none' : 'newPassword'}
+                        autoComplete={showPassword ? 'off' : 'password-new'}
+                        autoCorrect={false}
+                        spellCheck={false}
                         leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
                         rightIcon={
                             <Ionicons
@@ -127,6 +156,11 @@ export default function Register() {
                         onChangeText={setConfirmPassword}
                         placeholder="Repite tu contraseña"
                         secureTextEntry={!showPassword}
+                        // iOS: "newPassword" keeps consistent autofill for confirm field
+                        textContentType={showPassword ? 'none' : 'newPassword'}
+                        autoComplete={showPassword ? 'off' : 'password-new'}
+                        autoCorrect={false}
+                        spellCheck={false}
                         leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
                         returnKeyType="done"
                         onSubmitEditing={handleRegister}
@@ -188,9 +222,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 10,
     },
-    logoEmoji: {
-        fontSize: 30,
-    },
+    logoEmoji: { fontSize: 30 },
     appName: {
         ...typography.presets.screenTitle,
         color: '#fff',
@@ -231,9 +263,7 @@ const styles = StyleSheet.create({
         color: colors.success,
         fontWeight: '500',
     },
-    registerBtn: {
-        marginTop: 4,
-    },
+    registerBtn: { marginTop: 4 },
     linkRow: {
         flexDirection: 'row',
         justifyContent: 'center',

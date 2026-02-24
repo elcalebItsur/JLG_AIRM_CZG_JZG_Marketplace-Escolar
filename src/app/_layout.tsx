@@ -52,6 +52,18 @@ function RootLayoutNav() {
                 <Stack.Screen name="index" options={{ title: 'Inicio' }} />
                 <Stack.Screen name="auth/login" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+                <Stack.Screen
+                    name="products/[id]"
+                    options={{
+                        title: 'Detalle',
+                        headerStyle: { backgroundColor: colors.primary },
+                        headerTintColor: colors.textOnDark,
+                    }}
+                />
+                <Stack.Screen
+                    name="products/my-products"
+                    options={{ title: 'Mis Publicaciones' }}
+                />
             </Stack>
         </>
     );

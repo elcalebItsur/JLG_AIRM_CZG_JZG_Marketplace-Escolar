@@ -4,6 +4,7 @@ import {
     Text, TouchableOpacity, ScrollView, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Product } from '@/types/product';
 import { getProducts } from '@/services/productService';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -19,6 +20,7 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [activeCategory, setActiveCategory] = useState('Todos');
     const { user } = useAuth();
+    const router = useRouter();
 
     useEffect(() => { loadProducts(); }, []);
 
@@ -111,7 +113,7 @@ export default function HomeScreen() {
                     renderItem={({ item }) => (
                         <ProductCard
                             product={item}
-                            onPress={() => console.log('go to product:', item.id)}
+                            onPress={() => router.push(`/products/${item.id}`)}
                         />
                     )}
                     keyExtractor={item => item.id}
