@@ -1,153 +1,251 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Image } from 'react-native';
+import {
+    View, Text, StyleSheet, ScrollView, Alert,
+    TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenWrapper } from '@/components/ui/ScreenWrapper';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/theme/colors';
+import { typography } from '@/theme/typography';
+import { AppButton } from '@/components/ui/AppButton';
+import { AppInput } from '@/components/ui/AppInput';
 import { createProduct } from '@/services/productService';
 import { useAuth } from '@/context/AuthContext';
+
+const CATEGORIES = [
+    { key: 'libros', label: 'Libros', emoji: '📚' },
+    { key: 'electronica', label: 'Electrónica', emoji: '💻' },
+    { key: 'ropa', label: 'Ropa', emoji: '👕' },
+    { key: 'papeleria', label: 'Papelería', emoji: '✏️' },
+    { key: 'servicios', label: 'Servicios', emoji: '🛠️' },
+    { key: 'otros', label: 'Otros', emoji: '📦' },
+];
 
 export default function PublishScreen() {
     const [title, setTitle] = useState('');
     const [price, setPrice] = useState('');
     const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [loading, setLoading] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
 
     const handlePublish = async () => {
-        if (!title || !price || !description || !category) {
-            Alert.alert('Error', 'Todos los campos son obligatorios');
+        if (!title || !price || !description || !selectedCategory) {
+            Alert.alert('Campos vacíos', 'Por favor completa todos los campos');
+            return;
+        }
+        if (!user) {
+            Alert.alert('Error', 'Debes iniciar sesión para publicar');
             return;
         }
 
-        if (!user) {
-            Alert.alert('Error', 'Debes iniciar sesión para publicar');
+        const parsedPrice = parseFloat(price);
+        if (isNaN(parsedPrice) || parsedPrice <= 0) {
+            Alert.alert('Precio inválido', 'Ingresa un precio válido mayor a 0');
             return;
         }
 
         setLoading(true);
         const { success, error } = await createProduct({
             title,
-            price: parseFloat(price),
+            price: parsedPrice,
             description,
-            category,
-            images: ['https://via.placeholder.com/300'], // Placeholder image
+            category: selectedCategory,
+            images: [],
             sellerId: user.id,
             sellerName: user.displayName,
         });
         setLoading(false);
 
         if (success) {
-            Alert.alert('Éxito', 'Publicación creada correctamente', [
-                { text: 'OK', onPress: () => router.push('/(tabs)') }
+            Alert.alert('¡Publicado!', 'Tu producto está visible en el marketplace', [
+                { text: 'Ver catálogo', onPress: () => router.push('/(tabs)') },
             ]);
-            resetForm();
+            setTitle(''); setPrice(''); setDescription(''); setSelectedCategory('');
         } else {
-            Alert.alert('Error', error || 'No se pudo crear la publicación');
+            Alert.alert('Error', error || 'No se pudo publicar');
         }
     };
 
-    const resetForm = () => {
-        setTitle('');
-        setPrice('');
-        setDescription('');
-        setCategory('');
-    };
-
     return (
-        <ScreenWrapper>
-            <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.header}>Vender Producto</Text>
+        <KeyboardAvoidingView
+            style={styles.root}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Image upload placeholder */}
+                <TouchableOpacity style={styles.imageUpload} activeOpacity={0.7}>
+                    <View style={styles.imageUploadInner}>
+                        <Ionicons name="camera-outline" size={36} color={colors.textMuted} />
+                        <Text style={styles.imageUploadTitle}>Agregar fotos</Text>
+                        <Text style={styles.imageUploadSub}>Toca para seleccionar (hasta 5)</Text>
+                    </View>
+                </TouchableOpacity>
 
-                <Text style={styles.label}>Título</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Ej. Libro de Matemáticas"
-                    value={title}
-                    onChangeText={setTitle}
-                />
+                {/* Form */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Detalles del producto</Text>
 
-                <Text style={styles.label}>Precio ($)</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="0.00"
-                    value={price}
-                    onChangeText={setPrice}
-                    keyboardType="numeric"
-                />
+                    <AppInput
+                        label="Título"
+                        value={title}
+                        onChangeText={setTitle}
+                        placeholder="Ej. Libro de Cálculo Diferencial"
+                        leftIcon={<Ionicons name="pricetag-outline" size={18} color={colors.textMuted} />}
+                    />
 
-                <Text style={styles.label}>Categoría</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Ej. Libros, Electrónica, Ropa"
-                    value={category}
-                    onChangeText={setCategory}
-                />
-
-                <Text style={styles.label}>Descripción</Text>
-                <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Detalles del producto..."
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline
-                    numberOfLines={4}
-                />
-
-                <View style={styles.imagePlaceholder}>
-                    <Text style={styles.imageText}>📸 Subir Foto (Simulado)</Text>
+                    <AppInput
+                        label="Precio (MXN)"
+                        value={price}
+                        onChangeText={setPrice}
+                        placeholder="0.00"
+                        keyboardType="numeric"
+                        leftIcon={<Text style={styles.currencyIcon}>$</Text>}
+                    />
                 </View>
 
-                <Button
-                    title={loading ? "Publicando..." : "Publicar"}
-                    color={colors.primary}
+                {/* Category selector */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Categoría</Text>
+                    <View style={styles.categoryGrid}>
+                        {CATEGORIES.map(cat => (
+                            <TouchableOpacity
+                                key={cat.key}
+                                style={[
+                                    styles.categoryChip,
+                                    selectedCategory === cat.key && styles.categoryChipActive,
+                                ]}
+                                onPress={() => setSelectedCategory(cat.key)}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                                <Text style={[
+                                    styles.categoryLabel,
+                                    selectedCategory === cat.key && styles.categoryLabelActive,
+                                ]}>
+                                    {cat.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+
+                {/* Description */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Descripción</Text>
+                    <AppInput
+                        label=""
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder="Describe el estado, características y cualquier detalle relevante..."
+                        multiline
+                        numberOfLines={5}
+                        style={{ minHeight: 110, textAlignVertical: 'top' }}
+                    />
+                </View>
+
+                <AppButton
+                    title={loading ? 'Publicando...' : 'Publicar Producto'}
                     onPress={handlePublish}
-                    disabled={loading}
+                    loading={loading}
+                    style={styles.publishBtn}
+                    icon={<Ionicons name="cloud-upload-outline" size={20} color="#fff" />}
                 />
             </ScrollView>
-        </ScreenWrapper>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 20,
+    root: {
+        flex: 1,
+        backgroundColor: colors.background,
     },
-    header: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: colors.primary,
-        marginBottom: 20,
-        textAlign: 'center',
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 40,
     },
-    label: {
-        fontSize: 16,
-        color: colors.textSecondary,
-        marginBottom: 8,
-    },
-    input: {
-        borderWidth: 1,
+    imageUpload: {
+        borderWidth: 2,
         borderColor: colors.border,
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
-        fontSize: 16,
-        backgroundColor: colors.surface,
+        borderStyle: 'dashed',
+        borderRadius: 16,
+        marginBottom: 20,
+        overflow: 'hidden',
     },
-    textArea: {
-        height: 100,
-        textAlignVertical: 'top',
-    },
-    imagePlaceholder: {
-        height: 150,
-        backgroundColor: '#e1e4e8',
-        borderRadius: 8,
+    imageUploadInner: {
+        height: 140,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        gap: 6,
+        backgroundColor: colors.surfaceAlt,
     },
-    imageText: {
+    imageUploadTitle: {
+        ...typography.presets.bodyMedium,
         color: colors.textSecondary,
-    }
+    },
+    imageUploadSub: {
+        ...typography.presets.caption,
+        color: colors.textMuted,
+    },
+    section: {
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
+        elevation: 2,
+    },
+    sectionTitle: {
+        ...typography.presets.sectionTitle,
+        color: colors.text,
+        marginBottom: 14,
+    },
+    currencyIcon: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: colors.textSecondary,
+    },
+    categoryGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+    },
+    categoryChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        backgroundColor: colors.inputBg,
+    },
+    categoryChipActive: {
+        backgroundColor: colors.primaryLight + '18',
+        borderColor: colors.primary,
+    },
+    categoryEmoji: {
+        fontSize: 16,
+    },
+    categoryLabel: {
+        ...typography.presets.label,
+        color: colors.textSecondary,
+    },
+    categoryLabelActive: {
+        color: colors.primary,
+        fontWeight: '700',
+    },
+    publishBtn: {
+        marginTop: 4,
+    },
 });
