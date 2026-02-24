@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, Alert,
-    TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
+    TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +29,10 @@ export default function PublishScreen() {
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
+
+    // Refs for chaining
+    const priceRef = useRef<TextInput>(null);
+    const descriptionRef = useRef<TextInput>(null);
 
     const handlePublish = async () => {
         if (!title || !price || !description || !selectedCategory) {
@@ -72,10 +76,11 @@ export default function PublishScreen() {
         <KeyboardAvoidingView
             style={styles.root}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled"
+                keyboardShouldPersistTaps="handled" // Fixes focus jumping on Android/iOS
                 showsVerticalScrollIndicator={false}
             >
                 {/* Image upload placeholder */}
@@ -97,15 +102,22 @@ export default function PublishScreen() {
                         onChangeText={setTitle}
                         placeholder="Ej. Libro de Cálculo Diferencial"
                         leftIcon={<Ionicons name="pricetag-outline" size={18} color={colors.textMuted} />}
+                        returnKeyType="next"
+                        onSubmitEditing={() => priceRef.current?.focus()}
+                        blurOnSubmit={false}
                     />
 
                     <AppInput
+                        ref={priceRef}
                         label="Precio (MXN)"
                         value={price}
                         onChangeText={setPrice}
                         placeholder="0.00"
                         keyboardType="numeric"
                         leftIcon={<Text style={styles.currencyIcon}>$</Text>}
+                        returnKeyType="next"
+                        onSubmitEditing={() => descriptionRef.current?.focus()}
+                        blurOnSubmit={false}
                     />
                 </View>
 
@@ -139,6 +151,7 @@ export default function PublishScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Descripción</Text>
                     <AppInput
+                        ref={descriptionRef}
                         label=""
                         value={description}
                         onChangeText={setDescription}

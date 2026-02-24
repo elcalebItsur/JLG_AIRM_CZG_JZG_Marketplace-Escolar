@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    TouchableOpacity, KeyboardAvoidingView, Platform, Alert,
+    TouchableOpacity, KeyboardAvoidingView, Platform, Alert, TextInput
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -19,6 +19,11 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const { register, isLoading } = useAuth();
+
+    // Refs for chaining
+    const emailRef = useRef<TextInput>(null);
+    const passwordRef = useRef<TextInput>(null);
+    const confirmPasswordRef = useRef<TextInput>(null);
 
     const handleRegister = async () => {
         if (!name || !email || !password || !confirmPassword) {
@@ -75,9 +80,13 @@ export default function Register() {
                         onChangeText={setName}
                         placeholder="Juan Pérez García"
                         leftIcon={<Ionicons name="person-outline" size={18} color={colors.textMuted} />}
+                        returnKeyType="next"
+                        onSubmitEditing={() => emailRef.current?.focus()}
+                        blurOnSubmit={false}
                     />
 
                     <AppInput
+                        ref={emailRef}
                         label="Correo Institucional"
                         value={email}
                         onChangeText={setEmail}
@@ -85,9 +94,13 @@ export default function Register() {
                         autoCapitalize="none"
                         keyboardType="email-address"
                         leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
+                        returnKeyType="next"
+                        onSubmitEditing={() => passwordRef.current?.focus()}
+                        blurOnSubmit={false}
                     />
 
                     <AppInput
+                        ref={passwordRef}
                         label="Contraseña"
                         value={password}
                         onChangeText={setPassword}
@@ -102,15 +115,21 @@ export default function Register() {
                             />
                         }
                         onRightIconPress={() => setShowPassword(v => !v)}
+                        returnKeyType="next"
+                        onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                        blurOnSubmit={false}
                     />
 
                     <AppInput
+                        ref={confirmPasswordRef}
                         label="Confirmar Contraseña"
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         placeholder="Repite tu contraseña"
                         secureTextEntry={!showPassword}
                         leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
+                        returnKeyType="done"
+                        onSubmitEditing={handleRegister}
                     />
 
                     <AppButton

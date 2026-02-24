@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { forwardRef } from 'react';
 import {
     View,
     Text,
@@ -12,7 +12,7 @@ import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 
 interface AppInputProps extends TextInputProps {
-    label: string;
+    label?: string;
     error?: string;
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
@@ -20,47 +20,53 @@ interface AppInputProps extends TextInputProps {
     onRightIconPress?: () => void;
 }
 
-export const AppInput: React.FC<AppInputProps> = ({
-    label,
-    error,
-    leftIcon,
-    rightIcon,
-    containerStyle,
-    onRightIconPress,
-    ...props
-}) => {
-    const [focused, setFocused] = useState(false);
+// forwardRef so Login/Register can chain focus between inputs
+export const AppInput = forwardRef<TextInput, AppInputProps>(
+    ({ label, error, leftIcon, rightIcon, containerStyle, onRightIconPress, style, ...props }, ref) => {
+        return (
+            <View style={[styles.container, containerStyle]}>
+                {label ? (
+                    <Text style={[styles.label, error && styles.labelError]}>{label}</Text>
+                ) : null}
 
-    return (
-        <View style={[styles.container, containerStyle]}>
-            <Text style={[styles.label, error && styles.labelError]}>{label}</Text>
-            <View style={[
-                styles.inputWrapper,
-                focused && styles.inputWrapperFocused,
-                error && styles.inputWrapperError,
-            ]}>
-                {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
-                <TextInput
-                    style={[styles.input, leftIcon && styles.inputWithLeftIcon]}
-                    placeholderTextColor={colors.textMuted}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setFocused(false)}
-                    {...props}
-                />
-                {rightIcon && (
-                    <TouchableOpacity
-                        style={styles.iconRight}
-                        onPress={onRightIconPress}
-                        disabled={!onRightIconPress}
-                    >
-                        {rightIcon}
-                    </TouchableOpacity>
-                )}
+                <View style={[
+                    styles.inputWrapper,
+                    error && styles.inputWrapperError,
+                ]}>
+                    {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
+
+                    <TextInput
+                        ref={ref}
+                        style={[styles.input, leftIcon && styles.inputWithLeftIcon, style]}
+                        placeholderTextColor={colors.textMuted}
+                        // These defaults give the best cross-platform focus behaviour:
+                        // - blurOnSubmit=false → don't dismiss keyboard on "Next"
+                        // - returnKeyType → overridable per field
+                        blurOnSubmit={props.returnKeyType === 'done' || props.returnKeyType === 'go'}
+                        underlineColorAndroid="transparent"
+                        {...props}
+                    />
+
+                    {rightIcon && (
+                        <TouchableOpacity
+                            style={styles.iconRight}
+                            onPress={onRightIconPress}
+                            disabled={!onRightIconPress}
+                            // hitSlop makes the icon easier to tap on small screens
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            {rightIcon}
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
             </View>
-            {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
-    );
-};
+        );
+    }
+);
+
+AppInput.displayName = 'AppInput';
 
 const styles = StyleSheet.create({
     container: {
@@ -83,15 +89,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         minHeight: 50,
     },
-    inputWrapperFocused: {
-        borderColor: colors.primary,
-        backgroundColor: colors.surface,
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.12,
-        shadowRadius: 6,
-        elevation: 2,
-    },
     inputWrapperError: {
         borderColor: colors.error,
         backgroundColor: colors.errorLight,
@@ -102,9 +99,11 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         fontSize: typography.sizes.md,
         color: colors.text,
+        // Prevent Android from adding its own underline
+        textDecorationLine: 'none',
     },
     inputWithLeftIcon: {
-        paddingLeft: 6,
+        paddingLeft: 8,
     },
     iconLeft: {
         paddingLeft: 14,

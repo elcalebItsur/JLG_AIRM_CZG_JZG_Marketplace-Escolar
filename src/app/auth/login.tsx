@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    TouchableOpacity, KeyboardAvoidingView, Platform,
+    TouchableOpacity, KeyboardAvoidingView, Platform, TextInput
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -17,11 +17,13 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const { login, isLoading } = useAuth();
 
+    // Refs for chaining inputs
+    const passwordRef = useRef<TextInput>(null);
+
     const handleLogin = async () => {
         if (!email || !password) return;
         const { error } = await login(email, password);
         if (error) {
-            // We use a simple inline error approach
             console.warn(error);
         }
     };
@@ -33,7 +35,7 @@ export default function Login() {
         >
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled"
+                keyboardShouldPersistTaps="handled" // Crucial for iOS tap reliability
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header gradient block */}
@@ -57,9 +59,13 @@ export default function Login() {
                         autoCapitalize="none"
                         keyboardType="email-address"
                         leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
+                        returnKeyType="next"
+                        onSubmitEditing={() => passwordRef.current?.focus()}
+                        blurOnSubmit={false}
                     />
 
                     <AppInput
+                        ref={passwordRef}
                         label="Contraseña"
                         value={password}
                         onChangeText={setPassword}
@@ -74,6 +80,8 @@ export default function Login() {
                             />
                         }
                         onRightIconPress={() => setShowPassword(v => !v)}
+                        returnKeyType="done"
+                        onSubmitEditing={handleLogin}
                     />
 
                     <AppButton
