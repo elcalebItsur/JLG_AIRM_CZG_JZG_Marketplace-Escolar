@@ -134,6 +134,11 @@ export default function ProfileScreen() {
                     label="Mis Publicaciones"
                     onPress={() => router.push('/products/my-products')}
                 />
+                <MenuItem
+                    icon="swap-horizontal-outline"
+                    label="Mis Transacciones"
+                    onPress={() => router.push('/transactions/history')}
+                />
                 {user.role === Role.ADMIN && (
                     <MenuItem
                         icon="shield-checkmark-outline"

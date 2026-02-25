@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     ActivityIndicator, TouchableOpacity, Alert, Share,
-    useWindowDimensions, Image,
+    useWindowDimensions, Image, Modal, FlatList, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,13 @@ import { Review } from '@/types/review';
 import { getProductById, updateProductStatus } from '@/services/productService';
 import { getOrCreateChat } from '@/services/chatService';
 import { subscribeToSellerReviews, hasReviewed } from '@/services/reviewService';
+import {
+    createTransaction,
+    getChatBuyersForProduct,
+    getPendingTransaction,
+    updateTransactionStatus,
+} from '@/services/transactionService';
+import { Transaction } from '@/types/transaction';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
@@ -49,6 +56,11 @@ export default function ProductDetailScreen() {
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+    // Buyer-picker modal for sell flow
+    const [showBuyerModal, setShowBuyerModal] = useState(false);
+    const [chatBuyers, setChatBuyers] = useState<Array<{ uid: string; name: string }>>([]);
+    const [pendingTx, setPendingTx] = useState<Transaction | null>(null);
+    const [confirmingTx, setConfirmingTx] = useState(false);
     const router = useRouter();
     const { user } = useAuth();
     const { width } = useWindowDimensions();
@@ -77,26 +89,83 @@ export default function ProductDetailScreen() {
         setLoading(true);
         const data = await getProductById(productId);
         setProduct(data ?? null);
+        // If product is sold, check if current user is the buyer of a pending tx
+        if (data && data.status === 'sold' && user && data.sellerId !== user.id) {
+            getPendingTransaction(data.id, user.id).then(setPendingTx);
+        }
+
         setLoading(false);
     };
 
-    const handleMarkAsSold = () => {
-        if (!product) return;
+    const handleMarkAsSold = async () => {
+        if (!product || !user) return;
+
+        // Fetch potential buyers from existing chats
+        const buyers = await getChatBuyersForProduct(user.id, product.id);
+
+        const doSell = async (buyerId?: string, buyerName?: string) => {
+            setUpdatingStatus(true);
+            const { success } = await updateProductStatus(product.id, 'sold');
+            if (!success) {
+                setUpdatingStatus(false);
+                Alert.alert('Error', 'No se pudo actualizar el estado');
+                return;
+            }
+            setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
+
+            // Create transaction record if a buyer is identified
+            if (buyerId && buyerName) {
+                await createTransaction({
+                    productId: product.id,
+                    productTitle: product.title,
+                    productImage: product.images?.[0],
+                    price: product.price,
+                    sellerId: user.id,
+                    sellerName: user.displayName,
+                    buyerId,
+                    buyerName,
+                });
+            }
+            setUpdatingStatus(false);
+        };
+
+        if (buyers.length === 0) {
+            // No chat buyers — simple confirm
+            Alert.alert(
+                'Marcar como vendido',
+                'No hay compradores identificados. ¿Confirmas que este producto fue vendido?',
+                [
+                    { text: 'Cancelar', style: 'cancel' },
+                    { text: 'Confirmar', onPress: () => doSell() },
+                ]
+            );
+        } else {
+            // Show buyer picker
+            setChatBuyers(buyers);
+            setShowBuyerModal(true);
+        }
+    };
+
+    const handleConfirmTransaction = async () => {
+        if (!pendingTx) return;
+
         Alert.alert(
-            'Marcar como vendido',
-            '¿Confirmas que este producto ya fue vendido?',
+            'Confirmar recepción',
+            '¿Confirmas que recibiste este producto correctamente?',
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
-                    text: 'Confirmar', style: 'default',
+                    text: 'Confirmar',
                     onPress: async () => {
-                        setUpdatingStatus(true);
-                        const { success } = await updateProductStatus(product.id, 'sold');
-                        setUpdatingStatus(false);
+                        setConfirmingTx(true);
+                        const { success, error } = await updateTransactionStatus(pendingTx.id, 'completed');
+                        setConfirmingTx(false);
+
                         if (success) {
-                            setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
+                            setPendingTx(prev => prev ? { ...prev, status: 'completed' } : null);
+                            Alert.alert('¡Éxito!', 'Compra confirmada. ¡Gracias por usar el Marketplace!');
                         } else {
-                            Alert.alert('Error', 'No se pudo actualizar el estado');
+                            Alert.alert('Error', error ?? 'No se pudo confirmar la recepción');
                         }
                     },
                 },
@@ -263,45 +332,60 @@ export default function ProductDetailScreen() {
                             )}
                         </View>
                     ) : (
-                        // Buyer actions — active product
-                        product.status === 'active' && (
-                            <View style={styles.actionsCol}>
+                        // Buyer actions — check for pending transaction
+                        (product.status === 'sold' && pendingTx && pendingTx.status === 'pending') ? (
+                            <View style={styles.confirmTxCard}>
+                                <Text style={styles.confirmTxTitle}>¡Felicidades por tu compra!</Text>
+                                <Text style={styles.confirmTxSub}>El vendedor marcó este producto como vendido para ti.</Text>
                                 <AppButton
-                                    title="Contactar Vendedor"
-                                    onPress={async () => {
-                                        if (!user) return;
-                                        const { chatId, error } = await getOrCreateChat({
-                                            buyerId: user.id,
-                                            buyerName: user.displayName,
-                                            sellerId: product.sellerId,
-                                            sellerName: product.sellerName,
-                                            productId: product.id,
-                                            productTitle: product.title,
-                                            productImage: product.images?.[0],
-                                            productPrice: product.price,
-                                        });
-                                        if (error || !chatId) {
-                                            Alert.alert('Error', error ?? 'No se pudo abrir el chat');
-                                            return;
-                                        }
-                                        router.push(`/chat/${chatId}`);
-                                    }}
-                                    icon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
+                                    title="Confirmar Recepción"
+                                    onPress={handleConfirmTransaction}
+                                    variant="accent"
+                                    loading={confirmingTx}
+                                    icon={<Ionicons name="gift-outline" size={18} color="#fff" />}
                                 />
-                                {!alreadyReviewed ? (
-                                    <AppButton
-                                        title="Calificar Vendedor"
-                                        variant="secondary"
-                                        onPress={() => setShowReviewModal(true)}
-                                        icon={<Ionicons name="star-outline" size={18} color={colors.primary} />}
-                                    />
-                                ) : (
-                                    <View style={styles.reviewedBanner}>
-                                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                                        <Text style={styles.reviewedBannerText}>Ya calificaste a este vendedor</Text>
-                                    </View>
-                                )}
                             </View>
+                        ) : (
+                            // Buyer actions — active product or normal sold view
+                            product.status === 'active' && (
+                                <View style={styles.actionsCol}>
+                                    <AppButton
+                                        title="Contactar Vendedor"
+                                        onPress={async () => {
+                                            if (!user) return;
+                                            const { chatId, error } = await getOrCreateChat({
+                                                buyerId: user.id,
+                                                buyerName: user.displayName,
+                                                sellerId: product.sellerId,
+                                                sellerName: product.sellerName,
+                                                productId: product.id,
+                                                productTitle: product.title,
+                                                productImage: product.images?.[0],
+                                                productPrice: product.price,
+                                            });
+                                            if (error || !chatId) {
+                                                Alert.alert('Error', error ?? 'No se pudo abrir el chat');
+                                                return;
+                                            }
+                                            router.push(`/chat/${chatId}`);
+                                        }}
+                                        icon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
+                                    />
+                                    {!alreadyReviewed ? (
+                                        <AppButton
+                                            title="Calificar Vendedor"
+                                            variant="secondary"
+                                            onPress={() => setShowReviewModal(true)}
+                                            icon={<Ionicons name="star-outline" size={18} color={colors.primary} />}
+                                        />
+                                    ) : (
+                                        <View style={styles.reviewedBanner}>
+                                            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                                            <Text style={styles.reviewedBannerText}>Ya calificaste a este vendedor</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            )
                         )
                     )}
 
@@ -368,6 +452,84 @@ export default function ProductDetailScreen() {
                     productTitle={product.title}
                 />
             )}
+
+            {/* ─── Buyer picker modal (sell flow) ─────────────────── */}
+            <Modal
+                visible={showBuyerModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowBuyerModal(false)}
+            >
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.buyerSheet}>
+                        <View style={styles.buyerSheetHandle} />
+                        <Text style={styles.buyerSheetTitle}>¿A quién le vendiste?</Text>
+                        <Text style={styles.buyerSheetSub}>
+                            Selecciona el comprador para registrar la transacción.
+                        </Text>
+                        <FlatList
+                            data={chatBuyers}
+                            keyExtractor={b => b.uid}
+                            contentContainerStyle={{ gap: 8, paddingVertical: 12 }}
+                            showsVerticalScrollIndicator={false}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.buyerRow}
+                                    onPress={() => {
+                                        setShowBuyerModal(false);
+                                        const doSellWithBuyer = async () => {
+                                            if (!product || !user) return;
+                                            setUpdatingStatus(true);
+                                            const { success } = await updateProductStatus(product.id, 'sold');
+                                            if (!success) {
+                                                setUpdatingStatus(false);
+                                                Alert.alert('Error', 'No se pudo actualizar el estado');
+                                                return;
+                                            }
+                                            setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
+                                            await createTransaction({
+                                                productId: product.id,
+                                                productTitle: product.title,
+                                                productImage: product.images?.[0],
+                                                price: product.price,
+                                                sellerId: user.id,
+                                                sellerName: user.displayName,
+                                                buyerId: item.uid,
+                                                buyerName: item.name,
+                                            });
+                                            setUpdatingStatus(false);
+                                            Alert.alert('✅ Vendido', 'Transacción registrada correctamente');
+                                        };
+                                        doSellWithBuyer();
+                                    }}
+                                    activeOpacity={0.75}
+                                >
+                                    <View style={styles.buyerAvatar}>
+                                        <Text style={styles.buyerAvatarText}>
+                                            {item.name.charAt(0).toUpperCase()}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.buyerName}>{item.name}</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            )}
+                        />
+                        <TouchableOpacity
+                            style={styles.buyerSkipBtn}
+                            onPress={() => {
+                                setShowBuyerModal(false);
+                                if (!product || !user) return;
+                                updateProductStatus(product.id, 'sold').then(({ success }) => {
+                                    if (success) setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
+                                });
+                            }}
+                        >
+                            <Text style={styles.buyerSkipText}>Marcar como vendido sin registrar comprador</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
         </>
     );
 }
@@ -463,4 +625,57 @@ const styles = StyleSheet.create({
     reviewDate: { ...typography.presets.caption, color: colors.textMuted },
     reviewComment: { ...typography.presets.body, color: colors.text, lineHeight: 22 },
     reviewProductTag: { ...typography.presets.caption, color: colors.textMuted },
+
+    // ─── Buyer picker modal ─────────────────────────────────────────────
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    buyerSheet: {
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 20,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+        maxHeight: '70%',
+    },
+    buyerSheetHandle: {
+        width: 40, height: 4,
+        backgroundColor: colors.border,
+        borderRadius: 2,
+        alignSelf: 'center',
+        marginBottom: 16,
+    },
+    buyerSheetTitle: { ...typography.presets.sectionTitle, color: colors.text, marginBottom: 6 },
+    buyerSheetSub: { ...typography.presets.caption, color: colors.textMuted, marginBottom: 4 },
+
+    buyerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        padding: 14,
+        backgroundColor: colors.backgroundAlt,
+        borderRadius: 12,
+    },
+    buyerAvatar: {
+        width: 40, height: 40, borderRadius: 20,
+        backgroundColor: colors.primary,
+        justifyContent: 'center', alignItems: 'center',
+        flexShrink: 0,
+    },
+    buyerAvatarText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+    buyerName: { ...typography.presets.bodyMedium, color: colors.text, flex: 1 },
+
+    buyerSkipBtn: { padding: 14, alignItems: 'center', marginTop: 4 },
+    buyerSkipText: { ...typography.presets.caption, color: colors.textMuted, textDecorationLine: 'underline' },
+
+    confirmTxCard: {
+        backgroundColor: colors.accentLight,
+        borderRadius: 16, padding: 20, gap: 10,
+        borderWidth: 1, borderColor: colors.accent,
+        marginBottom: 16,
+    },
+    confirmTxTitle: { ...typography.presets.sectionTitle, color: colors.accent, fontSize: 18 },
+    confirmTxSub: { ...typography.presets.body, color: colors.textSecondary, marginBottom: 8 },
 });
