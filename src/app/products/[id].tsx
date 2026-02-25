@@ -8,6 +8,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/types/product';
 import { getProductById, updateProductStatus } from '@/services/productService';
+import { getOrCreateChat } from '@/services/chatService';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
@@ -239,9 +240,23 @@ export default function ProductDetailScreen() {
                         product.status === 'active' && (
                             <AppButton
                                 title="Contactar Vendedor"
-                                onPress={() => {
-                                    // TODO Phase 7: navigate to chat
-                                    Alert.alert('Próximamente', 'El chat estará disponible en la siguiente fase 💬');
+                                onPress={async () => {
+                                    if (!user) return;
+                                    const { chatId, error } = await getOrCreateChat({
+                                        buyerId: user.id,
+                                        buyerName: user.displayName,
+                                        sellerId: product.sellerId,
+                                        sellerName: product.sellerName,
+                                        productId: product.id,
+                                        productTitle: product.title,
+                                        productImage: product.images?.[0],
+                                        productPrice: product.price,
+                                    });
+                                    if (error || !chatId) {
+                                        Alert.alert('Error', error ?? 'No se pudo abrir el chat');
+                                        return;
+                                    }
+                                    router.push(`/chat/${chatId}`);
                                 }}
                                 icon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
                             />

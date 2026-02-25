@@ -1,10 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { colors } from '@/theme/colors';
+import { useAuth } from '@/context/AuthContext';
+import { subscribeToChats } from '@/services/chatService';
+import { Chat } from '@/types/chat';
 
 export default function TabLayout() {
+    const { user } = useAuth();
+    const [totalUnread, setTotalUnread] = useState(0);
+
+    useEffect(() => {
+        if (!user) return;
+        return subscribeToChats(user.id, (chats: Chat[]) => {
+            const count = chats.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+            setTotalUnread(count);
+        });
+    }, [user]);
+
     return (
         <Tabs
             screenOptions={{
@@ -82,6 +96,29 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
+                name="chats"
+                options={{
+                    title: 'Mensajes',
+                    tabBarLabel: 'Chats',
+                    tabBarIcon: ({ color, focused }) => (
+                        <View>
+                            <Ionicons
+                                name={focused ? 'chatbubbles' : 'chatbubbles-outline'}
+                                size={24}
+                                color={color}
+                            />
+                            {totalUnread > 0 && (
+                                <View style={styles.tabBadge}>
+                                    <Text style={styles.tabBadgeText}>
+                                        {totalUnread > 9 ? '9+' : totalUnread}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="profile"
                 options={{
                     title: 'Mi Perfil',
@@ -119,4 +156,22 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: colors.accent,
     },
+    tabBadge: {
+        position: 'absolute',
+        top: -4,
+        right: -8,
+        backgroundColor: colors.error,
+        borderRadius: 9,
+        minWidth: 18,
+        height: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    tabBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: '800',
+    },
 });
+

@@ -64,6 +64,10 @@ function RootLayoutNav() {
                     name="products/my-products"
                     options={{ title: 'Mis Publicaciones' }}
                 />
+                <Stack.Screen
+                    name="chat/[chatId]"
+                    options={{ headerShown: false }} // header managed inside ChatRoomScreen
+                />
             </Stack>
         </>
     );
