@@ -17,7 +17,10 @@ import {
     getPendingTransaction,
     updateTransactionStatus,
 } from '@/services/transactionService';
+import { createReport } from '@/services/reportService';
+import { createNotification } from '@/services/notificationService';
 import { Transaction } from '@/types/transaction';
+import { ReportReason, REPORT_REASON_LABELS } from '@/types/report';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
@@ -61,6 +64,10 @@ export default function ProductDetailScreen() {
     const [chatBuyers, setChatBuyers] = useState<Array<{ uid: string; name: string }>>([]);
     const [pendingTx, setPendingTx] = useState<Transaction | null>(null);
     const [confirmingTx, setConfirmingTx] = useState(false);
+    // Report state
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState<ReportReason>('spam');
+    const [reportSubmitting, setReportSubmitting] = useState(false);
     const router = useRouter();
     const { user } = useAuth();
     const { width } = useWindowDimensions();
@@ -125,6 +132,14 @@ export default function ProductDetailScreen() {
                     buyerId,
                     buyerName,
                 });
+                // Notify the buyer
+                createNotification({
+                    userId: buyerId,
+                    type: 'sold',
+                    title: '¡Tu compra fue confirmada!',
+                    body: `El vendedor marcó "${product.title}" como vendido para ti.`,
+                    relatedId: product.id,
+                });
             }
             setUpdatingStatus(false);
         };
@@ -162,8 +177,18 @@ export default function ProductDetailScreen() {
                         setConfirmingTx(false);
 
                         if (success) {
-                            setPendingTx(prev => prev ? { ...prev, status: 'completed' } : null);
-                            Alert.alert('¡Éxito!', 'Compra confirmada. ¡Gracias por usar el Marketplace!');
+                            setPendingTx(null);
+                            // Notify the seller
+                            if (product) {
+                                createNotification({
+                                    userId: product.sellerId,
+                                    type: 'confirmed',
+                                    title: 'Compra confirmada',
+                                    body: `El comprador confirmó la recepción de "${product.title}".`,
+                                    relatedId: product.id,
+                                });
+                            }
+                            Alert.alert('¡Gracias!', 'Recepción confirmada. La transacción se marcó como completada.');
                         } else {
                             Alert.alert('Error', error ?? 'No se pudo confirmar la recepción');
                         }
@@ -179,6 +204,26 @@ export default function ProductDetailScreen() {
             title: product.title,
             message: `${product.title} — $${product.price.toFixed(2)} en Marketplace ITSUR`,
         });
+    };
+
+    const handleSubmitReport = async () => {
+        if (!product || !user) return;
+        setReportSubmitting(true);
+        const { success, error } = await createReport({
+            reporterId: user.id,
+            reporterName: user.displayName,
+            targetType: 'product',
+            targetId: product.id,
+            targetTitle: product.title,
+            reason: reportReason,
+        });
+        setReportSubmitting(false);
+        setShowReportModal(false);
+        if (success) {
+            Alert.alert('Reporte enviado', 'Gracias. Un administrador revisará tu reporte.');
+        } else {
+            Alert.alert('Error', error ?? 'No se pudo enviar el reporte');
+        }
     };
 
     // ─── Loading ───────────────────────────────────────────────────────────────
@@ -389,6 +434,18 @@ export default function ProductDetailScreen() {
                         )
                     )}
 
+                    {/* ─── Report button (non-owners only) ─────────────── */}
+                    {!isOwner && product.status === 'active' && user && (
+                        <TouchableOpacity
+                            style={styles.reportBtn}
+                            onPress={() => setShowReportModal(true)}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="flag-outline" size={14} color={colors.textMuted} />
+                            <Text style={styles.reportBtnText}>Reportar publicación</Text>
+                        </TouchableOpacity>
+                    )}
+
                     {/* ─── Reviews section ──────────────────────────────── */}
                     {reviews.length > 0 && (
                         <View style={styles.reviewsSection}>
@@ -452,6 +509,47 @@ export default function ProductDetailScreen() {
                     productTitle={product.title}
                 />
             )}
+
+            {/* ─── Report Modal ─────────────────────────────────────── */}
+            <Modal
+                visible={showReportModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowReportModal(false)}
+            >
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.buyerSheet}>
+                        <View style={styles.buyerSheetHandle} />
+                        <Text style={styles.buyerSheetTitle}>Reportar publicación</Text>
+                        <Text style={styles.buyerSheetSub}>Selecciona el motivo del reporte:</Text>
+                        {(Object.keys(REPORT_REASON_LABELS) as ReportReason[]).map(r => (
+                            <TouchableOpacity
+                                key={r}
+                                style={[styles.buyerRow, reportReason === r && styles.buyerRowActive]}
+                                onPress={() => setReportReason(r)}
+                                activeOpacity={0.8}
+                            >
+                                <View style={[styles.radioCircle, reportReason === r && styles.radioCircleActive]}>
+                                    {reportReason === r && <View style={styles.radioInner} />}
+                                </View>
+                                <Text style={styles.buyerName}>{REPORT_REASON_LABELS[r]}</Text>
+                            </TouchableOpacity>
+                        ))}
+                        <AppButton
+                            title={reportSubmitting ? 'Enviando...' : 'Enviar Reporte'}
+                            onPress={handleSubmitReport}
+                            loading={reportSubmitting}
+                            fullWidth
+                        />
+                        <AppButton
+                            title="Cancelar"
+                            variant="ghost"
+                            onPress={() => setShowReportModal(false)}
+                            fullWidth
+                        />
+                    </View>
+                </View>
+            </Modal>
 
             {/* ─── Buyer picker modal (sell flow) ─────────────────── */}
             <Modal
@@ -678,4 +776,42 @@ const styles = StyleSheet.create({
     },
     confirmTxTitle: { ...typography.presets.sectionTitle, color: colors.accent, fontSize: 18 },
     confirmTxSub: { ...typography.presets.body, color: colors.textSecondary, marginBottom: 8 },
+
+    // ─── Report styles ────────────────────────────────────────────────
+    reportBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 12,
+        marginTop: 8,
+    },
+    reportBtnText: {
+        ...typography.presets.caption,
+        color: colors.textMuted,
+        fontWeight: '600',
+    },
+    buyerRowActive: {
+        borderWidth: 1,
+        borderColor: colors.primary,
+        backgroundColor: colors.primary + '10',
+    },
+    radioCircle: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        borderWidth: 2,
+        borderColor: colors.textMuted,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    radioCircleActive: {
+        borderColor: colors.primary,
+    },
+    radioInner: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: colors.primary,
+    },
 });

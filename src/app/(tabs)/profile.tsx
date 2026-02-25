@@ -8,6 +8,7 @@ import { typography } from '@/theme/typography';
 import { Role } from '@/types/role';
 import { getMyProducts } from '@/services/productService';
 import { getSellerReviews } from '@/services/reviewService';
+import { subscribeToNotifications } from '@/services/notificationService';
 
 interface MenuItemProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -35,9 +36,9 @@ function MenuItem({ icon, label, onPress, tint = colors.primary, badge }: MenuIt
 }
 
 const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
-    student: { label: 'Estudiante', color: '#3182CE' },
-    teacher: { label: 'Docente', color: '#6B46C1' },
-    admin: { label: 'Admin', color: '#C05621' },
+    [Role.STUDENT]: { label: 'Estudiante', color: '#3182CE' },
+    [Role.TEACHER]: { label: 'Docente', color: '#6B46C1' },
+    [Role.ADMIN]: { label: 'Administrador', color: '#C05621' },
 };
 
 export default function ProfileScreen() {
@@ -47,6 +48,7 @@ export default function ProfileScreen() {
     const [productCount, setProductCount] = useState<number | null>(null);
     const [reviewCount, setReviewCount] = useState<number | null>(null);
     const [avgRating, setAvgRating] = useState<number | null>(null);
+    const [unreadNotifs, setUnreadNotifs] = useState(0);
 
     useEffect(() => {
         if (!user) return;
@@ -62,6 +64,11 @@ export default function ProfileScreen() {
                 setAvgRating(null);
             }
         });
+        // Unread notification count
+        const unsub = subscribeToNotifications(user.id, (notifs) => {
+            setUnreadNotifs(notifs.filter(n => !n.isRead).length);
+        });
+        return unsub;
     }, [user]);
 
     if (!user) return null;
@@ -160,7 +167,8 @@ export default function ProfileScreen() {
                 <MenuItem
                     icon="notifications-outline"
                     label="Notificaciones"
-                    onPress={() => { }}
+                    onPress={() => router.push('/notifications')}
+                    badge={unreadNotifs > 0 ? String(unreadNotifs) : undefined}
                 />
                 <MenuItem
                     icon="help-circle-outline"

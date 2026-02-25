@@ -49,6 +49,33 @@ export async function registerUser(email: string, password: string, displayName:
   }
 }
 
+/**
+ * Specialized function for creating an ADMIN user.
+ * Bypasses domain validation and forces ADMIN role.
+ */
+export async function registerAdmin(email: string, password: string, displayName: string): Promise<{ user?: User; error?: string }> {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+
+    await updateProfile(firebaseUser, { displayName });
+
+    const newUser: User = {
+      id: firebaseUser.uid,
+      displayName,
+      email,
+      role: Role.ADMIN,
+      createdAt: new Date().toISOString(),
+    };
+
+    await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+    return { user: newUser };
+  } catch (e: any) {
+    console.error('registerAdmin error:', e);
+    return { error: e.message || 'Error al crear administrador' };
+  }
+}
+
 export async function loginUser(email: string, password: string): Promise<{ user?: User; error?: string }> {
   try {
     // 1. Login with Auth

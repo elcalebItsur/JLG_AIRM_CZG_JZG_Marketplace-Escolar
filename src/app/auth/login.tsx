@@ -129,6 +129,15 @@ export default function Login() {
                             </TouchableOpacity>
                         </Link>
                     </View>
+
+                    {/* Botón temporal — Borrar después de crear el admin */}
+                    <Link href="/auth/setup-admin" asChild>
+                        <TouchableOpacity style={{ marginTop: 20, alignItems: 'center' }}>
+                            <Text style={{ color: colors.textMuted, fontSize: 12, textDecorationLine: 'underline' }}>
+                                Configuración inicial de Administrador
+                            </Text>
+                        </TouchableOpacity>
+                    </Link>
                 </View>
 
                 {/* Footer note */}

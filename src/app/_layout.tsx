@@ -52,6 +52,7 @@ function RootLayoutNav() {
                 <Stack.Screen name="index" options={{ title: 'Inicio' }} />
                 <Stack.Screen name="auth/login" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+                <Stack.Screen name="auth/setup-admin" options={{ title: 'Configurar Admin' }} />
                 <Stack.Screen
                     name="products/[id]"
                     options={{
@@ -72,6 +73,33 @@ function RootLayoutNav() {
                     name="transactions/history"
                     options={{
                         title: 'Mis Transacciones',
+                        headerStyle: { backgroundColor: colors.primary },
+                        headerTintColor: colors.textOnDark,
+                        headerTitleStyle: { fontWeight: '700' },
+                    }}
+                />
+                <Stack.Screen
+                    name="admin/dashboard"
+                    options={{
+                        title: 'Panel Admin',
+                        headerStyle: { backgroundColor: colors.warning },
+                        headerTintColor: '#fff',
+                        headerTitleStyle: { fontWeight: '700' },
+                    }}
+                />
+                <Stack.Screen
+                    name="admin/reports"
+                    options={{
+                        title: 'Gestionar Reportes',
+                        headerStyle: { backgroundColor: colors.warning },
+                        headerTintColor: '#fff',
+                        headerTitleStyle: { fontWeight: '700' },
+                    }}
+                />
+                <Stack.Screen
+                    name="notifications"
+                    options={{
+                        title: 'Notificaciones',
                         headerStyle: { backgroundColor: colors.primary },
                         headerTintColor: colors.textOnDark,
                         headerTitleStyle: { fontWeight: '700' },

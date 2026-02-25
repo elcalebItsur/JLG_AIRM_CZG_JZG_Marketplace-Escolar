@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Chat, ChatMessage } from '@/types/chat';
+import { createNotification } from './notificationService';
 
 const CHATS = 'chats';
 const MESSAGES = 'messages';
@@ -133,6 +134,20 @@ export async function sendMessage(
             lastSenderId: senderId,  // <— track who sent last
             unreadCount: increment(1),
         });
+
+        // Trigger in-app notification for the recipient
+        // Extract recipient from chatId (deterministic [id1, id2].join('_'))
+        const ids = chatId.split('_');
+        const recipientId = ids.find(id => id !== senderId);
+        if (recipientId) {
+            createNotification({
+                userId: recipientId,
+                type: 'message',
+                title: `Nuevo mensaje de ${senderId === ids[0] && ids.length > 2 ? 'usuario' : senderName}`,
+                body: trimmed.length > 60 ? trimmed.substring(0, 57) + '...' : trimmed,
+                relatedId: chatId,
+            });
+        }
 
         return { success: true };
     } catch (err) {

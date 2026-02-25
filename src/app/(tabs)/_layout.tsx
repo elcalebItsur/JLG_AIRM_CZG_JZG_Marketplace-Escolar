@@ -5,21 +5,36 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { colors } from '@/theme/colors';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToChats } from '@/services/chatService';
+import { subscribeToNotifications } from '@/services/notificationService';
 import { Chat } from '@/types/chat';
+import { AppNotification } from '@/types/notification';
 
 export default function TabLayout() {
     const { user } = useAuth();
-    const [totalUnread, setTotalUnread] = useState(0);
+    const [totalUnreadChats, setTotalUnreadChats] = useState(0);
+    const [unreadNotifs, setUnreadNotifs] = useState(0);
 
     useEffect(() => {
         if (!user) return;
-        return subscribeToChats(user.id, (chats: Chat[]) => {
-            // Only count chats where WE are the recipient of the last message
+
+        // Subscribe to chats for message badge
+        const unsubChats = subscribeToChats(user.id, (chats: Chat[]) => {
             const count = chats
                 .filter(c => c.lastSenderId !== user.id)
                 .reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
-            setTotalUnread(count);
+            setTotalUnreadChats(count);
         });
+
+        // Subscribe to notifications for alert badge
+        const unsubNotifs = subscribeToNotifications(user.id, (notifs: AppNotification[]) => {
+            const count = notifs.filter(n => !n.isRead).length;
+            setUnreadNotifs(count);
+        });
+
+        return () => {
+            unsubChats();
+            unsubNotifs();
+        };
     }, [user]);
 
     return (
@@ -110,10 +125,10 @@ export default function TabLayout() {
                                 size={24}
                                 color={color}
                             />
-                            {totalUnread > 0 && (
+                            {totalUnreadChats > 0 && (
                                 <View style={styles.tabBadge}>
                                     <Text style={styles.tabBadgeText}>
-                                        {totalUnread > 9 ? '9+' : totalUnread}
+                                        {totalUnreadChats > 9 ? '9+' : totalUnreadChats}
                                     </Text>
                                 </View>
                             )}
@@ -127,11 +142,20 @@ export default function TabLayout() {
                     title: 'Mi Perfil',
                     tabBarLabel: 'Perfil',
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons
-                            name={focused ? 'person' : 'person-outline'}
-                            size={24}
-                            color={color}
-                        />
+                        <View>
+                            <Ionicons
+                                name={focused ? 'person' : 'person-outline'}
+                                size={24}
+                                color={color}
+                            />
+                            {unreadNotifs > 0 && (
+                                <View style={styles.tabBadge}>
+                                    <Text style={styles.tabBadgeText}>
+                                        {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
                     ),
                 }}
             />
