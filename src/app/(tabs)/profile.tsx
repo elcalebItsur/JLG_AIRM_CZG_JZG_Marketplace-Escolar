@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
@@ -81,10 +81,15 @@ export default function ProfileScreen() {
         .join('');
 
     const handleLogout = () => {
-        Alert.alert('Cerrar Sesión', '¿Estás seguro que deseas salir?', [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Salir', style: 'destructive', onPress: logout },
-        ]);
+        if (Platform.OS === 'web') {
+            const confirmed = window.confirm('¿Estás seguro que deseas cerrar sesión?');
+            if (confirmed) logout();
+        } else {
+            Alert.alert('Cerrar Sesión', '¿Estás seguro que deseas salir?', [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Salir', style: 'destructive', onPress: logout },
+            ]);
+        }
     };
 
     return (
