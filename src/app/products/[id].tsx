@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     ActivityIndicator, TouchableOpacity, Alert, Share,
@@ -7,12 +7,15 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/types/product';
+import { Review } from '@/types/review';
 import { getProductById, updateProductStatus } from '@/services/productService';
 import { getOrCreateChat } from '@/services/chatService';
+import { subscribeToSellerReviews, hasReviewed } from '@/services/reviewService';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
 import { AppButton } from '@/components/ui/AppButton';
+import { ReviewModal } from '@/components/ui/ReviewModal';
 
 const CATEGORY_COLORS: Record<string, string> = {
     libros: '#2B6CB0', electronica: '#6B46C1', ropa: '#C05621',
@@ -43,6 +46,9 @@ export default function ProductDetailScreen() {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [alreadyReviewed, setAlreadyReviewed] = useState(false);
     const router = useRouter();
     const { user } = useAuth();
     const { width } = useWindowDimensions();
@@ -54,6 +60,18 @@ export default function ProductDetailScreen() {
     useEffect(() => {
         if (id) loadProduct(id);
     }, [id]);
+
+    // Real-time reviews for the seller
+    useEffect(() => {
+        if (!product?.sellerId) return;
+        return subscribeToSellerReviews(product.sellerId, setReviews);
+    }, [product?.sellerId]);
+
+    // Check if current user already reviewed this product
+    useEffect(() => {
+        if (!user || !product) return;
+        hasReviewed(user.id, product.id).then(setAlreadyReviewed);
+    }, [user, product?.id]);
 
     const loadProduct = async (productId: string) => {
         setLoading(true);
@@ -236,34 +254,111 @@ export default function ProductDetailScreen() {
                             )}
                         </View>
                     ) : (
-                        // Buyer actions
+                        // Buyer actions — active product
                         product.status === 'active' && (
-                            <AppButton
-                                title="Contactar Vendedor"
-                                onPress={async () => {
-                                    if (!user) return;
-                                    const { chatId, error } = await getOrCreateChat({
-                                        buyerId: user.id,
-                                        buyerName: user.displayName,
-                                        sellerId: product.sellerId,
-                                        sellerName: product.sellerName,
-                                        productId: product.id,
-                                        productTitle: product.title,
-                                        productImage: product.images?.[0],
-                                        productPrice: product.price,
-                                    });
-                                    if (error || !chatId) {
-                                        Alert.alert('Error', error ?? 'No se pudo abrir el chat');
-                                        return;
-                                    }
-                                    router.push(`/chat/${chatId}`);
-                                }}
-                                icon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
-                            />
+                            <View style={styles.actionsCol}>
+                                <AppButton
+                                    title="Contactar Vendedor"
+                                    onPress={async () => {
+                                        if (!user) return;
+                                        const { chatId, error } = await getOrCreateChat({
+                                            buyerId: user.id,
+                                            buyerName: user.displayName,
+                                            sellerId: product.sellerId,
+                                            sellerName: product.sellerName,
+                                            productId: product.id,
+                                            productTitle: product.title,
+                                            productImage: product.images?.[0],
+                                            productPrice: product.price,
+                                        });
+                                        if (error || !chatId) {
+                                            Alert.alert('Error', error ?? 'No se pudo abrir el chat');
+                                            return;
+                                        }
+                                        router.push(`/chat/${chatId}`);
+                                    }}
+                                    icon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
+                                />
+                                {!alreadyReviewed ? (
+                                    <AppButton
+                                        title="Calificar Vendedor"
+                                        variant="secondary"
+                                        onPress={() => setShowReviewModal(true)}
+                                        icon={<Ionicons name="star-outline" size={18} color={colors.primary} />}
+                                    />
+                                ) : (
+                                    <View style={styles.reviewedBanner}>
+                                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                                        <Text style={styles.reviewedBannerText}>Ya calificaste a este vendedor</Text>
+                                    </View>
+                                )}
+                            </View>
                         )
+                    )}
+
+                    {/* ─── Reviews section ──────────────────────────────── */}
+                    {reviews.length > 0 && (
+                        <View style={styles.reviewsSection}>
+                            <View style={styles.divider} />
+                            <View style={styles.reviewsHeader}>
+                                <Ionicons name="star" size={17} color={colors.accent} />
+                                <Text style={styles.reviewsTitle}>Reseñas del vendedor</Text>
+                                <View style={styles.reviewCountBadge}>
+                                    <Text style={styles.reviewCountText}>{reviews.length}</Text>
+                                </View>
+                            </View>
+                            {reviews.slice(0, 5).map(r => (
+                                <View key={r.id} style={styles.reviewCard}>
+                                    <View style={styles.reviewCardHeader}>
+                                        <View style={styles.reviewAvatar}>
+                                            <Text style={styles.reviewAvatarText}>
+                                                {r.reviewerName.charAt(0).toUpperCase()}
+                                            </Text>
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.reviewerName}>{r.reviewerName}</Text>
+                                            <View style={styles.starsRow}>
+                                                {([1, 2, 3, 4, 5] as const).map(n => (
+                                                    <Ionicons
+                                                        key={n}
+                                                        name={n <= r.rating ? 'star' : 'star-outline'}
+                                                        size={13}
+                                                        color={n <= r.rating ? colors.accent : colors.border}
+                                                    />
+                                                ))}
+                                            </View>
+                                        </View>
+                                        <Text style={styles.reviewDate}>
+                                            {new Date(r.createdAt).toLocaleDateString('es-MX', { month: 'short', day: '2-digit' })}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.reviewComment}>{r.comment}</Text>
+                                    <Text style={styles.reviewProductTag}>📦 {r.productTitle}</Text>
+                                </View>
+                            ))}
+                        </View>
                     )}
                 </View>
             </ScrollView>
+
+            {/* Review modal */}
+            {!isOwner && product && user && (
+                <ReviewModal
+                    visible={showReviewModal}
+                    onClose={() => setShowReviewModal(false)}
+                    onSuccess={() => {
+                        setShowReviewModal(false);
+                        setAlreadyReviewed(true);
+                        Alert.alert('¡Gracias!', 'Tu reseña fue publicada exitosamente 🌟');
+                    }}
+                    sellerId={product.sellerId}
+                    sellerName={product.sellerName}
+                    reviewerId={user.id}
+                    reviewerName={user.displayName}
+                    productId={product.id}
+                    productTitle={product.title}
+                />
+            )}
         </>
     );
 }
@@ -320,4 +415,42 @@ const styles = StyleSheet.create({
     actionsCol: { gap: 12 },
     soldBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.successLight, padding: 14, borderRadius: 12 },
     soldBannerText: { ...typography.presets.bodyMedium, color: colors.success },
+
+    // ─── Reviewed banner ──────────────────────────────────────────────
+    reviewedBanner: {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: colors.successLight,
+        borderRadius: 10, padding: 12,
+    },
+    reviewedBannerText: { ...typography.presets.body, color: colors.success },
+
+    // ─── Reviews section ──────────────────────────────────────────────
+    reviewsSection: { marginTop: 4 },
+    reviewsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+    reviewsTitle: { ...typography.presets.sectionTitle, color: colors.text, flex: 1 },
+    reviewCountBadge: {
+        backgroundColor: colors.accent,
+        borderRadius: 12, minWidth: 24, height: 24,
+        justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6,
+    },
+    reviewCountText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+
+    reviewCard: {
+        backgroundColor: colors.backgroundAlt,
+        borderRadius: 12, padding: 14, marginBottom: 10,
+        gap: 8,
+    },
+    reviewCardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    reviewAvatar: {
+        width: 36, height: 36, borderRadius: 18,
+        backgroundColor: colors.primary,
+        justifyContent: 'center', alignItems: 'center',
+        flexShrink: 0,
+    },
+    reviewAvatarText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    reviewerName: { ...typography.presets.bodyMedium, color: colors.text },
+    starsRow: { flexDirection: 'row', gap: 2, marginTop: 2 },
+    reviewDate: { ...typography.presets.caption, color: colors.textMuted },
+    reviewComment: { ...typography.presets.body, color: colors.text, lineHeight: 22 },
+    reviewProductTag: { ...typography.presets.caption, color: colors.textMuted },
 });

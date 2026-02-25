@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { Role } from '@/types/role';
+import { getMyProducts } from '@/services/productService';
+import { getSellerReviews } from '@/services/reviewService';
 
 interface MenuItemProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -41,6 +43,26 @@ const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
 export default function ProfileScreen() {
     const { user, logout } = useAuth();
     const router = useRouter();
+
+    const [productCount, setProductCount] = useState<number | null>(null);
+    const [reviewCount, setReviewCount] = useState<number | null>(null);
+    const [avgRating, setAvgRating] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (!user) return;
+        // Products count
+        getMyProducts(user.id).then(prods => setProductCount(prods.length));
+        // Reviews + avg rating
+        getSellerReviews(user.id).then(reviews => {
+            setReviewCount(reviews.length);
+            if (reviews.length > 0) {
+                const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+                setAvgRating(Math.round(avg * 10) / 10);
+            } else {
+                setAvgRating(null);
+            }
+        });
+    }, [user]);
 
     if (!user) return null;
 
@@ -78,17 +100,28 @@ export default function ProfileScreen() {
             {/* Stats row */}
             <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                    <Text style={styles.statValue}>—</Text>
+                    <Text style={styles.statValue}>
+                        {productCount !== null ? productCount : '—'}
+                    </Text>
                     <Text style={styles.statLabel}>Publicaciones</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statItem}>
-                    <Text style={styles.statValue}>—</Text>
-                    <Text style={styles.statLabel}>Ventas</Text>
+                    <Text style={styles.statValue}>
+                        {reviewCount !== null ? reviewCount : '—'}
+                    </Text>
+                    <Text style={styles.statLabel}>Reseñas</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statItem}>
-                    <Text style={styles.statValue}>—</Text>
+                    <View style={styles.statRatingRow}>
+                        {avgRating != null && (
+                            <Ionicons name="star" size={16} color={colors.accent} />
+                        )}
+                        <Text style={styles.statValue}>
+                            {avgRating != null ? avgRating.toFixed(1) : '—'}
+                        </Text>
+                    </View>
                     <Text style={styles.statLabel}>Valoración</Text>
                 </View>
             </View>
@@ -214,6 +247,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     statItem: { alignItems: 'center' },
+    statRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     statValue: {
         fontSize: 20,
         fontWeight: '800',
