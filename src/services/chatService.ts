@@ -1,6 +1,7 @@
 /**
  * chatService.ts — Real-time chat using Firestore onSnapshot listeners.
- * Chat ID format: `{buyerUid}_{sellerUid}_{productId}`
+ * Chat ID format: `{sortedUid1}_{sortedUid2}` — one chat per user PAIR,
+ * regardless of how many products they discuss.
  */
 import {
     collection,
@@ -33,9 +34,9 @@ function toISO(value: unknown): string {
     return new Date().toISOString();
 }
 
-/** Generate a deterministic chat ID from the three participants/context */
-export function buildChatId(buyerId: string, sellerId: string, productId: string): string {
-    return `${buyerId}_${sellerId}_${productId}`;
+/** Generate a deterministic chat ID from the two user IDs (sorted so order doesn't matter) */
+export function buildChatId(userIdA: string, userIdB: string): string {
+    return [userIdA, userIdB].sort().join('_');
 }
 
 // ─── Get or create a chat ─────────────────────────────────────────────────────
@@ -53,18 +54,18 @@ export interface GetOrCreateChatParams {
 
 /**
  * Returns an existing chat or creates a new one.
- * Uses a deterministic document ID so there is at most one chat per
- * (buyer, seller, product) triplet.
+ * Uses a deterministic document ID based only on the two user IDs,
+ * so there is at most ONE chat per user pair (regardless of product).
+ * When a new product is discussed, the productId/title are updated on the chat.
  */
 export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ chatId: string; error?: string }> {
     try {
-        const chatId = buildChatId(params.buyerId, params.sellerId, params.productId);
+        const chatId = buildChatId(params.buyerId, params.sellerId);
         const ref = doc(db, CHATS, chatId);
         const snap = await getDoc(ref);
 
         if (!snap.exists()) {
-            // Build the payload and remove any undefined fields
-            // (Firestore rejects undefined — e.g. productImage when the product has no images)
+            // Create brand-new chat
             const raw: Record<string, unknown> = {
                 productId: params.productId,
                 productTitle: params.productTitle,
@@ -80,13 +81,18 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
                 lastMessageAt: serverTimestamp(),
                 unreadCount: 0,
             };
-
-            // Only add optional fields if they are defined
-            if (params.productImage !== undefined) {
-                raw.productImage = params.productImage;
-            }
-
+            if (params.productImage !== undefined) raw.productImage = params.productImage;
             await setDoc(ref, raw);
+        } else {
+            // Chat exists — update the product context so the header reflects
+            // the product the buyer just tapped on.
+            const update: Record<string, unknown> = {
+                productId: params.productId,
+                productTitle: params.productTitle,
+                productPrice: params.productPrice,
+            };
+            if (params.productImage !== undefined) update.productImage = params.productImage;
+            await updateDoc(ref, update);
         }
 
         return { chatId };

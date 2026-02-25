@@ -136,7 +136,9 @@ export async function getChatBuyersForProduct(
     productId: string
 ): Promise<Array<{ uid: string; name: string }>> {
     try {
-        // Chats where seller is involved and product matches
+        // Query chats where seller is involved AND the current product is/was the topic.
+        // Note: since chat IDs are now per user-pair, a chat can be reused across products.
+        // We rely on the `productId` field stored on the chat document.
         const snap = await getDocs(
             query(
                 collection(db, 'chats'),
@@ -144,12 +146,17 @@ export async function getChatBuyersForProduct(
                 where('productId', '==', productId),
             )
         );
-        return snap.docs.map(d => {
+        // De-duplicate in case there are legacy chats per-product from before the migration
+        const seen = new Set<string>();
+        return snap.docs.reduce<Array<{ uid: string; name: string }>>((acc, d) => {
             const data = d.data();
             const buyerId = data.buyerId as string;
+            if (seen.has(buyerId)) return acc;
+            seen.add(buyerId);
             const name = (data.participantsMap as Record<string, string>)[buyerId] ?? 'Comprador';
-            return { uid: buyerId, name };
-        });
+            acc.push({ uid: buyerId, name });
+            return acc;
+        }, []);
     } catch (err) {
         console.error('getChatBuyersForProduct error:', err);
         return [];

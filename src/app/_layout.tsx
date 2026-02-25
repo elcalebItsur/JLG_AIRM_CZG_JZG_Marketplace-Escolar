@@ -70,7 +70,12 @@ function RootLayoutNav() {
                 />
                 <Stack.Screen
                     name="transactions/history"
-                    options={{ headerShown: false }} // header managed inside TransactionHistoryScreen
+                    options={{
+                        title: 'Mis Transacciones',
+                        headerStyle: { backgroundColor: colors.primary },
+                        headerTintColor: colors.textOnDark,
+                        headerTitleStyle: { fontWeight: '700' },
+                    }}
                 />
             </Stack>
         </>

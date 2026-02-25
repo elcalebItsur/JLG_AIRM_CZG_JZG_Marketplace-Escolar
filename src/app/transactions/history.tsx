@@ -7,7 +7,7 @@ import {
     View, Text, StyleSheet, FlatList,
     ActivityIndicator, TouchableOpacity, Alert,
 } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
@@ -20,6 +20,7 @@ import {
 } from '@/services/transactionService';
 
 type Tab = 'sales' | 'purchases';
+
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
     pending: { label: 'Pendiente', color: '#B7791F', icon: 'time-outline' },
@@ -82,9 +83,14 @@ export default function TransactionHistoryScreen() {
     const renderItem = ({ item }: { item: Transaction }) => {
         const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.pending;
         const isBuyer = activeTab === 'purchases';
+        const canConfirm = isBuyer && item.status === 'pending';
 
         return (
-            <View style={styles.card}>
+            <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.85}
+                onPress={() => router.push(`/products/${item.productId}`)}
+            >
                 {/* Header row */}
                 <View style={styles.cardHeader}>
                     <View style={styles.cardIcon}>
@@ -120,10 +126,13 @@ export default function TransactionHistoryScreen() {
                     </View>
 
                     {/* Buyer can confirm receipt */}
-                    {isBuyer && item.status === 'pending' && (
+                    {canConfirm && (
                         <TouchableOpacity
                             style={styles.confirmBtn}
-                            onPress={() => handleConfirmReceipt(item)}
+                            onPress={(e) => {
+                                e.stopPropagation?.();
+                                handleConfirmReceipt(item);
+                            }}
                             activeOpacity={0.8}
                         >
                             <Ionicons name="checkmark-done-outline" size={15} color="#fff" />
@@ -137,20 +146,12 @@ export default function TransactionHistoryScreen() {
                         </Text>
                     )}
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 
     return (
-        <>
-            <Stack.Screen
-                options={{
-                    title: 'Mis Transacciones',
-                    headerStyle: { backgroundColor: colors.primary },
-                    headerTintColor: colors.textOnDark,
-                    headerTitleStyle: { fontWeight: '700' },
-                }}
-            />
+        <View style={styles.root}>
 
             {/* Tab selector */}
             <View style={styles.tabs}>
@@ -203,11 +204,15 @@ export default function TransactionHistoryScreen() {
                     showsVerticalScrollIndicator={false}
                 />
             )}
-        </>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+    root: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
     tabs: {
         flexDirection: 'row',
         backgroundColor: colors.surface,
