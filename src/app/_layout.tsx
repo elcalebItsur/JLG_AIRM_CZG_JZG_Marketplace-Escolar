@@ -49,6 +49,7 @@ function RootLayoutNav() {
                     },
                 }}
             >
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="index" options={{ title: 'Inicio' }} />
                 <Stack.Screen name="auth/login" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/register" options={{ headerShown: false }} />

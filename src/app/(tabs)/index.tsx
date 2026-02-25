@@ -3,6 +3,7 @@ import {
     View, FlatList, StyleSheet, ActivityIndicator,
     Text, TouchableOpacity, ScrollView, RefreshControl,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Product } from '@/types/product';
@@ -35,6 +36,7 @@ export default function HomeScreen() {
     const [showMarketplace, setShowMarketplace] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     useEffect(() => { loadProducts(); }, []);
 
@@ -56,10 +58,13 @@ export default function HomeScreen() {
         setRefreshing(false);
     };
 
+    const normalize = (s: string) =>
+        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
     const filteredProducts = activeCategory === 'Todos'
         ? products
         : products.filter(p =>
-            p.category?.toLowerCase() === activeCategory.toLowerCase()
+            normalize(p.category ?? '') === normalize(activeCategory)
         );
 
 
@@ -68,7 +73,7 @@ export default function HomeScreen() {
     if (user?.role === Role.ADMIN && !showMarketplace) {
         return (
             <View style={styles.root}>
-                <View style={[styles.topBar, { paddingBottom: 10 }]}>
+                <View style={[styles.topBar, { paddingTop: insets.top + 10, paddingBottom: 10 }]}>
                     <View>
                         <Text style={styles.greetingSmall}>Vista de Administrador</Text>
                         <Text style={styles.greetingBig}>Dashboard Global</Text>
@@ -89,7 +94,7 @@ export default function HomeScreen() {
     return (
         <View style={styles.root}>
             {/* Sticky top section */}
-            <View style={styles.topBar}>
+            <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
                 {/* Branding row */}
                 <View style={styles.brandRow}>
                     <View style={styles.brandLeft}>

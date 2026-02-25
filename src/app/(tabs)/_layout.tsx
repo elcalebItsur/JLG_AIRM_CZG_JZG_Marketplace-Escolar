@@ -87,6 +87,7 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: 'Marketplace',
+                    headerShown: false,
                     tabBarLabel: 'Inicio',
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
