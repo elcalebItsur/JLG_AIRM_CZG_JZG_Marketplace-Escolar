@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { AppButton } from '@/components/ui/AppButton';
@@ -13,13 +14,13 @@ import { createProduct } from '@/services/productService';
 import { useAuth } from '@/context/AuthContext';
 import { ProductCondition } from '@/types/product';
 
-const CATEGORIES = [
-    { key: 'libros', label: 'Libros', emoji: '📚' },
-    { key: 'electronica', label: 'Electrónica', emoji: '💻' },
-    { key: 'ropa', label: 'Ropa', emoji: '👕' },
-    { key: 'papeleria', label: 'Papelería', emoji: '✏️' },
-    { key: 'servicios', label: 'Servicios', emoji: '🛠️' },
-    { key: 'otros', label: 'Otros', emoji: '📦' },
+const CATEGORIES: { key: string; label: string; icon: ComponentProps<typeof Ionicons>['name'] }[] = [
+    { key: 'libros', label: 'Libros', icon: 'book-outline' },
+    { key: 'electronica', label: 'Electrónica', icon: 'laptop-outline' },
+    { key: 'ropa', label: 'Ropa', icon: 'shirt-outline' },
+    { key: 'papeleria', label: 'Papelería', icon: 'pencil-outline' },
+    { key: 'servicios', label: 'Servicios', icon: 'construct-outline' },
+    { key: 'otros', label: 'Otros', icon: 'cube-outline' },
 ];
 
 const CONDITIONS: { key: ProductCondition; label: string; desc: string }[] = [
@@ -77,7 +78,7 @@ export default function PublishScreen() {
         setLoading(false);
 
         if (success) {
-            Alert.alert('¡Publicado! 🎉', 'Tu producto ya está visible en el marketplace', [
+            Alert.alert('¡Publicado!', 'Tu producto ya está visible en el marketplace.', [
                 { text: 'Ver catálogo', onPress: () => router.push('/') },
             ]);
             setTitle(''); setPrice(''); setDescription('');
@@ -189,7 +190,11 @@ export default function PublishScreen() {
                                 onPress={() => setSelectedCategory(cat.key)}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                                <Ionicons
+                                    name={cat.icon}
+                                    size={16}
+                                    color={selectedCategory === cat.key ? colors.primary : colors.textMuted}
+                                />
                                 <Text style={[
                                     styles.categoryLabel,
                                     selectedCategory === cat.key && styles.categoryLabelActive,
@@ -305,7 +310,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.primaryLight + '18',
         borderColor: colors.primary,
     },
-    categoryEmoji: { fontSize: 16 },
+
     categoryLabel: { ...typography.presets.label, color: colors.textSecondary },
     categoryLabelActive: { color: colors.primary, fontWeight: '700' },
 

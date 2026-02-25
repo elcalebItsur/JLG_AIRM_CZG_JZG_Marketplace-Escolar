@@ -14,13 +14,24 @@ import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types/role';
 import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
 
-const CATEGORIES = ['Todos', 'Libros', 'Electrónica', 'Ropa', 'Papelería', 'Servicios', 'Otros'];
+import type { ComponentProps } from 'react';
+
+type CategoryItem = { label: string; icon: ComponentProps<typeof Ionicons>['name'] };
+const CATEGORIES: CategoryItem[] = [
+    { label: 'Todos', icon: 'grid-outline' },
+    { label: 'Libros', icon: 'book-outline' },
+    { label: 'Electrónica', icon: 'laptop-outline' },
+    { label: 'Ropa', icon: 'shirt-outline' },
+    { label: 'Papelería', icon: 'pencil-outline' },
+    { label: 'Servicios', icon: 'construct-outline' },
+    { label: 'Otros', icon: 'cube-outline' },
+];
 
 export default function HomeScreen() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [activeCategory, setActiveCategory] = useState('Todos');
+    const [activeCategory, setActiveCategory] = useState<string>('Todos');
     const [showMarketplace, setShowMarketplace] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
@@ -51,6 +62,7 @@ export default function HomeScreen() {
             p.category?.toLowerCase() === activeCategory.toLowerCase()
         );
 
+
     const firstName = user?.displayName?.split(' ')[0] || 'Estudiante';
 
     if (user?.role === Role.ADMIN && !showMarketplace) {
@@ -78,27 +90,39 @@ export default function HomeScreen() {
         <View style={styles.root}>
             {/* Sticky top section */}
             <View style={styles.topBar}>
-                {/* Greeting */}
-                <View>
-                    <Text style={styles.greetingSmall}>Hola, {firstName} 👋</Text>
-                    <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                    {user?.role === Role.ADMIN && (
+                {/* Branding row */}
+                <View style={styles.brandRow}>
+                    <View style={styles.brandLeft}>
+                        <View style={styles.brandIconWrap}>
+                            <Ionicons name="storefront-outline" size={22} color={colors.textOnDark} />
+                        </View>
+                        <View>
+                            <Text style={styles.brandTitle}>Marketplace</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                <Ionicons name="hand-left-outline" size={11} color="rgba(255,255,255,0.6)" />
+                                <Text style={styles.greetingSmall}>Hola, {firstName}</Text>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                        {user?.role === Role.ADMIN && (
+                            <TouchableOpacity
+                                style={styles.notificationBtn}
+                                onPress={() => setShowMarketplace(false)}
+                            >
+                                <Ionicons name="stats-chart" size={20} color={colors.textOnDark} />
+                            </TouchableOpacity>
+                        )}
                         <TouchableOpacity
                             style={styles.notificationBtn}
-                            onPress={() => setShowMarketplace(false)}
+                            onPress={() => router.push('/notifications')}
                         >
-                            <Ionicons name="stats-chart" size={20} color={colors.textOnDark} />
+                            <Ionicons name="notifications-outline" size={22} color={colors.textOnDark} />
                         </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                        style={styles.notificationBtn}
-                        onPress={() => router.push('/notifications')}
-                    >
-                        <Ionicons name="notifications-outline" size={22} color={colors.textOnDark} />
-                    </TouchableOpacity>
+                    </View>
                 </View>
+                {/* Subtitle */}
+                <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>
             </View>
 
             {/* Search bar (UI only) */}
@@ -109,24 +133,36 @@ export default function HomeScreen() {
                 </View>
             </View>
 
-            {/* Category filter chips */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoriesRow}
-            >
-                {CATEGORIES.map(cat => (
-                    <TouchableOpacity
-                        key={cat}
-                        style={[styles.chip, activeCategory === cat && styles.chipActive]}
-                        onPress={() => setActiveCategory(cat)}
-                    >
-                        <Text style={[styles.chipText, activeCategory === cat && styles.chipTextActive]}>
-                            {cat}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
+            {/* Category filter section */}
+            <View style={styles.categoriesSection}>
+                <Text style={styles.categoriesLabel}>Categorías</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.categoriesRow}
+                >
+                    {CATEGORIES.map(cat => {
+                        const isActive = activeCategory === cat.label;
+                        return (
+                            <TouchableOpacity
+                                key={cat.label}
+                                style={[styles.chip, isActive && styles.chipActive]}
+                                onPress={() => setActiveCategory(cat.label)}
+                                activeOpacity={0.75}
+                            >
+                                <Ionicons
+                                    name={cat.icon}
+                                    size={14}
+                                    color={isActive ? '#fff' : colors.primary}
+                                />
+                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                                    {cat.label}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+            </View>
 
             {/* Products grid */}
             {loading ? (
@@ -136,7 +172,7 @@ export default function HomeScreen() {
                 </View>
             ) : filteredProducts.length === 0 ? (
                 <View style={styles.center}>
-                    <Text style={styles.emptyEmoji}>📭</Text>
+                    <Ionicons name="file-tray-outline" size={56} color={colors.border} />
                     <Text style={styles.emptyTitle}>Sin productos aquí</Text>
                     <Text style={styles.emptySubtitle}>
                         {activeCategory !== 'Todos'
@@ -178,23 +214,47 @@ const styles = StyleSheet.create({
     },
     topBar: {
         backgroundColor: colors.primary,
+        paddingHorizontal: 20,
+        paddingTop: 14,
+        paddingBottom: 20,
+        gap: 6,
+    },
+    brandRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 12,
-        paddingBottom: 20,
+    },
+    brandLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    brandIconWrap: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.18)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    brandTitle: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '800',
+        letterSpacing: -0.3,
+        lineHeight: 22,
     },
     greetingSmall: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 13,
+        color: 'rgba(255,255,255,0.65)',
+        fontSize: 11,
         fontWeight: '500',
     },
     greetingBig: {
         color: '#fff',
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 17,
+        fontWeight: '600',
         marginTop: 2,
+        opacity: 0.9,
     },
     notificationBtn: {
         width: 40,
@@ -222,16 +282,35 @@ const styles = StyleSheet.create({
         ...typography.presets.body,
         color: colors.textMuted,
     },
+    categoriesSection: {
+        backgroundColor: colors.surface,
+        paddingTop: 12,
+        paddingBottom: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    categoriesLabel: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: colors.textMuted,
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        paddingHorizontal: 16,
+        marginBottom: 8,
+    },
     categoriesRow: {
         paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingBottom: 12,
         gap: 8,
     },
     chip: {
-        paddingHorizontal: 16,
-        paddingVertical: 7,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.background,
         borderWidth: 1.5,
         borderColor: colors.border,
     },
@@ -240,8 +319,8 @@ const styles = StyleSheet.create({
         borderColor: colors.primary,
     },
     chipText: {
-        fontSize: 13,
-        fontWeight: '500',
+        fontSize: 12,
+        fontWeight: '600',
         color: colors.textSecondary,
     },
     chipTextActive: {
@@ -266,9 +345,7 @@ const styles = StyleSheet.create({
         color: colors.textMuted,
         marginTop: 8,
     },
-    emptyEmoji: {
-        fontSize: 52,
-    },
+
     emptyTitle: {
         ...typography.presets.sectionTitle,
         color: colors.text,

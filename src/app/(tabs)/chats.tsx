@@ -78,9 +78,12 @@ export default function ChatsScreen() {
                         <Text style={styles.chatTime}>{formatTime(item.lastMessageAt)}</Text>
                     </View>
 
-                    <Text style={styles.chatProductTitle} numberOfLines={1}>
-                        📦 {item.productTitle} · ${item.productPrice.toFixed(2)}
-                    </Text>
+                    <View style={styles.chatProductRow}>
+                        <Ionicons name="cube-outline" size={11} color={colors.textSecondary} />
+                        <Text style={styles.chatProductTitle} numberOfLines={1}>
+                            {item.productTitle} · ${item.productPrice.toFixed(2)}
+                        </Text>
+                    </View>
 
                     <View style={styles.lastMsgRow}>
                         <Text
@@ -171,7 +174,8 @@ const styles = StyleSheet.create({
     chatName: { ...typography.presets.bodyMedium, color: colors.text, flex: 1, marginRight: 8 },
     chatNameBold: { fontWeight: '700' },
     chatTime: { ...typography.presets.caption, color: colors.textMuted },
-    chatProductTitle: { ...typography.presets.caption, color: colors.textSecondary },
+    chatProductRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    chatProductTitle: { ...typography.presets.caption, color: colors.textSecondary, flex: 1 },
     lastMsgRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     lastMsg: { ...typography.presets.caption, color: colors.textMuted, flex: 1 },
     lastMsgBold: { fontWeight: '700', color: colors.text },

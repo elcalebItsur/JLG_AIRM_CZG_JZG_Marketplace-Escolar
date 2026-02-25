@@ -43,12 +43,16 @@ const CONDITION_COLORS: Record<string, { bg: string; text: string }> = {
     acceptable: { bg: '#FFF5F5', text: '#C53030' },
 };
 
-function getCategoryEmoji(cat: string): string {
-    const map: Record<string, string> = {
-        libros: '📚', electronica: '💻', ropa: '👕',
-        papeleria: '✏️', servicios: '🛠️', otros: '📦',
+function getCategoryIcon(cat: string): keyof typeof Ionicons.glyphMap {
+    const map: Record<string, keyof typeof Ionicons.glyphMap> = {
+        libros: 'book-outline',
+        electronica: 'laptop-outline',
+        ropa: 'shirt-outline',
+        papeleria: 'pencil-outline',
+        servicios: 'construct-outline',
+        otros: 'cube-outline',
     };
-    return map[cat] || '📦';
+    return map[cat] || 'cube-outline';
 }
 
 export default function ProductDetailScreen() {
@@ -238,7 +242,7 @@ export default function ProductDetailScreen() {
     if (!product) {
         return (
             <View style={styles.center}>
-                <Text style={styles.emptyEmoji}>🔍</Text>
+                <Ionicons name="search-outline" size={52} color={colors.border} />
                 <Text style={styles.emptyTitle}>Producto no encontrado</Text>
                 <AppButton title="Volver" onPress={() => router.back()} variant="secondary" fullWidth={false} />
             </View>
@@ -270,9 +274,11 @@ export default function ProductDetailScreen() {
                         />
                     ) : (
                         <View style={[styles.imageFallback, { backgroundColor: catColor }]}>
-                            <Text style={styles.imageFallbackEmoji}>
-                                {getCategoryEmoji(product.category)}
-                            </Text>
+                            <Ionicons
+                                name={getCategoryIcon(product.category)}
+                                size={80}
+                                color="rgba(255,255,255,0.9)"
+                            />
                         </View>
                     )}
                     {/* Status overlay */}
@@ -300,8 +306,9 @@ export default function ProductDetailScreen() {
                     {/* Meta row */}
                     <View style={styles.metaRow}>
                         <View style={[styles.categoryPill, { backgroundColor: catColor + '20', borderColor: catColor + '50' }]}>
+                            <Ionicons name={getCategoryIcon(product.category)} size={12} color={catColor} />
                             <Text style={[styles.categoryText, { color: catColor }]}>
-                                {getCategoryEmoji(product.category)} {product.category}
+                                {product.category}
                             </Text>
                         </View>
                         {product.location ? (
@@ -483,7 +490,10 @@ export default function ProductDetailScreen() {
                                         </Text>
                                     </View>
                                     <Text style={styles.reviewComment}>{r.comment}</Text>
-                                    <Text style={styles.reviewProductTag}>📦 {r.productTitle}</Text>
+                                    <View style={styles.reviewProductRow}>
+                                        <Ionicons name="cube-outline" size={11} color={colors.textMuted} />
+                                        <Text style={styles.reviewProductTag}>{r.productTitle}</Text>
+                                    </View>
                                 </View>
                             ))}
                         </View>
@@ -596,7 +606,7 @@ export default function ProductDetailScreen() {
                                                 buyerName: item.name,
                                             });
                                             setUpdatingStatus(false);
-                                            Alert.alert('✅ Vendido', 'Transacción registrada correctamente');
+                                            Alert.alert('Vendido', 'Transacción registrada correctamente');
                                         };
                                         doSellWithBuyer();
                                     }}
@@ -635,14 +645,12 @@ export default function ProductDetailScreen() {
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 24 },
-    emptyEmoji: { fontSize: 48 },
     emptyTitle: { ...typography.presets.sectionTitle, color: colors.text },
     headerBtn: { padding: 4 },
 
     imageContainer: { width: '100%', backgroundColor: colors.backgroundAlt },
     image: { width: '100%', height: '100%' },
     imageFallback: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    imageFallbackEmoji: { fontSize: 80 },
     soldOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.55)',
@@ -661,7 +669,7 @@ const styles = StyleSheet.create({
     title: { fontSize: 20, fontWeight: '700', color: colors.text, lineHeight: 28, marginBottom: 12 },
 
     metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-    categoryPill: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+    categoryPill: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 4 },
     categoryText: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
     locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     locationText: { ...typography.presets.caption, color: colors.textMuted },
@@ -723,6 +731,7 @@ const styles = StyleSheet.create({
     reviewDate: { ...typography.presets.caption, color: colors.textMuted },
     reviewComment: { ...typography.presets.body, color: colors.text, lineHeight: 22 },
     reviewProductTag: { ...typography.presets.caption, color: colors.textMuted },
+    reviewProductRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 
     // ─── Buyer picker modal ─────────────────────────────────────────────
     modalBackdrop: {
