@@ -220,14 +220,23 @@ export default function ProductDetailScreen() {
                         </View>
                         <View style={styles.sellerInfo}>
                             <Text style={styles.sellerName}>{product.sellerName}</Text>
-                            {product.sellerRating != null && (
-                                <View style={styles.ratingRow}>
-                                    <Ionicons name="star" size={13} color={colors.accent} />
-                                    <Text style={styles.ratingText}>
-                                        {product.sellerRating.toFixed(1)}
-                                    </Text>
-                                </View>
-                            )}
+                            {(() => {
+                                // Compute live avg from real-time reviews subscription
+                                const liveRating = reviews.length > 0
+                                    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+                                    : (product.sellerRating ?? null);
+                                return liveRating != null ? (
+                                    <View style={styles.ratingRow}>
+                                        <Ionicons name="star" size={13} color={colors.accent} />
+                                        <Text style={styles.ratingText}>
+                                            {liveRating.toFixed(1)}
+                                            {reviews.length > 0 && (
+                                                <Text style={styles.ratingCount}> ({reviews.length})</Text>
+                                            )}
+                                        </Text>
+                                    </View>
+                                ) : null;
+                            })()}
                         </View>
                     </View>
 
@@ -411,6 +420,7 @@ const styles = StyleSheet.create({
     sellerName: { ...typography.presets.bodyMedium, color: colors.text },
     ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
     ratingText: { ...typography.presets.caption, color: colors.textSecondary },
+    ratingCount: { ...typography.presets.caption, color: colors.textMuted },
 
     actionsCol: { gap: 12 },
     soldBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.successLight, padding: 14, borderRadius: 12 },

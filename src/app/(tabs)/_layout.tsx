@@ -14,7 +14,10 @@ export default function TabLayout() {
     useEffect(() => {
         if (!user) return;
         return subscribeToChats(user.id, (chats: Chat[]) => {
-            const count = chats.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+            // Only count chats where WE are the recipient of the last message
+            const count = chats
+                .filter(c => c.lastSenderId !== user.id)
+                .reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
             setTotalUnread(count);
         });
     }, [user]);

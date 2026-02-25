@@ -55,7 +55,8 @@ export default function ChatsScreen() {
 
     const renderItem = ({ item }: { item: Chat }) => {
         const otherName = getOtherName(item);
-        const hasUnread = item.unreadCount > 0;
+        // Only show unread badge when WE are the recipient (not the sender)
+        const hasUnread = item.unreadCount > 0 && item.lastSenderId !== user?.id;
 
         return (
             <TouchableOpacity

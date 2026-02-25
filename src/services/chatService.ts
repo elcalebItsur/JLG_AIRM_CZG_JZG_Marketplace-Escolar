@@ -118,10 +118,13 @@ export async function sendMessage(
             createdAt: serverTimestamp(),
         });
 
-        // Update chat summary
+        // Update chat summary.
+        // Only increment unreadCount — the UI will filter it out
+        // on the SENDER's side by checking lastSenderId !== currentUserId.
         await updateDoc(doc(db, CHATS, chatId), {
             lastMessage: trimmed,
             lastMessageAt: serverTimestamp(),
+            lastSenderId: senderId,  // <— track who sent last
             unreadCount: increment(1),
         });
 

@@ -22,5 +22,7 @@ export interface Chat {
     sellerId: string;
     lastMessage: string;
     lastMessageAt: string; // ISO
+    /** Who sent the last message — used to avoid counting own messages as unread */
+    lastSenderId?: string;
     unreadCount: number;
 }
