@@ -11,6 +11,8 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
+import { Role } from '@/types/role';
+import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
 
 const CATEGORIES = ['Todos', 'Libros', 'Electrónica', 'Ropa', 'Papelería', 'Servicios', 'Otros'];
 
@@ -19,6 +21,7 @@ export default function HomeScreen() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [activeCategory, setActiveCategory] = useState('Todos');
+    const [showMarketplace, setShowMarketplace] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
 
@@ -50,6 +53,27 @@ export default function HomeScreen() {
 
     const firstName = user?.displayName?.split(' ')[0] || 'Estudiante';
 
+    if (user?.role === Role.ADMIN && !showMarketplace) {
+        return (
+            <View style={styles.root}>
+                <View style={[styles.topBar, { paddingBottom: 10 }]}>
+                    <View>
+                        <Text style={styles.greetingSmall}>Vista de Administrador</Text>
+                        <Text style={styles.greetingBig}>Dashboard Global</Text>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.marketplaceToggle}
+                        onPress={() => setShowMarketplace(true)}
+                    >
+                        <Ionicons name="cart-outline" size={20} color={colors.primary} />
+                        <Text style={styles.toggleText}>Ver Marketplace</Text>
+                    </TouchableOpacity>
+                </View>
+                <AdminDashboardView />
+            </View>
+        );
+    }
+
     return (
         <View style={styles.root}>
             {/* Sticky top section */}
@@ -59,8 +83,21 @@ export default function HomeScreen() {
                     <Text style={styles.greetingSmall}>Hola, {firstName} 👋</Text>
                     <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>
                 </View>
-                <View style={styles.notificationBtn}>
-                    <Ionicons name="notifications-outline" size={22} color={colors.textOnDark} />
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    {user?.role === Role.ADMIN && (
+                        <TouchableOpacity
+                            style={styles.notificationBtn}
+                            onPress={() => setShowMarketplace(false)}
+                        >
+                            <Ionicons name="stats-chart" size={20} color={colors.textOnDark} />
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                        style={styles.notificationBtn}
+                        onPress={() => router.push('/notifications')}
+                    >
+                        <Ionicons name="notifications-outline" size={22} color={colors.textOnDark} />
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -242,5 +279,19 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         textAlign: 'center',
         paddingHorizontal: 40,
+    },
+    marketplaceToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 6,
+    },
+    toggleText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: colors.primary,
     },
 });
