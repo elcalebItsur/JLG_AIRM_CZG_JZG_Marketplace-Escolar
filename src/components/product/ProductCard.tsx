@@ -11,6 +11,7 @@ import {
 import { Product } from '@/types/product';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ProductCardProps {
     product: Product;
@@ -62,9 +63,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, show
                         <Image source={{ uri: imageUri }} style={styles.image} />
                     ) : (
                         <View style={[styles.imageFallback, { backgroundColor: catColor }]}>
-                            <Text style={styles.fallbackEmoji}>
-                                {getCategoryEmoji(categoryKey)}
-                            </Text>
+                            <Ionicons
+                                name={getCategoryIcon(categoryKey)}
+                                size={44}
+                                color="rgba(255,255,255,0.85)"
+                            />
                         </View>
                     )}
                     {/* Price badge */}
@@ -83,6 +86,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, show
                 <View style={styles.content}>
                     {/* Category pill */}
                     <View style={[styles.categoryPill, { backgroundColor: catColor + '20', borderColor: catColor + '40' }]}>
+                        <Ionicons name={getCategoryIcon(categoryKey)} size={10} color={catColor} />
                         <Text style={[styles.categoryText, { color: catColor }]}>
                             {product.category}
                         </Text>
@@ -109,12 +113,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, show
     );
 };
 
-function getCategoryEmoji(cat: string): string {
-    const map: Record<string, string> = {
-        libros: '📚', electronica: '💻', ropa: '👕',
-        papeleria: '✏️', servicios: '🛠️', otros: '📦',
+function getCategoryIcon(cat: string): keyof typeof Ionicons.glyphMap {
+    const map: Record<string, keyof typeof Ionicons.glyphMap> = {
+        libros: 'book-outline',
+        electronica: 'laptop-outline',
+        ropa: 'shirt-outline',
+        papeleria: 'pencil-outline',
+        servicios: 'construct-outline',
+        otros: 'cube-outline',
     };
-    return map[cat] || '📦';
+    return map[cat] || 'cube-outline';
 }
 
 const styles = StyleSheet.create({
@@ -145,9 +153,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    fallbackEmoji: {
-        fontSize: 44,
-    },
+
     priceBadge: {
         position: 'absolute',
         bottom: 8,
@@ -179,6 +185,9 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     categoryPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
         borderWidth: 1,
         borderRadius: 20,
         paddingHorizontal: 8,
