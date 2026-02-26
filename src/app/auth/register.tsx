@@ -71,11 +71,17 @@ export default function Register() {
             >
                 {/* Header */}
                 <View style={styles.header}>
+                    <View style={styles.decorCircle1} />
+                    <View style={styles.decorCircle2} />
                     <View style={styles.logoCircle}>
-                        <Text style={styles.logoEmoji}>🎓</Text>
+                        <Ionicons name="storefront" size={28} color="#fff" />
                     </View>
-                    <Text style={styles.appName}>Marketplace ITSUR</Text>
-                    <Text style={styles.tagline}>Crea tu cuenta institucional</Text>
+                    <Text style={styles.appName}>Marketplace</Text>
+                    <Text style={styles.appNameSub}>ITSUR</Text>
+                    <View style={styles.taglineRow}>
+                        <Ionicons name="person-add-outline" size={14} color="rgba(255,255,255,0.55)" />
+                        <Text style={styles.tagline}>Crea tu cuenta institucional</Text>
+                    </View>
                 </View>
 
                 {/* Form card */}
@@ -202,35 +208,71 @@ const styles = StyleSheet.create({
     },
     header: {
         backgroundColor: colors.primary,
-        borderRadius: 24,
+        borderRadius: 28,
         alignItems: 'center',
-        paddingVertical: 32,
+        paddingVertical: 36,
         paddingHorizontal: 24,
         marginBottom: 24,
         shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
-        elevation: 8,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.35,
+        shadowRadius: 20,
+        elevation: 10,
+        overflow: 'hidden',
+    },
+    decorCircle1: {
+        position: 'absolute',
+        top: -30,
+        right: -30,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: 'rgba(255,255,255,0.06)',
+    },
+    decorCircle2: {
+        position: 'absolute',
+        bottom: -20,
+        left: -20,
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: 'rgba(255,255,255,0.04)',
     },
     logoCircle: {
         width: 64,
         height: 64,
-        borderRadius: 32,
-        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.18)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.25)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 12,
     },
-    logoEmoji: { fontSize: 30 },
     appName: {
-        ...typography.presets.screenTitle,
+        fontSize: 24,
+        fontWeight: '800',
         color: '#fff',
-        marginBottom: 4,
+        letterSpacing: -0.5,
+        lineHeight: 28,
+    },
+    appNameSub: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.55)',
+        letterSpacing: 4,
+        textTransform: 'uppercase',
+        marginBottom: 8,
+    },
+    taglineRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
     },
     tagline: {
-        ...typography.presets.body,
-        color: 'rgba(255,255,255,0.7)',
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.55)',
+        fontWeight: '500',
     },
     form: {
         backgroundColor: colors.surface,
