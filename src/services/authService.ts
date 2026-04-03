@@ -4,28 +4,28 @@ import {
   updateProfile,
   onAuthStateChanged,
   User as FirebaseUser,
-  AuthError
+  AuthError,
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithPopup
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { deriveRoleFromEmail, validateEmailDomainForRegistration } from '../utils/validators';
 import { User } from '../types/user';
 import { Role } from '../types/role';
+import { Platform } from 'react-native';
 
 export async function registerUser(email: string, password: string, displayName: string): Promise<{ user?: User; error?: string }> {
-  // 1. Validation
   const validation = validateEmailDomainForRegistration(email);
   if (!validation.ok) return { error: validation.message };
 
   try {
-    // 2. Create Auth User
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
 
-    // 3. Update Profile
     await updateProfile(firebaseUser, { displayName });
 
-    // 4. Derive Role and Create User Document in Firestore
     const role = deriveRoleFromEmail(email) as Role;
 
     const newUser: User = {
@@ -37,7 +37,6 @@ export async function registerUser(email: string, password: string, displayName:
     };
 
     await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-
     return { user: newUser };
 
   } catch (e: any) {
@@ -78,11 +77,9 @@ export async function registerAdmin(email: string, password: string, displayName
 
 export async function loginUser(email: string, password: string): Promise<{ user?: User; error?: string }> {
   try {
-    // 1. Login with Auth
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
 
-    // 2. Fetch User Data (Role) from Firestore
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     const userDoc = await getDoc(userDocRef);
 
@@ -90,13 +87,12 @@ export async function loginUser(email: string, password: string): Promise<{ user
       const userData = userDoc.data() as User;
       return { user: userData };
     } else {
-      // Fallback if firestore doc is missing (shouldn't happen on normal flow)
       return {
         user: {
           id: firebaseUser.uid,
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || 'Usuario',
-          role: Role.STUDENT, // Default
+          role: Role.STUDENT,
           createdAt: new Date().toISOString()
         }
       };
@@ -112,6 +108,83 @@ export async function loginUser(email: string, password: string): Promise<{ user
   }
 }
 
+/**
+ * Login con Google — Version Web (signInWithPopup).
+ * Solo se usa cuando Platform.OS === 'web'.
+ */
+export async function loginWithGoogleWeb(): Promise<{ user?: User; error?: string }> {
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    const result = await signInWithPopup(auth, provider);
+    return await _processGoogleUser(result.user);
+
+  } catch (e: any) {
+    console.error('loginWithGoogleWeb error:', e);
+    if (e.code === 'auth/popup-closed-by-user') {
+      return { error: 'Inicio de sesión cancelado' };
+    }
+    return { error: 'Error al iniciar sesión con Google' };
+  }
+}
+
+/**
+ * Login con Google — Version Nativa (recibe un idToken de expo-auth-session).
+ * Se llama desde el componente Login después de obtener el token.
+ */
+export async function loginWithGoogleNative(idToken: string): Promise<{ user?: User; error?: string }> {
+  try {
+    const credential = GoogleAuthProvider.credential(idToken);
+    const result = await signInWithCredential(auth, credential);
+    return await _processGoogleUser(result.user);
+
+  } catch (e: any) {
+    console.error('loginWithGoogleNative error:', e);
+    return { error: 'Error al iniciar sesión con Google' };
+  }
+}
+
+/**
+ * Procesa el usuario de Google después de la autenticación.
+ * Valida el dominio y crea/actualiza el perfil en Firestore.
+ */
+async function _processGoogleUser(firebaseUser: FirebaseUser): Promise<{ user?: User; error?: string }> {
+  if (!firebaseUser.email) {
+    await auth.signOut();
+    return { error: 'No se pudo obtener el correo de Google' };
+  }
+
+  // 1. Validar dominio institucional
+  const validation = validateEmailDomainForRegistration(firebaseUser.email);
+  if (!validation.ok) {
+    await auth.signOut();
+    return { error: 'Solo se permiten correos de @itsur.edu.mx o @alumnos.itsur.edu.mx' };
+  }
+
+  // 2. Verificar si el usuario ya existe en Firestore
+  const userDocRef = doc(db, 'users', firebaseUser.uid);
+  const userSnap = await getDoc(userDocRef);
+
+  if (userSnap.exists()) {
+    return { user: userSnap.data() as User };
+  }
+
+  // 3. Si es nuevo, crear perfil en Firestore
+  const role = deriveRoleFromEmail(firebaseUser.email) as Role;
+  const newUser: User = {
+    id: firebaseUser.uid,
+    displayName: firebaseUser.displayName || 'Usuario Marketplace',
+    email: firebaseUser.email,
+    role,
+    createdAt: new Date().toISOString(),
+    photoURL: firebaseUser.photoURL || undefined
+  };
+
+  await setDoc(userDocRef, newUser);
+  return { user: newUser };
+}
+
 export async function logoutUser() {
   await auth.signOut();
 }
@@ -125,7 +198,6 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
         if (userDoc.exists()) {
           callback(userDoc.data() as User);
         } else {
-          // Fallback
           callback({
             id: firebaseUser.uid,
             displayName: firebaseUser.displayName || 'Usuario',

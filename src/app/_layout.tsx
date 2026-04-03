@@ -19,8 +19,8 @@ function RootLayoutNav() {
             // If user is not logged in and not in auth group, redirect to login
             router.replace('/auth/login');
         } else if (user && inAuthGroup) {
-            // If user is logged in and in auth group, redirect to home
-            router.replace('/');
+            // If user is logged in and in auth group, redirect to tabs
+            router.replace('/(tabs)');
         }
     }, [user, segments, isLoading]);
 
@@ -50,7 +50,6 @@ function RootLayoutNav() {
                 }}
             >
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="index" options={{ title: 'Inicio' }} />
                 <Stack.Screen name="auth/login" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/register" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/setup-admin" options={{ title: 'Configurar Admin' }} />
