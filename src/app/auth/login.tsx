@@ -12,7 +12,7 @@ import { AppInput } from '@/components/ui/AppInput';
 import { Ionicons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
+import { makeRedirectUri, Prompt } from 'expo-auth-session';
 
 // Permite que el auth flow se complete al regresar a la app
 WebBrowser.maybeCompleteAuthSession();
@@ -41,6 +41,8 @@ export default function Login() {
         androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
         // Al usar 'makeRedirectUri' sin parámetros forzados, Expo decidirá si usar Proxy o no
         redirectUri,
+        // Forzar selector de cuentas
+        prompt: Prompt.SelectAccount,
     });
 
     // Procesar la respuesta de Google

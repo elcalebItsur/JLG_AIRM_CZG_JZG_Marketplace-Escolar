@@ -76,6 +76,15 @@ export async function registerAdmin(email: string, password: string, displayName
 }
 
 export async function loginUser(email: string, password: string): Promise<{ user?: User; error?: string }> {
+  // 1. Validar dominio institucional (excepto si es un login para algo específico, pero aquí es general)
+  const validation = validateEmailDomainForRegistration(email);
+  if (!validation.ok) {
+    // Nota: Si permites administradores con dominios externos, deberías permitir el intento 
+    // y dejar que Firebase Auth falle o que Firestore lo verifique. 
+    // Pero por ahora, sigamos la regla estricta solicitada.
+    return { error: 'Solo se permiten correos institucionales' };
+  }
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
@@ -195,13 +204,26 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
       try {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
+
         if (userDoc.exists()) {
           callback(userDoc.data() as User);
         } else {
+          // Si no hay perfil en Firestore, es un nuevo usuario (Google o Email recién creado)
+          // Debemos validar el dominio antes de dejarlo "entrar" a la app
+          const email = firebaseUser.email || '';
+          const validation = validateEmailDomainForRegistration(email);
+
+          if (!validation.ok) {
+            console.warn("Bloqueando acceso: Dominio no válido para nuevo usuario", email);
+            await auth.signOut();
+            callback(null);
+            return;
+          }
+
           callback({
             id: firebaseUser.uid,
             displayName: firebaseUser.displayName || 'Usuario',
-            email: firebaseUser.email || '',
+            email: email,
             role: Role.STUDENT,
             createdAt: new Date().toISOString()
           });
