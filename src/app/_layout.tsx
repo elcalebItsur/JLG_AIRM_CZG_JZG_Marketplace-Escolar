@@ -47,11 +47,20 @@ function RootLayoutNav() {
                     contentStyle: {
                         backgroundColor: colors.background,
                     },
+                    headerBackVisible: true,
                 }}
             >
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-                <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+                <Stack.Screen
+                    name="auth/register"
+                    options={{
+                        title: 'Crear Cuenta',
+                        headerStyle: { backgroundColor: colors.primary },
+                        headerTintColor: colors.textOnDark,
+                        headerTitleStyle: { fontWeight: '700' },
+                    }}
+                />
                 <Stack.Screen name="auth/setup-admin" options={{ title: 'Configurar Admin' }} />
                 <Stack.Screen
                     name="products/[id]"
