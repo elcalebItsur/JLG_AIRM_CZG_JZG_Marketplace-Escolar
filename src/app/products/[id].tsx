@@ -266,7 +266,7 @@ export default function ProductDetailScreen() {
             <ScrollView style={styles.root} showsVerticalScrollIndicator={false}>
                 {/* Hero image */}
                 <View style={[styles.imageContainer, { height: width * 0.75 }]}>
-                    {product.images?.length > 0 ? (
+                    {product.images?.[0] && (product.images[0].startsWith('data:') || product.images[0].startsWith('http')) ? (
                         <Image
                             source={{ uri: product.images[0] }}
                             style={styles.image}

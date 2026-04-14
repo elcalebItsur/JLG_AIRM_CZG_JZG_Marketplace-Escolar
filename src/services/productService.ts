@@ -7,12 +7,13 @@ import {
     doc,
     getDoc,
     updateDoc,
+    deleteDoc,
     increment,
     serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product, ProductStatus } from '@/types/product';
-import { uploadImage } from './storageService';
+import { uploadImage, deleteImageByUrl } from './storageService';
 
 const COLLECTION = 'products';
 
@@ -69,23 +70,29 @@ export const getMyProducts = async (userId: string): Promise<Product[]> => {
     }
 };
 
-/** Create a new product, uploading any local images first */
+/** Create a new product, uploading a single image first if provided */
 export const createProduct = async (
     productData: Omit<Product, 'id' | 'createdAt' | 'status' | 'viewCount'>
 ): Promise<{ success: boolean; product?: Product; error?: string }> => {
     try {
         let imageUrls: string[] = [];
 
-        if (productData.images?.length > 0) {
-            const uploadPromises = productData.images.map(async (uri) => {
-                if (uri.startsWith('file://') || uri.startsWith('content://')) {
-                    const path = `products/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
-                    return uploadImage(uri, path);
-                }
-                return uri; // already a remote URL
-            });
-            const results = await Promise.all(uploadPromises);
-            imageUrls = results.filter(Boolean) as string[];
+        // Limit to 1 image max
+        const rawImages = productData.images ?? [];
+        const firstImage = rawImages[0];
+
+        if (firstImage) {
+            if (firstImage.startsWith('data:')) {
+                // Already a data URI (base64), use directly
+                imageUrls = [firstImage];
+            } else if (firstImage.startsWith('http://') || firstImage.startsWith('https://')) {
+                // Remote URL, use directly
+                imageUrls = [firstImage];
+            } else {
+                // Local file URI — compress and convert to base64 data URI
+                const dataUri = await uploadImage(firstImage);
+                if (dataUri) imageUrls = [dataUri];
+            }
         }
 
         const payload = {
@@ -126,4 +133,31 @@ export const updateProductStatus = async (
     status: ProductStatus
 ): Promise<{ success: boolean; error?: string }> => {
     return updateProduct(id, { status });
+};
+
+/** Delete a product and its associated image from Storage */
+export const deleteProduct = async (
+    id: string
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        // First fetch the product to get its image URL
+        const ref = doc(db, COLLECTION, id);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+            const data = snap.data() as Product;
+            // Delete associated image from Storage
+            const imageUrl = data.images?.[0];
+            if (imageUrl) {
+                await deleteImageByUrl(imageUrl);
+            }
+        }
+
+        // Delete the Firestore document
+        await deleteDoc(ref);
+        return { success: true };
+    } catch (error) {
+        console.error('deleteProduct error:', error);
+        return { success: false, error: 'No se pudo eliminar el producto' };
+    }
 };

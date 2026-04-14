@@ -59,7 +59,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, show
             <Animated.View style={[styles.card, { width: cardWidth, transform: [{ scale }] }]}>
                 {/* Image / Fallback */}
                 <View style={styles.imageContainer}>
-                    {imageUri && !imageUri.includes('placeholder') ? (
+                    {imageUri && (imageUri.startsWith('data:') || imageUri.startsWith('http')) ? (
                         <Image source={{ uri: imageUri }} style={styles.image} />
                     ) : (
                         <View style={[styles.imageFallback, { backgroundColor: catColor }]}>

@@ -14,9 +14,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.marketplace.itsur",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Necesitamos acceso a tu cámara para tomar fotos de los productos que quieras publicar.",
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a tu galería para seleccionar fotos de los productos que quieras publicar."
+      }
     },
     "android": {
+      "package": "com.marketplace.itsur",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -29,7 +35,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Necesitamos acceso a tu galería para seleccionar fotos de productos.",
+          "cameraPermission": "Necesitamos acceso a tu cámara para tomar fotos de productos."
+        }
+      ]
     ]
   }
 }

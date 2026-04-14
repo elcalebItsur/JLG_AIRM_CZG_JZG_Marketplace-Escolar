@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     View, FlatList, StyleSheet, ActivityIndicator,
     Text, TouchableOpacity, ScrollView, RefreshControl,
+    TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types/role';
 import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
+import { useDebounce } from '@/utils/useDebounce';
 
 import type { ComponentProps } from 'react';
 
@@ -34,6 +36,8 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string>('Todos');
     const [showMarketplace, setShowMarketplace] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const debouncedSearch = useDebounce(searchQuery, 300);
     const { user } = useAuth();
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -61,11 +65,22 @@ export default function HomeScreen() {
     const normalize = (s: string) =>
         s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-    const filteredProducts = activeCategory === 'Todos'
-        ? products
-        : products.filter(p =>
-            normalize(p.category ?? '') === normalize(activeCategory)
-        );
+    // Combined filter: category + search text
+    const filteredProducts = products.filter(p => {
+        // Category filter
+        if (activeCategory !== 'Todos') {
+            if (normalize(p.category ?? '') !== normalize(activeCategory)) return false;
+        }
+        // Search text filter
+        if (debouncedSearch.trim()) {
+            const q = normalize(debouncedSearch.trim());
+            const inTitle = normalize(p.title ?? '').includes(q);
+            const inDesc = normalize(p.description ?? '').includes(q);
+            const inSeller = normalize(p.sellerName ?? '').includes(q);
+            if (!inTitle && !inDesc && !inSeller) return false;
+        }
+        return true;
+    });
 
 
     const firstName = user?.displayName?.split(' ')[0] || 'Estudiante';
@@ -130,11 +145,28 @@ export default function HomeScreen() {
                 <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>
             </View>
 
-            {/* Search bar (UI only) */}
+            {/* ── Functional search bar ────────────────────────── */}
             <View style={styles.searchBarWrapper}>
                 <View style={styles.searchBar}>
                     <Ionicons name="search-outline" size={18} color={colors.textMuted} />
-                    <Text style={styles.searchPlaceholder}>Buscar productos...</Text>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Buscar productos, vendedores..."
+                        placeholderTextColor={colors.textMuted}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        returnKeyType="search"
+                        autoCorrect={false}
+                        clearButtonMode="while-editing"
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity
+                            onPress={() => setSearchQuery('')}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
+                            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
 
@@ -169,6 +201,17 @@ export default function HomeScreen() {
                 </ScrollView>
             </View>
 
+            {/* ── Results summary when searching ─────────────── */}
+            {debouncedSearch.trim().length > 0 && !loading && (
+                <View style={styles.searchResultsBanner}>
+                    <Text style={styles.searchResultsText}>
+                        {filteredProducts.length === 0
+                            ? `Sin resultados para "${debouncedSearch.trim()}"`
+                            : `${filteredProducts.length} resultado${filteredProducts.length !== 1 ? 's' : ''} para "${debouncedSearch.trim()}"`}
+                    </Text>
+                </View>
+            )}
+
             {/* Products grid */}
             {loading ? (
                 <View style={styles.center}>
@@ -177,12 +220,20 @@ export default function HomeScreen() {
                 </View>
             ) : filteredProducts.length === 0 ? (
                 <View style={styles.center}>
-                    <Ionicons name="file-tray-outline" size={56} color={colors.border} />
-                    <Text style={styles.emptyTitle}>Sin productos aquí</Text>
+                    <Ionicons
+                        name={debouncedSearch.trim() ? 'search-outline' : 'file-tray-outline'}
+                        size={56}
+                        color={colors.border}
+                    />
+                    <Text style={styles.emptyTitle}>
+                        {debouncedSearch.trim() ? 'Sin resultados' : 'Sin productos aquí'}
+                    </Text>
                     <Text style={styles.emptySubtitle}>
-                        {activeCategory !== 'Todos'
-                            ? `No hay productos en "${activeCategory}" aún.`
-                            : 'Sé el primero en publicar algo.'}
+                        {debouncedSearch.trim()
+                            ? 'Intenta con otro término de búsqueda o cambia la categoría.'
+                            : activeCategory !== 'Todos'
+                                ? `No hay productos en "${activeCategory}" aún.`
+                                : 'Sé el primero en publicar algo.'}
                     </Text>
                 </View>
             ) : (
@@ -281,11 +332,26 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface,
         borderRadius: 14,
         paddingHorizontal: 14,
-        paddingVertical: 12,
+        paddingVertical: 10,
     },
-    searchPlaceholder: {
-        ...typography.presets.body,
-        color: colors.textMuted,
+    searchInput: {
+        flex: 1,
+        fontSize: 15,
+        color: colors.text,
+        paddingVertical: 2,
+    },
+    // ── Search results banner ─────────────────────────────────────────
+    searchResultsBanner: {
+        backgroundColor: colors.infoLight,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    searchResultsText: {
+        ...typography.presets.caption,
+        color: colors.info,
+        fontWeight: '600',
     },
     categoriesSection: {
         backgroundColor: colors.surface,

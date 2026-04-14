@@ -27,35 +27,41 @@ export default function Login() {
     const passwordRef = useRef<TextInput>(null);
 
     // Configurar Google Auth Request para nativo (iOS/Android)
-    // Usa el proxy de Expo para obtener un redirect URI https:// que Google acepta
-    // Para que funcione: ejecuta 'npx expo login' en la terminal
+    // 1. Configuración de URIs
+    // En Expo Go necesitamos el Proxy. En producción (build), usamos el esquema nativo.
     const redirectUri = makeRedirectUri({
-        // En Expo Go, esto genera: https://auth.expo.io/@{user}/{slug}
-        // En producción, usarás el scheme nativo
+        scheme: 'marketplace-itsur',
+        // preferUniversalRuntime: true // Ayuda con el proxy en algunos casos
     });
 
-    // Log del redirect URI para depuración (cópialo a Google Cloud Console > Credenciales)
-    useEffect(() => {
-        if (Platform.OS !== 'web') {
-            console.log('📱 Google Auth Redirect URI:', redirectUri);
-        }
-    }, [redirectUri]);
-
-    const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        // IMPORTANTE: Estos IDs deben ser DISTINTOS en tu .env
         clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
         androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-        redirectUri: Platform.OS === 'web' ? undefined : redirectUri,
-        selectAccount: true, // Forzar selector de cuentas
+        // Al usar 'makeRedirectUri' sin parámetros forzados, Expo decidirá si usar Proxy o no
+        redirectUri,
     });
 
-    // Procesar la respuesta de Google en nativo
+    // Procesar la respuesta de Google
     useEffect(() => {
-        if (response?.type === 'success') {
-            const { id_token } = response.params;
-            handleNativeGoogleResult(id_token);
-        } else if (response?.type === 'error') {
-            setErrorMsg('Error al iniciar sesión con Google');
+        if (response) {
+            console.log('📱 Google Response Details:', JSON.stringify(response, null, 2));
+
+            if (response.type === 'success') {
+                const { id_token } = response.params;
+                const idToken = id_token || response.authentication?.idToken;
+                
+                if (idToken) {
+                    handleNativeGoogleResult(idToken);
+                } else {
+                    console.log('⚠️ No se encontró id_token en la respuesta');
+                    setErrorMsg('Error al obtener token de Google');
+                }
+            } else if (response.type === 'error' || response.type === 'cancel' || response.type === 'dismiss') {
+                console.log('❌ Auth Falló o Canceló:', response.type);
+                // Si es un error 401 deleted_client, es un tema de configuración en Google Console
+            }
         }
     }, [response]);
 

@@ -2,9 +2,11 @@ import React, { useState, useRef } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, Alert,
     TouchableOpacity, KeyboardAvoidingView, Platform, TextInput,
+    Image, ActivityIndicator, ActionSheetIOS,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import type { ComponentProps } from 'react';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
@@ -37,6 +39,7 @@ export default function PublishScreen() {
     const [location, setLocation] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedCondition, setSelectedCondition] = useState<ProductCondition>('good');
+    const [imageUri, setImageUri] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
@@ -45,6 +48,94 @@ export default function PublishScreen() {
     const locationRef = useRef<TextInput>(null);
     const descriptionRef = useRef<TextInput>(null);
 
+    // ─── Permissions ────────────────────────────────────────────────────
+    const requestCameraPermission = async (): Promise<boolean> => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert(
+                'Permiso requerido',
+                'Se necesita acceso a la cámara para tomar fotos de tus productos. Ve a Configuración para habilitarlo.',
+            );
+            return false;
+        }
+        return true;
+    };
+
+    const requestGalleryPermission = async (): Promise<boolean> => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert(
+                'Permiso requerido',
+                'Se necesita acceso a tu galería para seleccionar fotos. Ve a Configuración para habilitarlo.',
+            );
+            return false;
+        }
+        return true;
+    };
+
+    // ─── Image picking ──────────────────────────────────────────────────
+    const pickFromGallery = async () => {
+        const granted = await requestGalleryPermission();
+        if (!granted) return;
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            setImageUri(result.assets[0].uri);
+        }
+    };
+
+    const takePhoto = async () => {
+        const granted = await requestCameraPermission();
+        if (!granted) return;
+
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            setImageUri(result.assets[0].uri);
+        }
+    };
+
+    const handleImagePress = () => {
+        if (Platform.OS === 'ios') {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options: ['Cancelar', 'Tomar foto', 'Elegir de galería'],
+                    cancelButtonIndex: 0,
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) takePhoto();
+                    if (buttonIndex === 2) pickFromGallery();
+                },
+            );
+        } else {
+            // Android & Web — show simple Alert with options
+            Alert.alert(
+                'Agregar foto',
+                'Selecciona de dónde quieres obtener la imagen',
+                [
+                    { text: 'Cancelar', style: 'cancel' },
+                    { text: 'Tomar foto', onPress: takePhoto },
+                    { text: 'Galería', onPress: pickFromGallery },
+                ],
+            );
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setImageUri(null);
+    };
+
+    // ─── Publish ────────────────────────────────────────────────────────
     const handlePublish = async () => {
         if (!title || !price || !description || !selectedCategory) {
             Alert.alert('Campos vacíos', 'Por favor completa todos los campos requeridos.');
@@ -69,7 +160,7 @@ export default function PublishScreen() {
             category: selectedCategory,
             condition: selectedCondition,
             location: location.trim() || undefined,
-            images: [],
+            images: imageUri ? [imageUri] : [],
             sellerId: user.id,
             sellerName: user.displayName,
             sellerRating: 0,
@@ -78,12 +169,12 @@ export default function PublishScreen() {
         setLoading(false);
 
         if (success) {
-            Alert.alert('¡Publicado!', 'Tu producto ya está visible en el marketplace.', [
+            Alert.alert('Publicado', 'Tu producto ya está visible en el marketplace.', [
                 { text: 'Ver catálogo', onPress: () => router.push('/') },
             ]);
             setTitle(''); setPrice(''); setDescription('');
             setLocation(''); setSelectedCategory('');
-            setSelectedCondition('good');
+            setSelectedCondition('good'); setImageUri(null);
         } else {
             Alert.alert('Error', error || 'No se pudo publicar');
         }
@@ -100,16 +191,37 @@ export default function PublishScreen() {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-                {/* Image upload placeholder */}
-                <TouchableOpacity style={styles.imageUpload} activeOpacity={0.7}>
-                    <View style={styles.imageUploadInner}>
-                        <Ionicons name="camera-outline" size={36} color={colors.textMuted} />
-                        <Text style={styles.imageUploadTitle}>Agregar fotos</Text>
-                        <Text style={styles.imageUploadSub}>Toca para seleccionar (hasta 5)</Text>
+                {/* ── Image upload ─────────────────────────────────── */}
+                {imageUri ? (
+                    <View style={styles.imagePreviewWrap}>
+                        <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+                        <TouchableOpacity
+                            style={styles.removeImageBtn}
+                            onPress={handleRemoveImage}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="close-circle" size={28} color={colors.error} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.changeImageBtn}
+                            onPress={handleImagePress}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="camera-outline" size={16} color="#fff" />
+                            <Text style={styles.changeImageText}>Cambiar</Text>
+                        </TouchableOpacity>
                     </View>
-                </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity style={styles.imageUpload} activeOpacity={0.7} onPress={handleImagePress}>
+                        <View style={styles.imageUploadInner}>
+                            <Ionicons name="camera-outline" size={36} color={colors.textMuted} />
+                            <Text style={styles.imageUploadTitle}>Agregar foto</Text>
+                            <Text style={styles.imageUploadSub}>Toca para tomar o seleccionar (1 por producto)</Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
 
-                {/* Details */}
+                {/* ── Details ──────────────────────────────────────── */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Detalles del producto</Text>
 
@@ -150,7 +262,7 @@ export default function PublishScreen() {
                     />
                 </View>
 
-                {/* Condition */}
+                {/* ── Condition ─────────────────────────────────────── */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Condición</Text>
                     <View style={styles.conditionGrid}>
@@ -176,7 +288,7 @@ export default function PublishScreen() {
                     </View>
                 </View>
 
-                {/* Category */}
+                {/* ── Category ──────────────────────────────────────── */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Categoría *</Text>
                     <View style={styles.categoryGrid}>
@@ -206,7 +318,7 @@ export default function PublishScreen() {
                     </View>
                 </View>
 
-                {/* Description */}
+                {/* ── Description ───────────────────────────────────── */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Descripción *</Text>
                     <AppInput
@@ -221,6 +333,16 @@ export default function PublishScreen() {
                         returnKeyType="done"
                     />
                 </View>
+
+                {/* ── Loading indicator for upload ──────────────────── */}
+                {loading && (
+                    <View style={styles.uploadingBanner}>
+                        <ActivityIndicator size="small" color={colors.primary} />
+                        <Text style={styles.uploadingText}>
+                            {imageUri ? 'Subiendo imagen y publicando...' : 'Publicando...'}
+                        </Text>
+                    </View>
+                )}
 
                 <AppButton
                     title="Publicar Producto"
@@ -238,6 +360,7 @@ const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
     scrollContent: { padding: 16, paddingBottom: 48 },
 
+    // ── Image upload placeholder ───────────────────────────────────────
     imageUpload: {
         borderWidth: 2,
         borderColor: colors.border,
@@ -256,6 +379,66 @@ const styles = StyleSheet.create({
     imageUploadTitle: { ...typography.presets.bodyMedium, color: colors.textSecondary },
     imageUploadSub: { ...typography.presets.caption, color: colors.textMuted },
 
+    // ── Image preview ──────────────────────────────────────────────────
+    imagePreviewWrap: {
+        position: 'relative',
+        borderRadius: 16,
+        overflow: 'hidden',
+        marginBottom: 20,
+        backgroundColor: colors.backgroundAlt,
+    },
+    imagePreview: {
+        width: '100%',
+        height: 200,
+        borderRadius: 16,
+    },
+    removeImageBtn: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#fff',
+        borderRadius: 14,
+        width: 28,
+        height: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    changeImageBtn: {
+        position: 'absolute',
+        bottom: 8,
+        right: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: 'rgba(0,0,0,0.55)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    changeImageText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+
+    // ── Upload banner ──────────────────────────────────────────────────
+    uploadingBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        backgroundColor: colors.infoLight,
+        padding: 14,
+        borderRadius: 12,
+        marginBottom: 12,
+    },
+    uploadingText: {
+        ...typography.presets.body,
+        color: colors.info,
+        fontWeight: '600',
+    },
+
+    // ── Sections ───────────────────────────────────────────────────────
     section: {
         backgroundColor: colors.surface,
         borderRadius: 16,
