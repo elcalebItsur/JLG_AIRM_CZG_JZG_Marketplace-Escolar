@@ -4,6 +4,7 @@ import {
     ActivityIndicator, TouchableOpacity, Alert, Share,
     useWindowDimensions, Image, Modal, FlatList, Platform,
 } from 'react-native';
+import { showAlert, showConfirm } from '@/utils/crossPlatformAlert';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/types/product';
@@ -111,53 +112,68 @@ export default function ProductDetailScreen() {
     const handleMarkAsSold = async () => {
         if (!product || !user) return;
 
-        // Fetch potential buyers from existing chats
-        const buyers = await getChatBuyersForProduct(user.id, product.id);
+        // Fetch potential buyers from existing chats (gracefully handle errors)
+        let buyers: Array<{ uid: string; name: string }> = [];
+        try {
+            buyers = await getChatBuyersForProduct(user.id, product.id);
+        } catch (e) {
+            console.warn('Could not fetch chat buyers:', e);
+        }
 
         const doSell = async (buyerId?: string, buyerName?: string) => {
             setUpdatingStatus(true);
-            const { success } = await updateProductStatus(product.id, 'sold');
-            if (!success) {
-                setUpdatingStatus(false);
-                Alert.alert('Error', 'No se pudo actualizar el estado');
-                return;
-            }
-            setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
+            try {
+                const { success } = await updateProductStatus(product.id, 'sold');
+                if (!success) {
+                    Alert.alert('Error', 'No se pudo actualizar el estado. Inténtalo de nuevo.');
+                    return;
+                }
+                setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
 
-            // Create transaction record if a buyer is identified
-            if (buyerId && buyerName) {
-                await createTransaction({
-                    productId: product.id,
-                    productTitle: product.title,
-                    productImage: product.images?.[0],
-                    price: product.price,
-                    sellerId: user.id,
-                    sellerName: user.displayName,
-                    buyerId,
-                    buyerName,
-                });
-                // Notify the buyer
-                createNotification({
-                    userId: buyerId,
-                    type: 'sold',
-                    title: '¡Tu compra fue confirmada!',
-                    body: `El vendedor marcó "${product.title}" como vendido para ti.`,
-                    relatedId: product.id,
-                });
+                // Create transaction record if a buyer is identified
+                if (buyerId && buyerName) {
+                    await createTransaction({
+                        productId: product.id,
+                        productTitle: product.title,
+                        productImage: product.images?.[0],
+                        price: product.price,
+                        sellerId: user.id,
+                        sellerName: user.displayName,
+                        buyerId,
+                        buyerName,
+                    });
+                    // Notify the buyer
+                    createNotification({
+                        userId: buyerId,
+                        type: 'sold',
+                        title: '¡Tu compra fue confirmada!',
+                        body: `El vendedor marcó "${product.title}" como vendido para ti.`,
+                        relatedId: product.id,
+                    });
+                }
+
+                // Show success message
+                Alert.alert(
+                    '¡Vendido!',
+                    `"${product.title}" ha sido marcado como vendido exitosamente.${buyerName ? `\nComprador: ${buyerName}` : ''}`,
+                    [{ text: 'OK' }]
+                );
+            } catch (e) {
+                console.error('doSell error:', e);
+                Alert.alert('Error', 'Ocurrió un error al marcar como vendido.');
+            } finally {
+                setUpdatingStatus(false);
             }
-            setUpdatingStatus(false);
         };
 
         if (buyers.length === 0) {
             // No chat buyers — simple confirm
-            Alert.alert(
+            const confirmed = await showConfirm(
                 'Marcar como vendido',
-                'No hay compradores identificados. ¿Confirmas que este producto fue vendido?',
-                [
-                    { text: 'Cancelar', style: 'cancel' },
-                    { text: 'Confirmar', onPress: () => doSell() },
-                ]
+                `¿Confirmas que "${product.title}" fue vendido?`,
+                'Sí, vendido',
             );
+            if (confirmed) doSell();
         } else {
             // Show buyer picker
             setChatBuyers(buyers);
@@ -168,38 +184,33 @@ export default function ProductDetailScreen() {
     const handleConfirmTransaction = async () => {
         if (!pendingTx) return;
 
-        Alert.alert(
+        const confirmed = await showConfirm(
             'Confirmar recepción',
             '¿Confirmas que recibiste este producto correctamente?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Confirmar',
-                    onPress: async () => {
-                        setConfirmingTx(true);
-                        const { success, error } = await updateTransactionStatus(pendingTx.id, 'completed');
-                        setConfirmingTx(false);
-
-                        if (success) {
-                            setPendingTx(null);
-                            // Notify the seller
-                            if (product) {
-                                createNotification({
-                                    userId: product.sellerId,
-                                    type: 'confirmed',
-                                    title: 'Compra confirmada',
-                                    body: `El comprador confirmó la recepción de "${product.title}".`,
-                                    relatedId: product.id,
-                                });
-                            }
-                            Alert.alert('¡Gracias!', 'Recepción confirmada. La transacción se marcó como completada.');
-                        } else {
-                            Alert.alert('Error', error ?? 'No se pudo confirmar la recepción');
-                        }
-                    },
-                },
-            ]
+            'Confirmar',
         );
+        if (!confirmed) return;
+
+        setConfirmingTx(true);
+        const { success, error } = await updateTransactionStatus(pendingTx.id, 'completed');
+        setConfirmingTx(false);
+
+        if (success) {
+            setPendingTx(null);
+            // Notify the seller
+            if (product) {
+                createNotification({
+                    userId: product.sellerId,
+                    type: 'confirmed',
+                    title: 'Compra confirmada',
+                    body: `El comprador confirmó la recepción de "${product.title}".`,
+                    relatedId: product.id,
+                });
+            }
+            showAlert('¡Gracias!', 'Recepción confirmada. La transacción se marcó como completada.');
+        } else {
+            showAlert('Error', error ?? 'No se pudo confirmar la recepción');
+        }
     };
 
     const handleShare = async () => {
@@ -224,9 +235,9 @@ export default function ProductDetailScreen() {
         setReportSubmitting(false);
         setShowReportModal(false);
         if (success) {
-            Alert.alert('Reporte enviado', 'Gracias. Un administrador revisará tu reporte.');
+            showAlert('Reporte enviado', 'Gracias. Un administrador revisará tu reporte.');
         } else {
-            Alert.alert('Error', error ?? 'No se pudo enviar el reporte');
+            showAlert('Error', error ?? 'No se pudo enviar el reporte');
         }
     };
 

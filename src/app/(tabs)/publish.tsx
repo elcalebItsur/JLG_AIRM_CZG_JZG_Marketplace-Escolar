@@ -4,6 +4,7 @@ import {
     TouchableOpacity, KeyboardAvoidingView, Platform, TextInput,
     Image, ActivityIndicator, ActionSheetIOS,
 } from 'react-native';
+import { showAlert, showConfirm, showChoice } from '@/utils/crossPlatformAlert';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -138,19 +139,27 @@ export default function PublishScreen() {
     // ─── Publish ────────────────────────────────────────────────────────
     const handlePublish = async () => {
         if (!title || !price || !description || !selectedCategory) {
-            Alert.alert('Campos vacíos', 'Por favor completa todos los campos requeridos.');
+            showAlert('Campos vacíos', 'Por favor completa todos los campos requeridos.');
             return;
         }
         if (!user) {
-            Alert.alert('Error', 'Debes iniciar sesión para publicar');
+            showAlert('Error', 'Debes iniciar sesión para publicar');
             return;
         }
 
         const parsedPrice = parseFloat(price);
         if (isNaN(parsedPrice) || parsedPrice <= 0) {
-            Alert.alert('Precio inválido', 'Ingresa un precio válido mayor a 0');
+            showAlert('Precio inválido', 'Ingresa un precio válido mayor a 0');
             return;
         }
+
+        // ── Confirmation dialog (works on web + native) ──
+        const confirmed = await showConfirm(
+            'Confirmar publicación',
+            `¿Deseas publicar "${title}" por $${parsedPrice.toFixed(2)}?`,
+            'Publicar',
+        );
+        if (!confirmed) return;
 
         setLoading(true);
         const { success, error } = await createProduct({
@@ -169,14 +178,19 @@ export default function PublishScreen() {
         setLoading(false);
 
         if (success) {
-            Alert.alert('Publicado', 'Tu producto ya está visible en el marketplace.', [
-                { text: 'Ver catálogo', onPress: () => router.push('/') },
-            ]);
+            // Reset form
             setTitle(''); setPrice(''); setDescription('');
             setLocation(''); setSelectedCategory('');
             setSelectedCondition('good'); setImageUri(null);
+
+            // Show success and navigate
+            showAlert(
+                '¡Producto publicado!',
+                'Tu producto ya está visible en el marketplace para toda la comunidad ITSUR.',
+                () => router.push('/'),
+            );
         } else {
-            Alert.alert('Error', error || 'No se pudo publicar');
+            showAlert('Error', error || 'No se pudo publicar el producto. Inténtalo de nuevo.');
         }
     };
 
