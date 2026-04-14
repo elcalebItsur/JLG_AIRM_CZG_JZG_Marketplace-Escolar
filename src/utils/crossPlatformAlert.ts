@@ -41,25 +41,48 @@ export function showConfirm(
 }
 
 /**
- * Cross-platform choice dialog (2 positive options + cancel).
- * On web: shows confirm for the first option, then alert for success.
- * On native: shows Alert with all options.
+ * Specialized choice for image sources (Camera vs Gallery).
+ * Handles ActionSheetIOS on iOS and reliable fallbacks elsewhere.
  */
-export function showChoice(
-    title: string,
-    message: string,
-    options: Array<{ text: string; onPress: () => void; style?: 'cancel' | 'default' | 'destructive' }>,
+export function showImageSourcePicker(
+    onCamera: () => void,
+    onGallery: () => void,
+    onCancel?: () => void,
 ) {
-    if (Platform.OS === 'web') {
-        // On web, show a simpler confirm for the primary action
-        const primaryOption = options.find(o => o.style !== 'cancel');
-        if (primaryOption) {
-            const confirmed = window.confirm(`${title}\n\n${message}`);
-            if (confirmed) {
-                primaryOption.onPress();
-            }
+    if (Platform.OS === 'ios') {
+        const ActionSheetIOS = require('react-native').ActionSheetIOS;
+        ActionSheetIOS.showActionSheetWithOptions(
+            {
+                options: ['Cancelar', 'Tomar foto', 'Elegir de galería'],
+                cancelButtonIndex: 0,
+            },
+            (buttonIndex: number) => {
+                if (buttonIndex === 1) onCamera();
+                if (buttonIndex === 2) onGallery();
+                if (buttonIndex === 0) onCancel?.();
+            },
+        );
+    } else if (Platform.OS === 'web') {
+        // Simple sequential choice for web
+        const wantCamera = window.confirm("¿Usa la cámara? (Aceptar para Cámara, Cancelar para Galería)");
+        if (wantCamera) {
+            onCamera();
+        } else {
+            // Note: browser cancel doesn't mean "stop everything", it's just the 'else' in this simple flow
+            // If they want to cancel completely, they'd have to choose gallery and then not pick a file,
+            // or we could add another confirm but that's annoying.
+            onGallery();
         }
     } else {
-        Alert.alert(title, message, options);
+        // Android
+        Alert.alert(
+            'Agregar foto',
+            'Selecciona el origen',
+            [
+                { text: 'Cancelar', style: 'cancel', onPress: onCancel },
+                { text: 'Tomar foto', onPress: onCamera },
+                { text: 'Galería', onPress: onGallery },
+            ]
+        );
     }
 }

@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, Alert,
+    View, Text, StyleSheet, ScrollView,
     TouchableOpacity, KeyboardAvoidingView, Platform, TextInput,
-    Image, ActivityIndicator, ActionSheetIOS,
+    Image, ActivityIndicator,
 } from 'react-native';
-import { showAlert, showConfirm, showChoice } from '@/utils/crossPlatformAlert';
+import { showAlert, showConfirm, showImageSourcePicker } from '@/utils/crossPlatformAlert';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -107,29 +107,7 @@ export default function PublishScreen() {
     };
 
     const handleImagePress = () => {
-        if (Platform.OS === 'ios') {
-            ActionSheetIOS.showActionSheetWithOptions(
-                {
-                    options: ['Cancelar', 'Tomar foto', 'Elegir de galería'],
-                    cancelButtonIndex: 0,
-                },
-                (buttonIndex) => {
-                    if (buttonIndex === 1) takePhoto();
-                    if (buttonIndex === 2) pickFromGallery();
-                },
-            );
-        } else {
-            // Android & Web — show simple Alert with options
-            Alert.alert(
-                'Agregar foto',
-                'Selecciona de dónde quieres obtener la imagen',
-                [
-                    { text: 'Cancelar', style: 'cancel' },
-                    { text: 'Tomar foto', onPress: takePhoto },
-                    { text: 'Galería', onPress: pickFromGallery },
-                ],
-            );
-        }
+        showImageSourcePicker(takePhoto, pickFromGallery);
     };
 
     const handleRemoveImage = () => {

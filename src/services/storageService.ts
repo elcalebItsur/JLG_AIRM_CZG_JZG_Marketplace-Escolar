@@ -12,6 +12,8 @@ const COMPRESS_QUALITY = 0.7; // 70 % JPEG
  */
 export const uploadImage = async (uri: string, _path?: string): Promise<string | null> => {
     try {
+        console.log('[storageService] Processing image:', uri.substring(0, 50) + '...');
+
         // 1. Compress the image
         const compressed = await ImageManipulator.manipulateAsync(
             uri,
@@ -19,27 +21,26 @@ export const uploadImage = async (uri: string, _path?: string): Promise<string |
             {
                 compress: COMPRESS_QUALITY,
                 format: ImageManipulator.SaveFormat.JPEG,
-                base64: true,  // <-- Ask ImageManipulator to return base64 directly
+                base64: true,
             },
         );
 
-        console.log('[storageService] Image compressed successfully');
-
-        if (!compressed.base64) {
-            console.error('[storageService] No base64 data returned');
+        if (!compressed || !compressed.base64) {
+            console.error('[storageService] ImageManipulator failed to return base64');
+            // On some platforms, if base64 fails, we could try to fetch the uri as a fallback
+            // but for now let's just log and return null.
             return null;
         }
 
-        // 2. Create a data URI that works with <Image source={{ uri }}>
+        // 2. Create a data URI
         const dataUri = `data:image/jpeg;base64,${compressed.base64}`;
 
-        // Log the approximate size
         const sizeKB = Math.round((compressed.base64.length * 3) / 4 / 1024);
-        console.log(`[storageService] Image ready: ~${sizeKB} KB`);
+        console.log(`[storageService] Success: ~${sizeKB} KB`);
 
         return dataUri;
     } catch (error) {
-        console.error('Error processing image:', error);
+        console.error('[storageService] Error processing image:', error);
         return null;
     }
 };
