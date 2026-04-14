@@ -31,7 +31,14 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Marketplace ITSUR",
+      "shortName": "MKTITSUR",
+      "description": "Compra y vende productos dentro de la comunidad estudiantil del ITSUR. Libros, electrónica, ropa y más.",
+      "lang": "es",
+      "themeColor": "#003366",
+      "backgroundColor": "#F0F4F8",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
