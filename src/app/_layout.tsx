@@ -3,7 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { colors } from '@/theme/colors';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
+import Head from 'expo-router/head';
 
 function RootLayoutNav() {
     const { user, isLoading } = useAuth();
@@ -34,6 +35,12 @@ function RootLayoutNav() {
 
     return (
         <>
+            {Platform.OS === 'web' && (
+                <Head>
+                    <title>Marketplace ITSUR</title>
+                    <link rel="apple-touch-icon" href="/assets/favicon.png" />
+                </Head>
+            )}
             <StatusBar style="dark" />
             <Stack
                 screenOptions={{
