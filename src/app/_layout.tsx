@@ -38,7 +38,16 @@ function RootLayoutNav() {
             {Platform.OS === 'web' && (
                 <Head>
                     <title>Marketplace ITSUR</title>
-                    <link rel="apple-touch-icon" href="/assets/favicon.png" />
+                    <meta name="description" content="Marketplace para la comunidad del ITSUR" />
+                    {/* Safari Home Screen Icon - Standard, Precomposed and Sizes */}
+                    <link rel="apple-touch-icon" href="/assets/icon.jpg" />
+                    <link rel="apple-touch-icon-precomposed" href="/assets/icon.jpg" />
+                    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.jpg" />
+                    
+                    {/* Metadatos PWA para Safari */}
+                    <meta name="apple-mobile-web-app-capable" content="yes" />
+                    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+                    <meta name="apple-mobile-web-app-title" content="Marketplace" />
                 </Head>
             )}
             <StatusBar style="dark" />
