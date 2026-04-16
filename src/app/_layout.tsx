@@ -43,6 +43,8 @@ function RootLayoutNav() {
                     <link rel="apple-touch-icon" href="/assets/icon.jpg" />
                     <link rel="apple-touch-icon-precomposed" href="/assets/icon.jpg" />
                     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.jpg" />
+                    <link rel="apple-touch-icon" sizes="192x192" href="/assets/icon.jpg" />
+                    <link rel="apple-touch-icon" sizes="512x512" href="/assets/icon.jpg" />
                     
                     {/* Metadatos PWA para Safari */}
                     <meta name="apple-mobile-web-app-capable" content="yes" />
