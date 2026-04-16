@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     View, FlatList, StyleSheet, ActivityIndicator,
     Text, TouchableOpacity, ScrollView, RefreshControl,
-    TextInput,
+    TextInput, useWindowDimensions, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,6 +41,19 @@ export default function HomeScreen() {
     const { user } = useAuth();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
+
+    const isLargeScreen = width > 800;
+
+    // Responsive columns logic
+    const getColumns = () => {
+        if (width >= 1400) return 6;
+        if (width >= 1100) return 4;
+        if (width >= 768) return 3;
+        return 2;
+    };
+
+    const numColumns = getColumns();
 
     useEffect(() => { loadProducts(); }, []);
 
@@ -109,7 +122,11 @@ export default function HomeScreen() {
     return (
         <View style={styles.root}>
             {/* Sticky top section */}
-            <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+            <View style={[
+                styles.topBar,
+                { paddingTop: insets.top + (isLargeScreen ? 6 : 10) },
+                isLargeScreen && styles.topBarWeb
+            ]}>
                 {/* Branding row */}
                 <View style={styles.brandRow}>
                     <View style={styles.brandLeft}>
@@ -142,11 +159,11 @@ export default function HomeScreen() {
                     </View>
                 </View>
                 {/* Subtitle */}
-                <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>
+                {!isLargeScreen && <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>}
             </View>
 
             {/* ── Functional search bar ────────────────────────── */}
-            <View style={styles.searchBarWrapper}>
+            <View style={[styles.searchBarWrapper, isLargeScreen && styles.searchBarWrapperWeb]}>
                 <View style={styles.searchBar}>
                     <Ionicons name="search-outline" size={18} color={colors.textMuted} />
                     <TextInput
@@ -243,12 +260,14 @@ export default function HomeScreen() {
                         <ProductCard
                             product={item}
                             onPress={() => router.push(`/products/${item.id}`)}
+                            numColumns={numColumns}
                         />
                     )}
                     keyExtractor={item => item.id}
-                    numColumns={2}
+                    key={`grid-${numColumns}`} // Force refresh columns
+                    numColumns={numColumns}
                     contentContainerStyle={styles.list}
-                    columnWrapperStyle={styles.columnWrapper}
+                    columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -275,10 +294,15 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
         gap: 6,
     },
+    topBarWeb: {
+        paddingTop: 8,
+        paddingBottom: 10,
+    },
     brandRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingVertical: 2,
     },
     brandLeft: {
         flexDirection: 'row',
@@ -286,19 +310,19 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     brandIconWrap: {
-        width: 38,
-        height: 38,
-        borderRadius: 12,
+        width: 32,
+        height: 32,
+        borderRadius: 10,
         backgroundColor: 'rgba(255,255,255,0.18)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     brandTitle: {
         color: '#fff',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '800',
         letterSpacing: -0.3,
-        lineHeight: 22,
+        lineHeight: 20,
     },
     greetingSmall: {
         color: 'rgba(255,255,255,0.65)',
@@ -313,9 +337,9 @@ const styles = StyleSheet.create({
         opacity: 0.9,
     },
     notificationBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
@@ -324,6 +348,9 @@ const styles = StyleSheet.create({
         backgroundColor: colors.primary,
         paddingHorizontal: 16,
         paddingBottom: 16,
+    },
+    searchBarWrapperWeb: {
+        paddingBottom: 10,
     },
     searchBar: {
         flexDirection: 'row',

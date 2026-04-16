@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { colors } from '@/theme/colors';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToChats } from '@/services/chatService';
@@ -13,6 +13,9 @@ export default function TabLayout() {
     const { user } = useAuth();
     const [totalUnreadChats, setTotalUnreadChats] = useState(0);
     const [unreadNotifs, setUnreadNotifs] = useState(0);
+
+    const { width } = useWindowDimensions();
+    const isWeb = Platform.OS === 'web' && width > 800;
 
     useEffect(() => {
         if (!user) return;
@@ -65,22 +68,21 @@ export default function TabLayout() {
                             shadowOpacity: 0.06,
                             shadowRadius: 10,
                         },
-                        android: {
-                            elevation: 12,
-                        },
-                        web: {
-                            boxShadow: '0 -2px 12px rgba(0,0,0,0.07)',
-                        },
+                        android: { elevation: 12 },
+                        web: { boxShadow: '0 -2px 12px rgba(0,0,0,0.07)' },
                     }),
-                    paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-                    paddingTop: 8,
-                    height: Platform.OS === 'ios' ? 80 : 62,
+                    paddingBottom: isWeb ? 4 : (Platform.OS === 'ios' ? 22 : 12),
+                    paddingTop: isWeb ? 4 : 8,
+                    height: isWeb ? 56 : (Platform.OS === 'ios' ? 84 : 72),
                 },
                 tabBarLabelStyle: {
-                    fontSize: 11,
+                    fontSize: isWeb ? 10 : 11,
                     fontWeight: '600',
-                    marginTop: 2,
+                    marginTop: isWeb ? 0 : 2,
                 },
+                tabBarIconStyle: {
+                    marginBottom: isWeb ? -2 : 0,
+                }
             }}
         >
             <Tabs.Screen
@@ -92,7 +94,7 @@ export default function TabLayout() {
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
                             name={focused ? 'home' : 'home-outline'}
-                            size={24}
+                            size={isWeb ? 20 : 24}
                             color={color}
                         />
                     ),
@@ -104,10 +106,14 @@ export default function TabLayout() {
                     title: 'Nueva Publicación',
                     tabBarLabel: 'Vender',
                     tabBarIcon: ({ focused }) => (
-                        <View style={[styles.publishIcon, focused && styles.publishIconActive]}>
+                        <View style={[
+                            styles.publishIcon, 
+                            focused && styles.publishIconActive,
+                            isWeb && styles.publishIconWeb
+                        ]}>
                             <Ionicons
                                 name="add"
-                                size={28}
+                                size={isWeb ? 22 : 28}
                                 color={focused ? colors.primary : colors.textOnDark}
                             />
                         </View>
@@ -123,7 +129,7 @@ export default function TabLayout() {
                         <View>
                             <Ionicons
                                 name={focused ? 'chatbubbles' : 'chatbubbles-outline'}
-                                size={24}
+                                size={isWeb ? 20 : 24}
                                 color={color}
                             />
                             {totalUnreadChats > 0 && (
@@ -146,7 +152,7 @@ export default function TabLayout() {
                         <View>
                             <Ionicons
                                 name={focused ? 'person' : 'person-outline'}
-                                size={24}
+                                size={isWeb ? 20 : 24}
                                 color={color}
                             />
                             {unreadNotifs > 0 && (
@@ -166,18 +172,24 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
     publishIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 42,
+        height: 42,
+        borderRadius: 21,
         backgroundColor: colors.accent,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: -8,
+        marginTop: -10,
         shadowColor: colors.accent,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
         shadowRadius: 8,
         elevation: 6,
+    },
+    publishIconWeb: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        marginTop: -4,
     },
     publishIconActive: {
         backgroundColor: colors.accentLight,

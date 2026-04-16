@@ -75,8 +75,9 @@ export default function ProductDetailScreen() {
     const [reportSubmitting, setReportSubmitting] = useState(false);
     const router = useRouter();
     const { user } = useAuth();
-    const { width } = useWindowDimensions();
+    const { width, height } = useWindowDimensions();
 
+    const isDesktop = width > 900;
     const isOwner = product?.sellerId === user?.id;
     const catColor = CATEGORY_COLORS[product?.category?.toLowerCase() ?? 'otros'] ?? '#4A5568';
     const conditionStyle = CONDITION_COLORS[product?.condition ?? 'good'];
@@ -274,14 +275,14 @@ export default function ProductDetailScreen() {
                 }}
             />
 
-            <ScrollView style={styles.root} showsVerticalScrollIndicator={false}>
-                {/* Hero image */}
-                <View style={[styles.imageContainer, { height: width * 0.75 }]}>
+            <View style={[styles.root, isDesktop && styles.rootDesktop]}>
+                {/* 1. Left Column: Image (on Desktop) or Top Hero (on Mobile) */}
+                <View style={[styles.imageContainer, isDesktop ? styles.imageContainerDesktop : { height: width * 0.75 }]}>
                     {product.images?.[0] && (product.images[0].startsWith('data:') || product.images[0].startsWith('http')) ? (
                         <Image
                             source={{ uri: product.images[0] }}
                             style={styles.image}
-                            resizeMode="cover"
+                            resizeMode="contain"
                         />
                     ) : (
                         <View style={[styles.imageFallback, { backgroundColor: catColor }]}>
@@ -300,19 +301,25 @@ export default function ProductDetailScreen() {
                     )}
                 </View>
 
-                <View style={styles.content}>
-                    {/* Price + badges row */}
-                    <View style={styles.priceBadgesRow}>
-                        <Text style={styles.price}>${product.price.toFixed(2)}</Text>
-                        <View style={[styles.conditionBadge, { backgroundColor: conditionStyle.bg }]}>
-                            <Text style={[styles.conditionText, { color: conditionStyle.text }]}>
-                                {CONDITION_LABELS[product.condition ?? 'good']}
-                            </Text>
+                {/* 2. Right Column: Details (Scrollable on Desktop) */}
+                <ScrollView 
+                    style={isDesktop ? styles.contentDesktop : styles.scrollView} 
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={isDesktop ? styles.scrollContentDesktop : undefined}
+                >
+                    <View style={styles.content}>
+                        {/* Price + badges row */}
+                        <View style={styles.priceBadgesRow}>
+                            <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+                            <View style={[styles.conditionBadge, { backgroundColor: conditionStyle.bg }]}>
+                                <Text style={[styles.conditionText, { color: conditionStyle.text }]}>
+                                    {CONDITION_LABELS[product.condition ?? 'good']}
+                                </Text>
+                            </View>
                         </View>
-                    </View>
 
-                    {/* Title */}
-                    <Text style={styles.title}>{product.title}</Text>
+                        {/* Title */}
+                        <Text style={styles.title}>{product.title}</Text>
 
                     {/* Meta row */}
                     <View style={styles.metaRow}>
@@ -511,6 +518,7 @@ export default function ProductDetailScreen() {
                     )}
                 </View>
             </ScrollView>
+        </View>
 
             {/* Review modal */}
             {!isOwner && product && user && (
@@ -655,11 +663,17 @@ export default function ProductDetailScreen() {
 
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
+    rootDesktop: { flexDirection: 'row', padding: 20, gap: 20 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 24 },
     emptyTitle: { ...typography.presets.sectionTitle, color: colors.text },
     headerBtn: { padding: 4 },
 
+    scrollView: { flex: 1 },
+    contentDesktop: { flex: 1, backgroundColor: colors.surface, borderRadius: 20, overflow: 'hidden' },
+    scrollContentDesktop: { paddingBottom: 40 },
+
     imageContainer: { width: '100%', backgroundColor: colors.backgroundAlt },
+    imageContainerDesktop: { width: '45%', height: '100%', borderRadius: 20, overflow: 'hidden' },
     image: { width: '100%', height: '100%' },
     imageFallback: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     soldOverlay: {
