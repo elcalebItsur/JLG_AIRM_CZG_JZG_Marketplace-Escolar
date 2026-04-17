@@ -5,7 +5,7 @@
     "scheme": "marketplace-itsur",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.jpg",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -24,7 +24,7 @@
     "android": {
       "package": "com.marketplace.itsur",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -38,7 +38,13 @@
       "lang": "es",
       "themeColor": "#003366",
       "backgroundColor": "#F0F4F8",
-      "bundler": "metro"
+      "bundler": "metro",
+      "config": {
+        "pwa": {
+          "icon": "./assets/icon.png",
+          "display": "standalone"
+        }
+      }
     },
     "plugins": [
       "expo-router",
