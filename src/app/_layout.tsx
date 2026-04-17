@@ -40,11 +40,11 @@ function RootLayoutNav() {
                     <title>Marketplace ITSUR</title>
                     <meta name="description" content="Marketplace para la comunidad del ITSUR" />
                     {/* Safari Home Screen Icon - Standard, Precomposed and Sizes */}
-                    <link rel="apple-touch-icon" href="/assets/icon.png" />
-                    <link rel="apple-touch-icon-precomposed" href="/assets/icon.png" />
-                    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.png" />
-                    <link rel="apple-touch-icon" sizes="192x192" href="/assets/icon.png" />
-                    <link rel="apple-touch-icon" sizes="512x512" href="/assets/icon.png" />
+                    <link rel="apple-touch-icon" href="/icon.png" />
+                    <link rel="apple-touch-icon-precomposed" href="/icon.png" />
+                    <link rel="apple-touch-icon" sizes="180x180" href="/icon.png" />
+                    <link rel="apple-touch-icon" sizes="192x192" href="/icon.png" />
+                    <link rel="apple-touch-icon" sizes="512x512" href="/icon.png" />
                     
                     {/* Metadatos PWA para Safari */}
                     <meta name="apple-mobile-web-app-capable" content="yes" />
