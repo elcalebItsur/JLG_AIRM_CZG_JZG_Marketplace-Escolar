@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/types/product';
 import { Review } from '@/types/review';
 import { getProductById, updateProductStatus } from '@/services/productService';
-import { getOrCreateChat } from '@/services/chatService';
+import { getOrCreateChat, sendMessage } from '@/services/chatService';
 import { subscribeToSellerReviews, hasReviewed } from '@/services/reviewService';
 import {
     createTransaction,
@@ -423,7 +423,7 @@ export default function ProductDetailScreen() {
                                         title="Contactar Vendedor"
                                         onPress={async () => {
                                             if (!user) return;
-                                            const { chatId, error } = await getOrCreateChat({
+                                            const { chatId, isNew, error } = await getOrCreateChat({
                                                 buyerId: user.id,
                                                 buyerName: user.displayName,
                                                 sellerId: product.sellerId,
@@ -437,6 +437,17 @@ export default function ProductDetailScreen() {
                                                 Alert.alert('Error', error ?? 'No se pudo abrir el chat');
                                                 return;
                                             }
+
+                                            // Automatically send interest message if it's a new conversation
+                                            if (isNew) {
+                                                await sendMessage(
+                                                    chatId,
+                                                    user.id,
+                                                    user.displayName,
+                                                    `¡Hola! Me interesa tu producto: "${product.title}"`
+                                                );
+                                            }
+
                                             router.push(`/chat/${chatId}`);
                                         }}
                                         icon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}

@@ -59,7 +59,7 @@ export interface GetOrCreateChatParams {
  * so there is at most ONE chat per user pair (regardless of product).
  * When a new product is discussed, the productId/title are updated on the chat.
  */
-export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ chatId: string; error?: string }> {
+export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ chatId: string; isNew: boolean; error?: string }> {
     try {
         const chatId = buildChatId(params.buyerId, params.sellerId);
         const ref = doc(db, CHATS, chatId);
@@ -84,9 +84,9 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
             };
             if (params.productImage !== undefined) raw.productImage = params.productImage;
             await setDoc(ref, raw);
+            return { chatId, isNew: true };
         } else {
             // Chat exists — update the product context so the header reflects
-            // the product the buyer just tapped on.
             const update: Record<string, unknown> = {
                 productId: params.productId,
                 productTitle: params.productTitle,
@@ -94,12 +94,11 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
             };
             if (params.productImage !== undefined) update.productImage = params.productImage;
             await updateDoc(ref, update);
+            return { chatId, isNew: false };
         }
-
-        return { chatId };
     } catch (err) {
         console.error('getOrCreateChat error:', err);
-        return { chatId: '', error: 'No se pudo abrir el chat' };
+        return { chatId: '', isNew: false, error: 'No se pudo abrir el chat' };
     }
 }
 

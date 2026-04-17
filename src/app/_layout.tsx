@@ -97,7 +97,7 @@ function RootLayoutNav() {
                 />
                 <Stack.Screen
                     name="chat/[chatId]"
-                    options={{ headerShown: false }} // header managed inside ChatRoomScreen
+                    options={{ headerShown: true }} 
                 />
                 <Stack.Screen
                     name="transactions/history"

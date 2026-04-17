@@ -135,11 +135,6 @@ export default function ChatRoomScreen() {
                     headerStyle: { backgroundColor: colors.primary },
                     headerTintColor: colors.textOnDark,
                     headerTitleStyle: { fontWeight: '700' },
-                    headerLeft: () => (
-                        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                            <Ionicons name="arrow-back" size={24} color={colors.textOnDark} />
-                        </TouchableOpacity>
-                    ),
                     headerRight: () => chat ? (
                         <View style={styles.headerProductPill}>
                             <Text style={styles.headerProductText} numberOfLines={1}>
@@ -153,7 +148,7 @@ export default function ChatRoomScreen() {
             <KeyboardAvoidingView
                 style={styles.root}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : (Platform.OS === 'web' ? 60 : 0)}
             >
                 {/* Product info strip */}
                 {chat && (
