@@ -51,6 +51,8 @@ export interface GetOrCreateChatParams {
     productTitle: string;
     productImage?: string;
     productPrice: number;
+    buyerPhoto?: string | null;
+    sellerPhoto?: string | null;
 }
 
 /**
@@ -76,6 +78,10 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
                     [params.buyerId]: params.buyerName,
                     [params.sellerId]: params.sellerName,
                 },
+                participantsPhotosMap: {
+                    [params.buyerId]: params.buyerPhoto || null,
+                    [params.sellerId]: params.sellerPhoto || null,
+                },
                 buyerId: params.buyerId,
                 sellerId: params.sellerId,
                 lastMessage: '',
@@ -93,6 +99,11 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
                 productPrice: params.productPrice,
             };
             if (params.productImage !== undefined) update.productImage = params.productImage;
+            
+            // Always sync photos when a chat is "opened" from product detail
+            update[`participantsPhotosMap.${params.buyerId}`] = params.buyerPhoto || null;
+            update[`participantsPhotosMap.${params.sellerId}`] = params.sellerPhoto || null;
+            
             await updateDoc(ref, update);
             return { chatId, isNew: false };
         }
@@ -109,6 +120,7 @@ export async function sendMessage(
     senderId: string,
     senderName: string,
     text: string,
+    senderPhoto?: string | null,
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const trimmed = text.trim();
@@ -119,6 +131,7 @@ export async function sendMessage(
             chatId,
             senderId,
             senderName,
+            senderPhoto: senderPhoto || null,
             text: trimmed,
             isRead: false,
             createdAt: serverTimestamp(),

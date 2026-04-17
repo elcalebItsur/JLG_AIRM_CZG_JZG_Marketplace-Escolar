@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ChatMessage, Chat } from '@/types/chat';
 import {
     subscribeToMessages,
@@ -81,16 +82,27 @@ export default function ChatRoomScreen() {
     const handleSend = async () => {
         if (!chatId || !user || !text.trim()) return;
         setSending(true);
-        await sendMessage(chatId, user.id, user.displayName, text);
+        await sendMessage(chatId, user.id, user.displayName, text, user.photoURL);
         setText('');
         setSending(false);
         inputRef.current?.focus();
     };
 
+    const getOtherUserId = (): string => {
+        if (!chat || !user) return '';
+        return chat.participants.find(p => p !== user.id) ?? '';
+    };
+
     const getOtherName = (): string => {
         if (!chat || !user) return 'Chat';
-        const otherId = chat.participants.find(p => p !== user.id) ?? '';
+        const otherId = getOtherUserId();
         return chat.participantsMap[otherId] ?? 'Usuario';
+    };
+
+    const getOtherPhoto = (): string | null => {
+        if (!chat || !user) return null;
+        const otherId = getOtherUserId();
+        return chat.participantsPhotosMap?.[otherId] || null;
     };
 
     // ─── Render a single bubble ──────────────────────────────────────────────
@@ -123,6 +135,22 @@ export default function ChatRoomScreen() {
                         )}
                     </Text>
                 </View>
+
+                {/* Sender Avatar (only for others & last in group) */}
+                {!isMe && (
+                    <View style={styles.bubbleAvatarWrapper}>
+                        {isLastInGroup ? (
+                            <UserAvatar 
+                                userId={item.senderId} 
+                                userName={item.senderName} 
+                                size={28} 
+                                initialPhoto={item.senderPhoto || chat?.participantsPhotosMap?.[item.senderId]} 
+                            />
+                        ) : (
+                            <View style={{ width: 28 }} />
+                        )}
+                    </View>
+                )}
             </View>
         );
     };
@@ -131,8 +159,20 @@ export default function ChatRoomScreen() {
         <>
             <Stack.Screen
                 options={{
-                    title: getOtherName(),
-                    headerStyle: { backgroundColor: colors.primary },
+                    headerTitle: () => (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <UserAvatar 
+                                userId={getOtherUserId()} 
+                                userName={getOtherName()} 
+                                size={32} 
+                                initialPhoto={getOtherPhoto()} 
+                                style={{ borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' }}
+                            />
+                            <Text style={{ fontWeight: '700', color: colors.textOnDark, fontSize: 17 }}>
+                                {getOtherName()}
+                            </Text>
+                        </View>
+                    ),
                     headerTintColor: colors.textOnDark,
                     headerTitleStyle: { fontWeight: '700' },
                     headerRight: () => chat ? (
@@ -252,9 +292,9 @@ const styles = StyleSheet.create({
 
     messageList: { padding: 12, paddingBottom: 8 },
 
-    msgWrapper: { marginVertical: 2, maxWidth: '80%' },
+    msgWrapper: { marginVertical: 2, maxWidth: '85%' },
     msgWrapperMe: { alignSelf: 'flex-end', alignItems: 'flex-end' },
-    msgWrapperOther: { alignSelf: 'flex-start', alignItems: 'flex-start' },
+    msgWrapperOther: { alignSelf: 'flex-start', alignItems: 'flex-start', flexDirection: 'row-reverse' },
 
     msgSenderName: {
         ...typography.presets.caption,
@@ -337,4 +377,10 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     sendBtnDisabled: { opacity: 0.4 },
+
+    bubbleAvatarWrapper: {
+        width: 28,
+        marginRight: 8,
+        justifyContent: 'flex-end',
+    },
 });

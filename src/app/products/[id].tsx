@@ -9,6 +9,8 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/types/product';
 import { Review } from '@/types/review';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '@/config/firebase';
 import { getProductById, updateProductStatus } from '@/services/productService';
 import { getOrCreateChat, sendMessage } from '@/services/chatService';
 import { subscribeToSellerReviews, hasReviewed } from '@/services/reviewService';
@@ -27,6 +29,7 @@ import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
 import { AppButton } from '@/components/ui/AppButton';
 import { ReviewModal } from '@/components/ui/ReviewModal';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 const CATEGORY_COLORS: Record<string, string> = {
     libros: '#2B6CB0', electronica: '#6B46C1', ropa: '#C05621',
@@ -349,14 +352,14 @@ export default function ProductDetailScreen() {
 
                     <View style={styles.divider} />
 
-                    {/* Seller card */}
+                    {/* Seller details */}
                     <Text style={styles.sectionLabel}>Vendedor</Text>
                     <View style={styles.sellerCard}>
-                        <View style={[styles.sellerAvatar, { backgroundColor: catColor }]}>
-                            <Text style={styles.sellerAvatarText}>
-                                {product.sellerName?.charAt(0)?.toUpperCase() ?? '?'}
-                            </Text>
-                        </View>
+                        <UserAvatar 
+                            userId={product.sellerId} 
+                            userName={product.sellerName} 
+                            size={48} 
+                        />
                         <View style={styles.sellerInfo}>
                             <Text style={styles.sellerName}>{product.sellerName}</Text>
                             {(() => {
@@ -423,11 +426,25 @@ export default function ProductDetailScreen() {
                                         title="Contactar Vendedor"
                                         onPress={async () => {
                                             if (!user) return;
+                                            
+                                            // Fetch seller photo for synchronization
+                                            let sellerPhoto: string | null = null;
+                                            try {
+                                                const sellerDoc = await getDoc(doc(db, 'users', product.sellerId));
+                                                if (sellerDoc.exists()) {
+                                                    sellerPhoto = sellerDoc.data().photoURL || null;
+                                                }
+                                            } catch (e) {
+                                                console.error("Error fetching seller photo", e);
+                                            }
+
                                             const { chatId, isNew, error } = await getOrCreateChat({
                                                 buyerId: user.id,
                                                 buyerName: user.displayName,
+                                                buyerPhoto: user.photoURL,
                                                 sellerId: product.sellerId,
                                                 sellerName: product.sellerName,
+                                                sellerPhoto: sellerPhoto,
                                                 productId: product.id,
                                                 productTitle: product.title,
                                                 productImage: product.images?.[0],
@@ -444,7 +461,8 @@ export default function ProductDetailScreen() {
                                                     chatId,
                                                     user.id,
                                                     user.displayName,
-                                                    `¡Hola! Me interesa tu producto: "${product.title}"`
+                                                    `¡Hola! Me interesa tu producto: "${product.title}"`,
+                                                    user.photoURL
                                                 );
                                             }
 
@@ -493,35 +511,35 @@ export default function ProductDetailScreen() {
                                     <Text style={styles.reviewCountText}>{reviews.length}</Text>
                                 </View>
                             </View>
-                            {reviews.slice(0, 5).map(r => (
-                                <View key={r.id} style={styles.reviewCard}>
+                            {reviews.slice(0, 5).map(review => (
+                                <View key={review.id} style={styles.reviewCard}>
                                     <View style={styles.reviewCardHeader}>
-                                        <View style={styles.reviewAvatar}>
-                                            <Text style={styles.reviewAvatarText}>
-                                                {r.reviewerName.charAt(0).toUpperCase()}
-                                            </Text>
-                                        </View>
+                                        <UserAvatar 
+                                            userId={review.reviewerId} 
+                                            userName={review.reviewerName} 
+                                            size={36} 
+                                        />
                                         <View style={{ flex: 1 }}>
-                                            <Text style={styles.reviewerName}>{r.reviewerName}</Text>
+                                            <Text style={styles.reviewerName}>{review.reviewerName}</Text>
                                             <View style={styles.starsRow}>
                                                 {([1, 2, 3, 4, 5] as const).map(n => (
                                                     <Ionicons
                                                         key={n}
-                                                        name={n <= r.rating ? 'star' : 'star-outline'}
+                                                        name={n <= review.rating ? 'star' : 'star-outline'}
                                                         size={13}
-                                                        color={n <= r.rating ? colors.accent : colors.border}
+                                                        color={n <= review.rating ? colors.accent : colors.border}
                                                     />
                                                 ))}
                                             </View>
                                         </View>
                                         <Text style={styles.reviewDate}>
-                                            {new Date(r.createdAt).toLocaleDateString('es-MX', { month: 'short', day: '2-digit' })}
+                                            {new Date(review.createdAt).toLocaleDateString('es-MX', { month: 'short', day: '2-digit' })}
                                         </Text>
                                     </View>
-                                    <Text style={styles.reviewComment}>{r.comment}</Text>
+                                    <Text style={styles.reviewComment}>{review.comment}</Text>
                                     <View style={styles.reviewProductRow}>
                                         <Ionicons name="cube-outline" size={11} color={colors.textMuted} />
-                                        <Text style={styles.reviewProductTag}>{r.productTitle}</Text>
+                                        <Text style={styles.reviewProductTag}>{review.productTitle}</Text>
                                     </View>
                                 </View>
                             ))}

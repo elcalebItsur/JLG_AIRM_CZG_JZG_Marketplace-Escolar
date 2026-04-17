@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
     TouchableOpacity, ActivityIndicator,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
@@ -53,8 +54,15 @@ export default function ChatsScreen() {
 
     const getAvatarLetter = (name: string) => name.charAt(0).toUpperCase();
 
+    const getOtherUserId = (chat: Chat): string => {
+        if (!user) return '';
+        return chat.participants.find(p => p !== user.id) ?? '';
+    };
+
     const renderItem = ({ item }: { item: Chat }) => {
         const otherName = getOtherName(item);
+        const otherId = getOtherUserId(item);
+        const otherPhoto = item.participantsPhotosMap?.[otherId];
         // Only show unread badge when WE are the recipient (not the sender)
         const hasUnread = item.unreadCount > 0 && item.lastSenderId !== user?.id;
 
@@ -65,9 +73,12 @@ export default function ChatsScreen() {
                 activeOpacity={0.7}
             >
                 {/* Avatar */}
-                <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{getAvatarLetter(otherName)}</Text>
-                </View>
+                <UserAvatar 
+                    userId={otherId} 
+                    userName={otherName} 
+                    size={52} 
+                    initialPhoto={otherPhoto} 
+                />
 
                 {/* Content */}
                 <View style={styles.chatContent}>
@@ -159,16 +170,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface,
         gap: 14,
     },
-    avatar: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexShrink: 0,
-    },
-    avatarText: { fontSize: 22, fontWeight: '700', color: '#fff' },
     chatContent: { flex: 1, gap: 2 },
     chatHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     chatName: { ...typography.presets.bodyMedium, color: colors.text, flex: 1, marginRight: 8 },

@@ -12,6 +12,7 @@ import { Product } from '@/types/product';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { Ionicons } from '@expo/vector-icons';
+import { UserAvatar } from '../ui/UserAvatar';
 
 interface ProductCardProps {
     product: Product;
@@ -106,11 +107,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
                     {/* Seller row */}
                     <View style={styles.sellerRow}>
-                        <View style={[styles.sellerAvatar, { backgroundColor: catColor }]}>
-                            <Text style={styles.sellerAvatarText}>
-                                {product.sellerName?.charAt(0)?.toUpperCase() || '?'}
-                            </Text>
-                        </View>
+                        <UserAvatar 
+                            userId={product.sellerId} 
+                            userName={product.sellerName} 
+                            size={20} 
+                        />
                         <Text style={styles.sellerName} numberOfLines={1}>
                             {product.sellerName}
                         </Text>
