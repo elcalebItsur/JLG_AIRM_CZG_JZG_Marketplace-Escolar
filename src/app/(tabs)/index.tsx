@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     View, FlatList, StyleSheet, ActivityIndicator,
     Text, TouchableOpacity, ScrollView, RefreshControl,
-    TextInput, useWindowDimensions, Platform,
+    TextInput, useWindowDimensions, Platform, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -155,6 +155,23 @@ export default function HomeScreen() {
                             onPress={() => router.push('/notifications')}
                         >
                             <Ionicons name="notifications-outline" size={22} color={colors.textOnDark} />
+                        </TouchableOpacity>
+
+                        {/* User Profile Shortcut */}
+                        <TouchableOpacity
+                            style={styles.profileHeaderBtn}
+                            onPress={() => router.push('/(tabs)/profile')}
+                            activeOpacity={0.7}
+                        >
+                            {user?.photoURL ? (
+                                <Image source={{ uri: user.photoURL }} style={styles.profileHeaderImage} />
+                            ) : (
+                                <View style={styles.profileHeaderFallback}>
+                                    <Text style={styles.profileHeaderFallbackText}>
+                                        {firstName.charAt(0).toUpperCase()}
+                                    </Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -343,6 +360,30 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    profileHeaderBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        overflow: 'hidden',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.3)',
+    },
+    profileHeaderImage: {
+        width: '100%',
+        height: '100%',
+    },
+    profileHeaderFallback: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: colors.accent,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    profileHeaderFallbackText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '800',
     },
     searchBarWrapper: {
         backgroundColor: colors.primary,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
@@ -99,7 +99,11 @@ export default function ProfileScreen() {
                 {/* Avatar */}
                 <View style={styles.avatarWrapper}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{initials}</Text>
+                        {user.photoURL ? (
+                            <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
+                        ) : (
+                            <Text style={styles.avatarText}>{initials}</Text>
+                        )}
                     </View>
                     <View style={[styles.roleBadge, { backgroundColor: role.color }]}>
                         <Text style={styles.roleBadgeText}>{role.label}</Text>
@@ -218,6 +222,11 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.4)',
         justifyContent: 'center',
         alignItems: 'center',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
     },
     avatarText: {
         fontSize: 32,

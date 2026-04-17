@@ -39,6 +39,9 @@ function RootLayoutNav() {
                 <Head>
                     <title>Marketplace ITSUR</title>
                     <meta name="description" content="Marketplace para la comunidad del ITSUR" />
+                    <meta name="theme-color" content={colors.primary} />
+                    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+                    
                     {/* Safari Home Screen Icon - Standard, Precomposed and Sizes */}
                     <link rel="apple-touch-icon" href="/icon.png" />
                     <link rel="apple-touch-icon-precomposed" href="/icon.png" />
@@ -48,7 +51,7 @@ function RootLayoutNav() {
                     
                     {/* Metadatos PWA para Safari */}
                     <meta name="apple-mobile-web-app-capable" content="yes" />
-                    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
                     <meta name="apple-mobile-web-app-title" content="Marketplace" />
                 </Head>
             )}

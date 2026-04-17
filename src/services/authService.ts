@@ -176,7 +176,13 @@ async function _processGoogleUser(firebaseUser: FirebaseUser): Promise<{ user?: 
   const userSnap = await getDoc(userDocRef);
 
   if (userSnap.exists()) {
-    return { user: userSnap.data() as User };
+    const existingData = userSnap.data() as User;
+    // Auto-update photoURL if missing in Firestore but present in Google
+    if (!existingData.photoURL && firebaseUser.photoURL) {
+      await setDoc(userDocRef, { photoURL: firebaseUser.photoURL }, { merge: true });
+      return { user: { ...existingData, photoURL: firebaseUser.photoURL } };
+    }
+    return { user: existingData };
   }
 
   // 3. Si es nuevo, crear perfil en Firestore
@@ -206,7 +212,16 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          callback(userDoc.data() as User);
+          const userData = userDoc.data() as User;
+          
+          // Self-healing: Update Firestore if Auth has photo but Firestore doesn't
+          if (!userData.photoURL && firebaseUser.photoURL) {
+            setDoc(userDocRef, { photoURL: firebaseUser.photoURL }, { merge: true })
+              .catch(e => console.error("Error auto-syncing photo:", e));
+            callback({ ...userData, photoURL: firebaseUser.photoURL });
+          } else {
+            callback(userData);
+          }
         } else {
           // Si no hay perfil en Firestore, es un nuevo usuario (Google o Email recién creado)
           // Debemos validar el dominio antes de dejarlo "entrar" a la app
