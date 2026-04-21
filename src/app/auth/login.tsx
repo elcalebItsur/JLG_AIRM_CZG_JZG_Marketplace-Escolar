@@ -18,13 +18,9 @@ import { makeRedirectUri, Prompt } from 'expo-auth-session';
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const { login, loginWithGoogleWeb, loginWithGoogleNative, isLoading } = useAuth();
 
-    const passwordRef = useRef<TextInput>(null);
 
     // Configurar Google Auth Request para nativo (iOS/Android)
     // 1. Configuración de URIs
@@ -77,24 +73,13 @@ export default function Login() {
 
     useFocusEffect(
         useCallback(() => {
-            setEmail('');
-            setPassword('');
-            setShowPassword(false);
             setErrorMsg(null);
             return () => {
-                passwordRef.current?.blur();
+                // Cleanup
             };
         }, [])
     );
 
-    const handleLogin = async () => {
-        if (!email || !password) return;
-        setErrorMsg(null);
-        const { error } = await login(email.trim(), password);
-        if (error) {
-            setErrorMsg(error);
-        }
-    };
 
     const handleGoogleLogin = async () => {
         setErrorMsg(null);
@@ -155,75 +140,29 @@ export default function Login() {
                         </View>
                     )}
 
-                    <AppInput
-                        label="Correo Institucional"
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="1234@alumnos.itsur.edu.mx"
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        textContentType="emailAddress"
-                        autoComplete="email"
-                        leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
-                        returnKeyType="next"
-                        onSubmitEditing={() => passwordRef.current?.focus()}
-                        blurOnSubmit={false}
-                        autoCorrect={false}
-                        spellCheck={false}
-                    />
 
-                    <AppInput
-                        ref={passwordRef}
-                        label="Contraseña"
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="••••••••"
-                        secureTextEntry={!showPassword}
-                        textContentType={showPassword ? 'none' : 'password'}
-                        autoComplete={showPassword ? 'off' : 'password'}
-                        leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
-                        rightIcon={
-                            <Ionicons
-                                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                                size={18}
-                                color={colors.textMuted}
-                            />
-                        }
-                        onRightIconPress={() => setShowPassword(v => !v)}
-                        returnKeyType="done"
-                        onSubmitEditing={handleLogin}
-                        autoCorrect={false}
-                        spellCheck={false}
-                    />
-
-                    <AppButton
-                        title="Ingresar"
-                        onPress={handleLogin}
-                        loading={isLoading}
-                        style={styles.loginBtn}
-                    />
-
-                    <View style={styles.dividerRow}>
-                        <View style={styles.dividerLine} />
-                        <Text style={styles.dividerText}>o</Text>
-                        <View style={styles.dividerLine} />
+                    {/* El login tradicional ha sido removido a petición */}
+                    <View style={styles.infoBox}>
+                        <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                        <Text style={styles.infoText}>
+                            Usa tu cuenta institucional de Google para acceder al Marketplace.
+                        </Text>
                     </View>
 
-                    {/* Botón de Google Sign-In */}
+                    {/* Botón de Google Sign-In como opción principal */}
                     <AppButton
                         title="Continuar con Google"
                         onPress={handleGoogleLogin}
                         loading={isLoading}
-                        variant="ghost"
+                        variant="primary" // Cambiado a primary para ser el foco
                         style={styles.googleBtn}
-                        icon={<Ionicons name="logo-google" size={20} color={colors.primary} />}
+                        icon={<Ionicons name="logo-google" size={20} color="#fff" />}
                     />
 
                     <View style={styles.linkRow}>
-                        <Text style={styles.linkText}>¿No tienes cuenta? </Text>
-                        <Link href="/auth/register" asChild>
+                        <Link href="/auth/admin-login" asChild>
                             <TouchableOpacity>
-                                <Text style={styles.linkAction}>Regístrate aquí</Text>
+                                <Text style={styles.linkAction}>Soy admin</Text>
                             </TouchableOpacity>
                         </Link>
                     </View>
@@ -361,41 +300,32 @@ const styles = StyleSheet.create({
         color: colors.error,
         flex: 1,
     },
-    loginBtn: {
-        marginTop: 6,
-        marginBottom: 4,
-    },
     googleBtn: {
         marginBottom: 14,
-    },
-    dividerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 14,
-        gap: 12,
-    },
-    dividerLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: colors.border,
-    },
-    dividerText: {
-        ...typography.presets.caption,
-        color: colors.textMuted,
-        fontWeight: '600',
     },
     linkRow: {
         flexDirection: 'row',
         justifyContent: 'center',
-    },
-    linkText: {
-        ...typography.presets.body,
-        color: colors.textSecondary,
+        marginTop: 10,
     },
     linkAction: {
         ...typography.presets.bodyMedium,
+        color: colors.textMuted,
+        textDecorationLine: 'underline',
+    },
+    infoBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.primaryLight,
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 20,
+        gap: 10,
+    },
+    infoText: {
+        ...typography.presets.caption,
         color: colors.primary,
-        fontWeight: '700',
+        flex: 1,
     },
 
     /* ─── Footer ──────────────────────────────────── */

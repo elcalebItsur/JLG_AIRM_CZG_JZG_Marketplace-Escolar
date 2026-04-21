@@ -118,6 +118,43 @@ export async function loginUser(email: string, password: string): Promise<{ user
 }
 
 /**
+ * Specialized login for ADMINS.
+ * Bypasses institutional domain validation.
+ */
+export async function loginAdmin(email: string, password: string): Promise<{ user?: User; error?: string }> {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as User;
+      // Optional: Verify if the user actually has the ADMIN role
+      if (userData.role !== Role.ADMIN) {
+        // Log out if not admin
+        await auth.signOut();
+        return { error: 'Esta cuenta no tiene privilegios de administrador.' };
+      }
+      return { user: userData };
+    } else {
+      // If no doc exists, we can't confirm role, so we block access for security
+      await auth.signOut();
+      return { error: 'Perfil de administrador no encontrado.' };
+    }
+
+  } catch (e: any) {
+    let errorMessage = 'Error al iniciar sesión';
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+      errorMessage = 'Credenciales inválidas';
+    }
+    console.error(e);
+    return { error: errorMessage };
+  }
+}
+
+/**
  * Login con Google — Version Web (signInWithPopup).
  * Solo se usa cuando Platform.OS === 'web'.
  */

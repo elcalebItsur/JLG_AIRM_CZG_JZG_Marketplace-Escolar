@@ -3,7 +3,7 @@ import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, KeyboardAvoidingView, Platform, Alert, TextInput
 } from 'react-native';
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
@@ -13,50 +13,20 @@ import { validateEmailDomainForRegistration } from '@/utils/validators';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Register() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const { register, isLoading } = useAuth();
+    const { isLoading } = useAuth();
+    const router = useRouter();
 
-    // Refs for chaining
-    const emailRef = useRef<TextInput>(null);
-    const passwordRef = useRef<TextInput>(null);
-    const confirmPasswordRef = useRef<TextInput>(null);
 
     // Clear all fields every time the screen gains focus.
     // Prevents stale autofill state after navigating back from login.
     useFocusEffect(
         useCallback(() => {
-            setName('');
-            setEmail('');
-            setPassword('');
-            setConfirmPassword('');
-            setShowPassword(false);
             return () => {
-                confirmPasswordRef.current?.blur();
+                // Cleanup
             };
         }, [])
     );
 
-    const handleRegister = async () => {
-        if (!name || !email || !password || !confirmPassword) {
-            Alert.alert('Campos requeridos', 'Por favor completa todos los campos');
-            return;
-        }
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Las contraseñas no coinciden');
-            return;
-        }
-        const domainValidation = validateEmailDomainForRegistration(email);
-        if (!domainValidation.ok) {
-            Alert.alert('Dominio inválido', domainValidation.message);
-            return;
-        }
-        const { error } = await register(email.trim(), password, name.trim());
-        if (error) Alert.alert('Error de registro', error);
-    };
 
     return (
         <KeyboardAvoidingView
@@ -86,97 +56,21 @@ export default function Register() {
 
                 {/* Form card */}
                 <View style={styles.form}>
-                    <Text style={styles.formTitle}>Crear Cuenta</Text>
-
-                    {/* Domain notice */}
-                    <View style={styles.domainNotice}>
-                        <Ionicons name="shield-checkmark-outline" size={16} color={colors.success} />
-                        <Text style={styles.domainNoticeText}>
-                            Solo correos @alumnos.itsur.edu.mx o @itsur.edu.mx
+                    {/* El registro tradicional ha sido removido */}
+                    <View style={styles.infoBox}>
+                        <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                        <Text style={styles.infoText}>
+                            Para registrarte, solo necesitas usar tu cuenta institucional de Google. Es rápido y seguro.
                         </Text>
                     </View>
 
-                    <AppInput
-                        label="Nombre Completo"
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Juan Pérez García"
-                        // iOS: name autofill
-                        textContentType="name"
-                        autoComplete="name"
-                        leftIcon={<Ionicons name="person-outline" size={18} color={colors.textMuted} />}
-                        returnKeyType="next"
-                        onSubmitEditing={() => emailRef.current?.focus()}
-                        blurOnSubmit={false}
-                    />
-
-                    <AppInput
-                        ref={emailRef}
-                        label="Correo Institucional"
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="1234@alumnos.itsur.edu.mx"
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        // iOS: email autofill
-                        textContentType="emailAddress"
-                        autoComplete="email"
-                        autoCorrect={false}
-                        spellCheck={false}
-                        leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
-                        returnKeyType="next"
-                        onSubmitEditing={() => passwordRef.current?.focus()}
-                        blurOnSubmit={false}
-                    />
-
-                    <AppInput
-                        ref={passwordRef}
-                        label="Contraseña"
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="Mínimo 6 caracteres"
-                        secureTextEntry={!showPassword}
-                        // iOS: "newPassword" lets iOS suggest a strong password
-                        textContentType={showPassword ? 'none' : 'newPassword'}
-                        autoComplete={showPassword ? 'off' : 'password-new'}
-                        autoCorrect={false}
-                        spellCheck={false}
-                        leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
-                        rightIcon={
-                            <Ionicons
-                                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                                size={18}
-                                color={colors.textMuted}
-                            />
-                        }
-                        onRightIconPress={() => setShowPassword(v => !v)}
-                        returnKeyType="next"
-                        onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-                        blurOnSubmit={false}
-                    />
-
-                    <AppInput
-                        ref={confirmPasswordRef}
-                        label="Confirmar Contraseña"
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        placeholder="Repite tu contraseña"
-                        secureTextEntry={!showPassword}
-                        // iOS: "newPassword" keeps consistent autofill for confirm field
-                        textContentType={showPassword ? 'none' : 'newPassword'}
-                        autoComplete={showPassword ? 'off' : 'password-new'}
-                        autoCorrect={false}
-                        spellCheck={false}
-                        leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
-                        returnKeyType="done"
-                        onSubmitEditing={handleRegister}
-                    />
-
+                    {/* Botón de Registro con Google */}
                     <AppButton
-                        title="Crear Cuenta"
-                        onPress={handleRegister}
-                        loading={isLoading}
+                        title="Registrarse con Google"
+                        onPress={() => router.replace('/auth/login')} // Redirigimos al login que tiene el flow de Google
+                        variant="primary"
                         style={styles.registerBtn}
+                        icon={<Ionicons name="logo-google" size={20} color="#fff" />}
                     />
 
                     <View style={styles.linkRow}>
@@ -319,6 +213,20 @@ const styles = StyleSheet.create({
         ...typography.presets.bodyMedium,
         color: colors.primary,
         fontWeight: '700',
+    },
+    infoBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.primaryLight,
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 20,
+        gap: 10,
+    },
+    infoText: {
+        ...typography.presets.caption,
+        color: colors.primary,
+        flex: 1,
     },
     footerNote: {
         ...typography.presets.caption,
