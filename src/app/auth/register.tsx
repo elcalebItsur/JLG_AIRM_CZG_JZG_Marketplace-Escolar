@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     infoBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.primaryLight,
+        backgroundColor: colors.infoLight, // Changed for better contrast
         padding: 12,
         borderRadius: 12,
         marginBottom: 20,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         ...typography.presets.caption,
-        color: colors.primary,
+        color: colors.info, // Changed for better contrast
         flex: 1,
     },
     footerNote: {
