@@ -1,0 +1,479 @@
+INSTITUTO TECNOLÓGICO SUPERIOR DEL SUR DE GUANAJUATO
+NOMBRE DEL TRABAJO PROFESIONAL
+Informe de Residencia Profesional
+Elaborado
+ por: 
+Jovani Zavala Guerrero
+Angel Ivan Rocha Martinez
+ Caleb Zacarias Garcia
+Jovanny Lobato Garcia
+Asesor:
+Rocio Camarena Martínez
+Uriangato, Gto.                                               
+   
+                       
+May
+o
+ de 2026
+“
+Marketplace Escolar
+” 
+Elaborada por:
+Jovanny Lobato Garcia
+Angel Ivan Rocha Martinez
+Caleb Zacarias Garcia
+Jovani Zavala Guerrero
+Aprobado por. . . . .  . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Nombre del 
+Asesor
+ (
+Nombre completo y grado)
+ 
+Docente de la carrera de Ingeniería 
+….
+……….
+Asesor de la opción de titulación
+Revisado por. . . . .  . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Nombre del 
+Revisor
+ (
+Nombre completo y grado)
+ 
+Docente de la carrera de Ingeniería 
+……………
+Revisor de la opción de titulación
+Revisado por. . . . .  . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Nombre del Revisor 
+(Nombre completo y grado)
+Docente de la carrera de Ingeniería 
+……………
+Revisor de la opción de titulación
+Elementos 
+del trabajo
+ profesional
+Copia de la portada
+Oficio de Liberación de Proyecto para la Titulació
+n Integral
+Resumen
+Abstract
+Palabras Claves (keywords)
+Agradecimientos
+Dedicatoria
+Índice general
+Índice de figuras 
+Índice de tablas
+Índice de contenido
+Contenido
+ (Todo lo que se indica en la tabla de 
+contenido)
+Tabla de contenido
+C
+apítulo 1
+5
+Introducción.
+5
+Capítulo 2
+7
+Marco teórico (Antecedentes).
+7
+Capítulo 3
+8
+Planteamiento del problema
+8
+3.1.
+Identificación.
+8
+3.2. 
+Justificación.
+8
+3.3. 
+Alcance.
+8
+Capítulo 4
+9
+Objetivos
+9
+4.1.
+Objetivos generales.
+9
+4.2.
+Objetivos específicos.
+9
+Capítulo 5
+10
+Metodología
+10
+Capítulo 6
+12
+Resultados
+12
+Capítulo 7
+13
+Análisis de Resultados
+13
+C
+apítulo 8
+14
+Conclusiones y trabajo a futuro
+14
+Referencias bibliográficas
+15
+Anexos
+16
+Título de la 
+tesis
+: 
+La finalidad del título de un trabajo
+ de 
+Tesis
+ es informar cuál es el contenido del documento. 
+Debe reunir las siguientes 
+características
+:   
+•  
+Relativamente
+ breve (no exceder 15 palabras
+ 
+y de 100 caracteres incluyendo espacios en blanco
+)  y atractivo; 
+•  
+Que
+ incluya los términos más relevantes que se refieren al tema del trabajo para se
+r
+ fácilmente ubicado; 
+•  E
+scribirlo al final, cuando ya se tiene idea del contenido total del 
+trabajo de Tesis
+.
+Resumen
+ y abstract
+: 
+El resumen 
+y abstract
+ 
+representa una versión breve del 
+trabajo
+, el cual permite a los miembros del 
+ITSUR
+ identificar rápidamente y con exactitud, el contenido del 
+trabajo.
+Características del resumen:
+O
+rientar 
+quien lee
+, de forma rápida y exacta, sobre la relevancia del 
+trabajo
+. 
+E
+xpresa de forma clara y breve “los objetivos y el alcance del estudio, los procedimientos básicos, los métodos analíticos y observacionales, los principales hallazgos y las conclusiones.”  
+Se redacta 
+en tercera persona, tiempo pasado, excluir abreviaturas y referencias bibliográficas. 
+La extensión del resumen de no más de
+ 250 palabras. 
+El Abstract es el resumen en inglés.
+Palabras claves (
+keywords
+) 
+•  
+Número
+:
+ de tres a diez palabras clave. 
+•  
+Función
+:
+ ayudan a indexar el trabajo
+ en determinadas bases de datos, a fin de ser ubicado.
+C
+apítulo 1
+Introducción.
+La transformación digital ha permeado prácticamente todos los ámbitos de la vida cotidiana; el entorno educativo no es la excepción. En las instituciones de educación superior, los estudiantes generan una dinámica constante de compra, venta e intercambio de materiales académicos —libros de texto, dispositivos electrónicos, material de papelería, prendas institucionales y servicios entre pares— que, en su mayoría, se lleva a cabo a través de canales informales como grupos de redes sociales, publicaciones efímeras o comunicación verbal directa. Dichos canales carecen de estructura, trazabilidad y mecanismos de confianza, lo que provoca ineficiencia en las transacciones y desconfianza entre las partes involucradas.
+ 
+El presente proyecto propone el diseño y desarrollo de una plataforma web tipo marketplace escolar, orientada a la comunidad del Instituto Tecnológico Superior del Sur de Guanajuato (ITSUR).
+ 
+Desde el punto de vista técnico, la aplicación se desarrolla utilizando React y React Native (Expo) en el frontend, una arquitectura por capas en la lógica de negocio, y una base de datos en la nube (Firebase / Firestore) como capa de persistencia. El ciclo de desarrollo sigue un enfoque iterativo-incremental que permite incorporar retroalimentación temprana de los usuarios y ajustar los requerimientos conforme avanza el proyecto.
+ 
+La plataforma tiene como finalidad centralizar y formalizar el proceso de compra-venta de productos y servicios académicos, proporcionando un espacio seguro, organizado y accesible desde dispositivos móviles y de escritorio.
+C
+apítulo 2
+Marco teórico (Antecedentes).
+Es la consideración de lo que se ha investig
+ado acerca del objeto de nuestro
+ 
+trabajo
+. Es una síntesis de las investigaciones o trabajos realizados, hasta el momento
+, sobre el problema en estudio. 
+ A partir de estas investigaciones se determinará el enfoque metodológico de la futura investigación. 
+En síntesis, responde a la pregunta: ¿qué antecedentes existen sobre el problema que se desea investigar? 
+En general, se podría afirmar que 
+los antecedentes
+ tiene
+n
+ como funciones:
+Organizar datos y hechos significativos para descubrir las relaciones entre el problema que se quiere investigar con 
+los resultados que
+ ya existen acerca del mismo. 
+Evitar que el investigador aborde temáticas que ya han sido investigadas o carecen de importancia científica. 
+Elegir los factores y variables que serán estudiados en la investigación, así como sus estrategias de medición, validez y confiabilidad. 
+Evitar variables extrañas que podrían desviar del problema esencial. 
+El desarrollo de una plataforma tecnológica destinada al intercambio de bienes y servicios dentro de una comunidad universitaria no es simplemente un ejercicio de programación, sino una intervención sociotécnica que requiere un sustento teórico profundo. El presente marco teórico constituye una síntesis de las investigaciones previas, modelos económicos y paradigmas tecnológicos que fundamentan la creación del Marketplace para el Instituto Tecnológico Superior del Sur de Guanajuato (ITSUR). A través de esta revisión, se busca organizar los hechos significativos para descubrir las relaciones entre el problema de la informalidad en las transacciones escolares y las soluciones validadas por la comunidad científica, garantizando la validez metodológica del enfoque propuesto.
+Fundamentos Conceptuales del Comercio Electrónico y los Mercados de Consumo Colaborativo
+Para comprender la naturaleza del Marketplace ITSUR, es imperativo establecer definiciones precisas sobre las modalidades de comercio electrónico que convergen en este proyecto. De acuerdo con el 
+Ministerio de Tecnologías de la Información y las Comunicaciones (2009)
+, el comercio electrónico se define de manera general como el desarrollo de actividades económicas a través de redes de telecomunicaciones, facilitando transacciones comerciales que incluyen la transferencia de propiedad o derechos de uso de bienes y servicios. No obstante, el enfoque de este proyecto se centra específicamente en el modelo 
+Consumer-to-Consumer
+ (C2C) o 
+Peer-to-Peer
+ (P2P).
+Como explica 
+Anzit (2010)
+, el modelo C2C implica transacciones directas entre consumidores, donde la plataforma digital actúa únicamente como intermediaria, proporcionando el soporte necesario para el intercambio. Esta modalidad ha experimentado un auge significativo debido a su bajo costo de aplicación y la facilidad de acceso para pequeños comerciantes, lo que la hace ideal para el entorno estudiantil, tal como sugieren 
+Sukrat et al. (2016)
+. Dentro de este marco, surge el concepto de economía colaborativa; 
+Hamari et al. (2016)
+ la definen como la actividad coordinada a través de servicios en línea para obtener o compartir acceso a bienes y servicios basados en la comunidad.
+Esta dinámica no se limita al intercambio monetario; según 
+Belk (2010)
+, la economía colaborativa tiende a ser un acto comunitario que vincula a las personas, creando sentimientos de solidaridad y unión dentro del campus. Este componente social es fundamental, ya que el marketplace no solo busca resolver una necesidad económica, sino fortalecer el tejido social de la institución mediante la confianza mutua y la reputación compartida.
+Antecedentes de la Economía Circular en Instituciones de Educación Superior
+El Marketplace ITSUR encuentra una de sus justificaciones más sólidas en la teoría de la economía circular (EC). La 
+Fundación Ellen MacArthur (2024)
+ propone que este modelo es un sistema regenerativo y restaurativo diseñado para mantener la 
+utilidad y el valor de los productos en su nivel más alto en todo momento. En el contexto universitario, 
+Mendoza et al. (2019)
+ sostienen que las instituciones son agentes críticos para la implementación de estos principios debido a su relevancia socioeconómica y su capacidad de actuar como laboratorios vivientes para la sostenibilidad.
+Investigaciones previas, como la de 
+Rodríguez y Ortiz (2021)
+, indican que las universidades que adoptan modelos de economía circular logran optimizar sus recursos y reducir significativamente la generación de desperdicios. Por ejemplo, el estudio de 
+Zhi (2021)
+ sobre la implementación de plataformas de comercio de segunda mano en campus universitarios valida que la gestión técnica de productos permite que un bien que ya no es útil para un estudiante se reintegre a la economía local, evitando la acumulación innecesaria en dormitorios. Complementariamente, 
+Pino C. et al. (2024)
+ argumentan que la economía circular debe integrarse de forma transversal en la operación de los institutos tecnológicos para potenciar el desarrollo de competencias sostenibles.
+El Paradigma del Smart Campus y la Digitalización de Servicios Académicos
+El concepto de "Smart Campus" ha emergido como una respuesta estratégica a la necesidad de transformación digital. Según 
+Imbar et al. (2022)
+, un Smart Campus es aquel capaz de utilizar recursos existentes para resolver desafíos mediante servicios inteligentes que mejoren la calidad de vida de los interesados. Dentro de este marco, 
+Silva-da-Nóbrega et al. (2022)
+ definen los mercados internos como herramientas esenciales para optimizar recursos y crear ecosistemas sustentables.
+Un sistema de mercado interno no es una aplicación aislada, sino un servicio que, como indica 
+Imbar et al. (2022)
+, se vuelve "inteligente" cuando incorpora procesos de toma de decisiones y aprendizaje basados en datos reales de la comunidad. El Marketplace ITSUR cumple con esta premisa al centralizar la oferta de productos académicos en una plataforma formal que permite la trazabilidad de las 
+transacciones, superando las limitaciones de los canales informales identificados en investigaciones previas.
+Análisis del Comportamiento del Consumidor: Generación Z
+Para que un marketplace escolar sea exitoso, es vital desentrañar los patrones de consumo de sus usuarios principales. 
+Antonio Fumero (2021)
+ describe a la Generación Z como nativos digitales que han crecido con la red totalmente desarrollada, lo que los hace más analíticos, pragmáticos y exigentes respecto a la inmediatez tecnológica. En México, los datos de 
+NielsenIQ (2024)
+ revelan que este grupo es cauteloso: el 47% planifica sus compras para gestionar costos y el 59% compra solo lo que va a usar para evitar el desperdicio.
+El estudio de 
+Ramos (2023)
+ sobre jóvenes universitarios confirma que este grupo exige una comunicación fluida y rápida, lo que justifica la implementación de sistemas de chat en tiempo real en la arquitectura técnica del proyecto. Asimismo, 
+Mintel (2022)
+ destaca que el 72% de esta generación confía más en las recomendaciones de sus pares y en la autenticidad de la marca que en el marketing tradicional. Estos rasgos de "consumidor consciente" encajan perfectamente con un modelo de marketplace escolar de segunda mano donde el valor y la utilidad prevalecen.
+Teorías de Aceptación Tecnológica: TAM y UTAUT
+La intención de uso de la plataforma por parte de la comunidad del ITSUR puede ser predicha mediante el Modelo de Aceptación Tecnológica (TAM). 
+Davis (1989)
+ establece que la aceptación depende principalmente de la Utilidad Percibida (PU) y la Facilidad de Uso Percibida (PEOU). Investigaciones recientes en educación superior, como la de 
+Venkatesh y Bala (2008)
+ en su versión TAM 3, incorporan la confianza como un mediador indispensable; si el usuario percibe un alto riesgo de fraude, la intención de uso cae drásticamente.
+Por otro lado, la Teoría Unificada de Aceptación y Uso de Tecnología (UTAUT), desarrollada por 
+Venkatesh et al. (2003)
+, integra factores como las "Condiciones Facilitadoras", destacando que el soporte institucional y la infraestructura técnica son determinantes para garantizar el uso real del sistema por parte de los estudiantes.
+Arquitecturas de Software y Gestión de Datos en Tiempo Real
+La decisión técnica sobre el framework de desarrollo es fundamental para el rendimiento del Marketplace ITSUR. 
+Kishore et al. (2022)
+ compararon el rendimiento de React Native frente a Flutter, concluyendo que React Native ofrece una estabilidad superior en interfaces complejas y una curva de aprendizaje optimizada para desarrolladores familiarizados con JavaScript. Para agilizar este proceso, 
+Kumar et al. (2024)
+ validan el uso del ecosistema Expo, señalando que herramientas como Expo Go reducen los tiempos de desarrollo y facilitan la iteración continua de productos mínimos viables.
+En cuanto al backend, 
+Kesavan et al. (2023)
+ fundamentan la adopción de Cloud Firestore como una base de datos NoSQL serverless ideal para aplicaciones que requieren sincronización en tiempo real y alta concurrencia en publicaciones y mensajería. Finalmente, 
+Contreras Rivas et al. (2025)
+ defienden el uso de una arquitectura por capas (presentación, lógica y datos) para mejorar la mantenibilidad y escalabilidad de sistemas móviles distribuidos, asegurando que el software sea robusto frente al crecimiento de la comunidad estudiantil.
+Capítulo 3
+Planteamiento
+ del problema
+3.1.
+Identificación
+.
+En el ITSUR, los estudiantes y docentes recurren frecuentemente a la compra-venta de materiales académicos entre pares: libros de semestres anteriores, dispositivos electrónicos, artículos de papelería, ropa institucional e incluso servicios como asesorías o impresiones. Sin embargo, estas transacciones se realizan de manera dispersa e informal, principalmente a través de:
+ 
+Grupos de Facebook y WhatsApp sin moderación ni estructura.
+Publicaciones efímeras en historias de redes sociales.
+Comunicación de boca en boca dentro del campus.
+Esta situación genera los siguientes problemas:
+Falta de centralización:
+ no existe un punto único donde los usuarios puedan consultar la oferta disponible de productos académicos.
+Ausencia de confianza:
+ al no haber perfiles verificados ni historial de transacciones, los compradores desconocen la reputación del vendedor.
+Ineficiencia en la búsqueda:
+ localizar un producto específico requiere revisar múltiples grupos y publicaciones sin categorización ni filtro.
+Sin trazabilidad:
+ las transacciones no quedan registradas, lo que dificulta la resolución de disputas.
+Nula gestión administrativa:
+ no existe un rol de administración que supervise el contenido publicado ni atiende reportes de la comunidad.
+3.2. 
+Justificación
+.
+ 
+El presente proyecto propone el desarrollo de una plataforma digital orientada a la reutilización y reventa de materiales académicos dentro del Instituto Tecnológico Superior del Sur de Guanajuato (ITSUR), con el propósito de atender una necesidad real identificada en la comunidad estudiantil. La iniciativa surge ante la constante limitación presupuestaria que enfrentan muchos estudiantes, especialmente en instituciones públicas, y busca ofrecer una solución tecnológica que promueva el acceso equitativo a recursos educativos, fomenta la economía circular y fortalezca el sentido de colaboración dentro del campus.
+Desde una perspectiva social, el proyecto contribuye a la reducción de gastos académicos y al aprovechamiento responsable de materiales, impactando positivamente en la economía estudiantil. En el ámbito tecnológico, representa una aplicación integral de los conocimientos adquiridos en la carrera de Ingeniería en Sistemas Computacionales, abarcando análisis de requerimientos, diseño de bases de datos, arquitectura de software y desarrollo con tecnologías actuales, asegurando una solución escalable y alineada con estándares de la industria.
+En el plano institucional, la propuesta cubre un vacío existente al no contar actualmente con una herramienta digital que atienda esta necesidad específica, posicionándose como un servicio complementario que puede fortalecer la identidad y el ecosistema digital del ITSUR. Finalmente, metodológicamente, el proyecto se sustenta en la recopilación de datos mediante encuestas dirigidas a los usuarios finales, garantizando que el diseño y desarrollo de la plataforma respondan a necesidades reales y verificables.
+En conjunto, la propuesta integra impacto social, innovación tecnológica, aporte institucional y rigor metodológico, justificando plenamente su desarrollo y pertinencia dentro del contexto académico.
+3.3. 
+Alcance
+.
+ 
+El alcance del proyecto se define en los siguientes términos:
+Incluye
+Diseño y desarrollo de una aplicación móvil multiplataforma (iOS y Android) con capacidad de ejecución en web, construida con React Native y Expo.
+Implementación de un sistema de autenticación restringido a correos institucionales del ITSUR (
+@alumnos.itsur.edu.mx
+ / @itsur.edu.mx).
+Módulo de gestión de productos: publicación, edición, eliminación, categorización, carga de imágenes y marcado de estado (disponible / vendido).
+Módulo de comunicación: sistema de mensajería en tiempo real entre compradores y vendedores.
+Módulo de administración: panel para que un usuario con rol de administrador gestione reportes, supervise contenido y visualice estadísticas generales del sistema.
+Sistema de reseñas y calificaciones entre usuarios.
+Sistema de notificaciones dentro de la aplicación.
+Búsqueda y filtrado de productos por categoría, condición y texto libre.
+No incluye (limitaciones)
+Procesamiento de pagos en línea; las transacciones económicas se realizan de manera externa entre las partes.
+Servicio de envío o logística de entrega física.
+Moderación automática de contenido mediante inteligencia artificial.
+C
+apítulo 4
+Objetivos
+Objetivos generales
+.
+ 
+Diseñar y desarrollar una plataforma web tipo marketplace escolar para la comunidad del ITSUR, que permita centralizar, organizar y facilitar el proceso de compra-venta de productos y servicios académicos entre estudiantes y docentes, mediante la implementación de una arquitectura por capas, una interfaz de usuario desarrollada con React y una base de datos en la nube.
+Objetivos específicos
+.
+ 
+Realizar el levantamiento y análisis de requerimientos funcionales y no funcionales del sistema, utilizando encuestas aplicadas a la comunidad estudiantil y docente del ITSUR como instrumento principal de recopilación de información.
+Diseñar la arquitectura de base de datos del sistema, definiendo las entidades, atributos y relaciones necesarias para el almacenamiento de usuarios, productos, transacciones, mensajes, notificaciones y reportes.
+Diseñar las interfaces de usuario de la plataforma utilizando React Native y Expo, aplicando principios de usabilidad, accesibilidad y diseño responsivo que respondan a las necesidades identificadas en el levantamiento de requerimientos.
+Implementar la arquitectura por capas del sistema, separando la capa de presentación, la capa de lógica de negocio (servicios) y la capa de acceso a datos, para garantizar la mantenibilidad y escalabilidad de la solución.
+Desarrollar el módulo de gestión de productos, incluyendo las funcionalidades de publicación, edición, eliminación, categorización, carga de imágenes y cambio de estado.
+Integrar funcionalidades de búsqueda por texto y filtrado por categoría, así como el soporte para contenido multimedia (imágenes de productos) mediante servicios de almacenamiento en la nube.
+Ejecutar pruebas funcionales y de usabilidad sobre los módulos desarrollados, documentando los resultados y ajustes realizados para asegurar la calidad del producto final.
+C
+apítulo 5
+Metodología
+La metodología
+ es una relación clara y concisa de cada una de las etapas de la investigación. En términos generales, el diseño metodológico es la descripción de cómo se va a realizar la investigación
+ y tiene que responder a tres cuestiones:
+¿Dónde se realizó 
+el trabajo
+? Describir el lugar donde se implementó
+ el trabajo
+.
+¿Qué se realizó? Las etapas que se realizaron al implementar 
+el trabajo de tesis.
+¿Cómo se realizó? Describir cada una de las etapas según la forma en que se implementaron, que instrumentos se utilizaron, como se aplicaron o utilizaron
+Desarrollar tantas subsecciones como sea necesario.
+Capítulo 6
+Resultados
+Se presenta 
+sólo los resultados 
+relevantes 
+y relacionados con los objetivos del estudio, incluso 
+los contrarios 
+a la 
+hi
+pótesis,
+ en
+ 
+secuencia lógica 
+y 
+con 
+suficiente detalle 
+que permita justificar las conclusiones. 
+Los cuadros (tablas) y lo gráficos (ilustraciones), 
+sólo 
+cuando contribuyan a la nitidez de la explicación. 
+En el texto 
+se deben citar 
+todos los cuadros y
+ figuras
+.
+Capítulo 7
+Análisis de Resultados
+Es importante 
+en 
+el análisis de los resultados:
+•  
+Examinar e interpretar 
+los resultados obtenidos en la investigación con 
+los antecedentes
+.
+•  
+Discutir
+la coherencia y las contradicciones fundam
+entales de los datos obtenidos.
+•  
+Contrastar 
+las implicaciones de los resultados con respecto a las hipótesis 
+originales. 
+ De aquí emergen los 
+nuevos conocimientos
+ 
+y las hipótesis 
+a verificar en nuevos estudios.
+C
+apítulo 8
+Conclusiones y trabajo a futuro
+Responde 
+a la pregunta o preguntas que se planteó la investigación y que aparecen en la introducción. 
+ Aquí 
+la o 
+el autor 
+expresa 
+su acuerdo o desacuerdo con los datos
+ obtenidos en la investigación 
+y 
+fundamenta 
+su postura
+ de acuerdo al objetivo general.
+Trabajo a futuro se incluye al final de esta sección con las recomendaciones y/o sugerencias para continuar con este trabajo de investigación.
+Referencias bibliográficas
+Es un listado de las referencias bibliográficas citadas o consultadas para la elaboración del 
+trabajo de investigación
+, escritas de acuerdo con la normativa internacional para citación de bibliografía. 
+Anexos
+Criterios generales 
+para
+ la redacción del trabajo de investigación
+Los trabajos de investigación deben elaborarse en el procesador de palabras 
+Word para Windows,
+ 
+tomando en cuenta los siguientes aspectos (ver tabla 2):
+TABLA 2. CRITERIOS PARA LA PRESENTACIÓN DEL TRABAJOS DE INVESTIGACIÓN
+Fuente
+Arial
+Tamaño
+12
+Interlineado
+1.5 renglones
+Extensión
+Mínimo 
+40
+ 
+páginas del contenido
+ (Sin incluir ANEXOS)
+Sangrías
+Sin sangrías
+Margen
+Justificado
+Numeración
+Parte inferior derecha
+Formato de Tablas y de Figuras
+Numeración y título en la parte 
+inferi
+or
+Fuente Arial 10 
+Espaciado sencillo
+Especificar 
+la fuente de la tabla
+ en caso de ser necesario
+Titulo
+El título de la tesis debe ser de máximo 100 caracteres (incluyendo espacios en blanco)

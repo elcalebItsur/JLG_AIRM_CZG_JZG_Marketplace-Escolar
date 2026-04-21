@@ -5,8 +5,9 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
-    ActivityIndicator, TouchableOpacity, Alert,
+    ActivityIndicator, TouchableOpacity,
 } from 'react-native';
+import { showAlert, showConfirm } from '@/utils/crossPlatformAlert';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/theme/colors';
@@ -57,27 +58,24 @@ export default function TransactionHistoryScreen() {
 
     const data = activeTab === 'sales' ? sales : purchases;
 
-    const handleConfirmReceipt = (tx: Transaction) => {
-        Alert.alert(
+    const handleConfirmReceipt = async (tx: Transaction) => {
+        const confirmed = await showConfirm(
             'Confirmar recepción',
             '¿Confirmas que recibiste este producto correctamente?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Confirmar',
-                    onPress: async () => {
-                        const { success, error } = await updateTransactionStatus(tx.id, 'completed');
-                        if (success) {
-                            setPurchases(prev =>
-                                prev.map(p => p.id === tx.id ? { ...p, status: 'completed' } : p)
-                            );
-                        } else {
-                            Alert.alert('Error', error ?? 'No se pudo confirmar');
-                        }
-                    },
-                },
-            ]
+            'Confirmar'
         );
+        
+        if (!confirmed) return;
+
+        const { success, error } = await updateTransactionStatus(tx.id, 'completed');
+        if (success) {
+            setPurchases(prev =>
+                prev.map(p => p.id === tx.id ? { ...p, status: 'completed' } : p)
+            );
+            showAlert('¡Gracias!', 'Recepción confirmada. La transacción se ha completado.');
+        } else {
+            showAlert('Error', error ?? 'No se pudo confirmar');
+        }
     };
 
     const renderItem = ({ item }: { item: Transaction }) => {
