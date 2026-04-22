@@ -63,16 +63,15 @@ export function showImageSourcePicker(
             },
         );
     } else if (Platform.OS === 'web') {
-        // Simple sequential choice for web
-        const wantCamera = window.confirm("¿Usa la cámara? (Aceptar para Cámara, Cancelar para Galería)");
-        if (wantCamera) {
-            onCamera();
-        } else {
-            // Note: browser cancel doesn't mean "stop everything", it's just the 'else' in this simple flow
-            // If they want to cancel completely, they'd have to choose gallery and then not pick a file,
-            // or we could add another confirm but that's annoying.
-            onGallery();
-        }
+        /**
+         * On mobile web, calling pickFromGallery (launchImageLibraryAsync) 
+         * automatically triggers the OS-level picker which includes 
+         * "Files", "Gallery" and "Camera".
+         * 
+         * Using a custom confirm/dialog here is redundant and often 
+         * breaks the user flow on mobile browsers.
+         */
+        onGallery();
     } else {
         // Android
         Alert.alert(
