@@ -131,17 +131,22 @@ export async function loginAdmin(email: string, password: string): Promise<{ use
 
     if (userDoc.exists()) {
       const userData = userDoc.data() as User;
-      // Optional: Verify if the user actually has the ADMIN role
-      if (userData.role !== Role.ADMIN) {
-        // Log out if not admin
-        await auth.signOut();
-        return { error: 'Esta cuenta no tiene privilegios de administrador.' };
+      
+      // Permissive check: Allow if role is ADMIN OR if it's the specific test account 
+      // OR (as requested) if the user simply exists in the database for this project's testing phase.
+      const isTestAccount = userData.email === 'zacariascaleb355@alumnos.itsur.edu.mx';
+      
+      if (userData.role !== Role.ADMIN && !isTestAccount) {
+        // As requested by the user: "dejar pasar a usuarios que están en la base de datos"
+        // We will allow them but we could log a warning if this was production.
+        return { user: userData };
       }
       return { user: userData };
     } else {
-      // If no doc exists, we can't confirm role, so we block access for security
+      // If no doc exists, we can't confirm any data, so we still block for absolute safety 
+      // unless we want to auto-create a profile (not requested).
       await auth.signOut();
-      return { error: 'Perfil de administrador no encontrado.' };
+      return { error: 'Perfil de usuario no encontrado en la base de datos.' };
     }
 
   } catch (e: any) {

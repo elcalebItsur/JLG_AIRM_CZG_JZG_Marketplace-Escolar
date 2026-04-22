@@ -19,6 +19,7 @@ import {
     getBuyerTransactions,
     updateTransactionStatus,
 } from '@/services/transactionService';
+import { createNotification } from '@/services/notificationService';
 
 type Tab = 'sales' | 'purchases';
 
@@ -42,6 +43,7 @@ export default function TransactionHistoryScreen() {
     const [sales, setSales] = useState<Transaction[]>([]);
     const [purchases, setPurchases] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user) return;
@@ -67,15 +69,29 @@ export default function TransactionHistoryScreen() {
         
         if (!confirmed) return;
 
+        setProcessingId(tx.id);
         const { success, error } = await updateTransactionStatus(tx.id, 'completed');
+        
         if (success) {
+            const now = new Date().toISOString();
             setPurchases(prev =>
-                prev.map(p => p.id === tx.id ? { ...p, status: 'completed' } : p)
+                prev.map(p => p.id === tx.id ? { ...p, status: 'completed', completedAt: now } : p)
             );
+
+            // Notify the seller (consistency with product detail)
+            createNotification({
+                userId: tx.sellerId,
+                type: 'confirmed',
+                title: 'Compra confirmada',
+                body: `El comprador confirmó la recepción de "${tx.productTitle}".`,
+                relatedId: tx.productId,
+            });
+
             showAlert('¡Gracias!', 'Recepción confirmada. La transacción se ha completado.');
         } else {
             showAlert('Error', error ?? 'No se pudo confirmar');
         }
+        setProcessingId(null);
     };
 
     const renderItem = ({ item }: { item: Transaction }) => {
@@ -126,15 +142,22 @@ export default function TransactionHistoryScreen() {
                     {/* Buyer can confirm receipt */}
                     {canConfirm && (
                         <TouchableOpacity
-                            style={styles.confirmBtn}
+                            style={[styles.confirmBtn, processingId === item.id && { opacity: 0.7 }]}
                             onPress={(e) => {
                                 e.stopPropagation?.();
                                 handleConfirmReceipt(item);
                             }}
                             activeOpacity={0.8}
+                            disabled={processingId === item.id}
                         >
-                            <Ionicons name="checkmark-done-outline" size={15} color="#fff" />
-                            <Text style={styles.confirmBtnText}>Confirmar recepción</Text>
+                            {processingId === item.id ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <Ionicons name="checkmark-done-outline" size={15} color="#fff" />
+                            )}
+                            <Text style={styles.confirmBtnText}>
+                                {processingId === item.id ? 'Confirmando...' : 'Confirmar recepción'}
+                            </Text>
                         </TouchableOpacity>
                     )}
 
