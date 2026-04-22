@@ -92,7 +92,7 @@ export default function MyProductsScreen() {
                         <ProductCard
                             product={item}
                             showStatus
-                            onPress={() => console.log('edit:', item.id)}
+                            onPress={() => router.push(`/products/${item.id}`)}
                         />
                     )}
                     keyExtractor={item => item.id}

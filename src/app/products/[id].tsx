@@ -11,7 +11,7 @@ import { Product } from '@/types/product';
 import { Review } from '@/types/review';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { getProductById, updateProductStatus } from '@/services/productService';
+import { getProductById, updateProductStatus, deleteProduct } from '@/services/productService';
 import { getOrCreateChat, sendMessage } from '@/services/chatService';
 import { subscribeToSellerReviews, hasReviewed } from '@/services/reviewService';
 import {
@@ -182,6 +182,30 @@ export default function ProductDetailScreen() {
             // Show buyer picker
             setChatBuyers(buyers);
             setShowBuyerModal(true);
+        }
+    };
+
+    const handleDeleteProduct = async () => {
+        if (!product) return;
+        const confirmed = await showConfirm(
+            'Eliminar publicación',
+            '¿Estás seguro de que deseas eliminar permanentemente esta publicación? Esta acción no se puede deshacer.',
+            'Eliminar',
+            'No, cancelar'
+        );
+
+        if (!confirmed) return;
+
+        setUpdatingStatus(true);
+        const { success, error } = await deleteProduct(product.id);
+        setUpdatingStatus(false);
+
+        if (success) {
+            showAlert('Publicación eliminada', 'Tu producto ha sido eliminado del marketplace.', () => {
+                router.replace('/');
+            });
+        } else {
+            showAlert('Error', error ?? 'No se pudo eliminar el producto');
         }
     };
 
@@ -389,13 +413,31 @@ export default function ProductDetailScreen() {
                         // Owner actions
                         <View style={styles.actionsCol}>
                             {product.status === 'active' && (
-                                <AppButton
-                                    title="Marcar como vendido"
-                                    onPress={handleMarkAsSold}
-                                    variant="secondary"
-                                    loading={updatingStatus}
-                                    icon={<Ionicons name="checkmark-circle-outline" size={18} color={colors.primary} />}
-                                />
+                                <>
+                                    <AppButton
+                                        title="Marcar como vendido"
+                                        onPress={handleMarkAsSold}
+                                        variant="secondary"
+                                        loading={updatingStatus}
+                                        icon={<Ionicons name="checkmark-circle-outline" size={18} color={colors.primary} />}
+                                    />
+                                    <View style={styles.ownerActionsGrid}>
+                                        <TouchableOpacity 
+                                            style={[styles.ownerActionBtn, { borderColor: colors.primary }]}
+                                            onPress={() => router.push(`/products/edit/${product.id}`)}
+                                        >
+                                            <Ionicons name="create-outline" size={18} color={colors.primary} />
+                                            <Text style={[styles.ownerActionText, { color: colors.primary }]}>Editar</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity 
+                                            style={[styles.ownerActionBtn, { borderColor: colors.error }]}
+                                            onPress={handleDeleteProduct}
+                                        >
+                                            <Ionicons name="trash-outline" size={18} color={colors.error} />
+                                            <Text style={[styles.ownerActionText, { color: colors.error }]}>Eliminar</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
                             )}
                             {product.status === 'sold' && (
                                 <View style={styles.soldBanner}>
@@ -745,6 +787,21 @@ const styles = StyleSheet.create({
     ratingCount: { ...typography.presets.caption, color: colors.textMuted },
 
     actionsCol: { gap: 12 },
+    ownerActionsGrid: { flexDirection: 'row', gap: 10, marginTop: 4 },
+    ownerActionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1.5,
+    },
+    ownerActionText: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
     soldBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.successLight, padding: 14, borderRadius: 12 },
     soldBannerText: { ...typography.presets.bodyMedium, color: colors.success },
 
