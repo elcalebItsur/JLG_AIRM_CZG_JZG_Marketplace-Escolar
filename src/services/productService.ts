@@ -10,12 +10,33 @@ import {
     deleteDoc,
     increment,
     serverTimestamp,
+    onSnapshot,
+    Timestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product, ProductStatus } from '@/types/product';
 import { uploadImage, deleteImageByUrl } from './storageService';
 
 const COLLECTION = 'products';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function mapProduct(d: { id: string; data(): Record<string, unknown> }): Product {
+    const data = d.data();
+    // Handle Firestore Timestamp to ISO string
+    let createdAt = new Date().toISOString();
+    if (data.createdAt instanceof Timestamp) {
+        createdAt = data.createdAt.toDate().toISOString();
+    } else if (typeof data.createdAt === 'string') {
+        createdAt = data.createdAt;
+    }
+
+    return {
+        id: d.id,
+        ...data,
+        createdAt,
+    } as Product;
+}
 
 /** Get all active products, newest first */
 export const getProducts = async (): Promise<Product[]> => {
@@ -59,7 +80,7 @@ export const getMyProducts = async (userId: string): Promise<Product[]> => {
             where('sellerId', '==', userId)
         );
         const snap = await getDocs(q);
-        const products = snap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+        const products = snap.docs.map(mapProduct);
         // Sort client-side to avoid needing a composite Firestore index
         return products.sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -68,6 +89,71 @@ export const getMyProducts = async (userId: string): Promise<Product[]> => {
         console.error('getMyProducts error:', error);
         return [];
     }
+};
+
+// ─── Real-time Subscriptions ──────────────────────────────────────────────────
+
+/** Subscribe to active products */
+export const subscribeToProducts = (
+    callback: (products: Product[]) => void
+): () => void => {
+    const q = query(
+        collection(db, COLLECTION),
+        where('status', '==', 'active')
+    );
+
+    return onSnapshot(q, (snap) => {
+        const products = snap.docs.map(mapProduct);
+        const sorted = products.sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        callback(sorted);
+    }, (err) => {
+        console.error('subscribeToProducts error:', err);
+        callback([]);
+    });
+};
+
+/** Subscribe to a specific product by ID */
+export const subscribeToProductById = (
+    id: string,
+    callback: (product: Product | undefined) => void
+): () => void => {
+    const ref = doc(db, COLLECTION, id);
+    return onSnapshot(ref, (snap) => {
+        if (!snap.exists()) {
+            callback(undefined);
+            return;
+        }
+        // Increment view count handled separately in getProductById if needed,
+        // but for real-time we just map the data.
+        callback(mapProduct(snap));
+    }, (err) => {
+        console.error('subscribeToProductById error:', err);
+        callback(undefined);
+    });
+};
+
+/** Subscribe to products for a specific seller */
+export const subscribeToMyProducts = (
+    userId: string,
+    callback: (products: Product[]) => void
+): () => void => {
+    const q = query(
+        collection(db, COLLECTION),
+        where('sellerId', '==', userId)
+    );
+
+    return onSnapshot(q, (snap) => {
+        const products = snap.docs.map(mapProduct);
+        const sorted = products.sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        callback(sorted);
+    }, (err) => {
+        console.error('subscribeToMyProducts error:', err);
+        callback([]);
+    });
 };
 
 /** Create a new product, uploading a single image first if provided */

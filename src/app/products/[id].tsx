@@ -11,7 +11,7 @@ import { Product } from '@/types/product';
 import { Review } from '@/types/review';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { getProductById, updateProductStatus, deleteProduct } from '@/services/productService';
+import { getProductById, updateProductStatus, deleteProduct, subscribeToProductById } from '@/services/productService';
 import { getOrCreateChat, sendMessage } from '@/services/chatService';
 import { subscribeToSellerReviews, hasReviewed } from '@/services/reviewService';
 import {
@@ -86,8 +86,27 @@ export default function ProductDetailScreen() {
     const conditionStyle = CONDITION_COLORS[product?.condition ?? 'good'];
 
     useEffect(() => {
-        if (id) loadProduct(id);
-    }, [id]);
+        if (!id) return;
+
+        setLoading(true);
+        
+        // One-time fetch to increment view count
+        getProductById(id).catch(console.error);
+
+        // Subscription for real-time updates
+        const unsubscribe = subscribeToProductById(id, (data) => {
+            setProduct(data ?? null);
+            
+            // If product is sold, check if current user is the buyer of a pending tx
+            if (data && data.status === 'sold' && user && data.sellerId !== user.id) {
+                getPendingTransaction(data.id, user.id).then(setPendingTx);
+            }
+            
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [id, user]);
 
     // Real-time reviews for the seller
     useEffect(() => {
@@ -100,18 +119,6 @@ export default function ProductDetailScreen() {
         if (!user || !product) return;
         hasReviewed(user.id, product.id).then(setAlreadyReviewed);
     }, [user, product?.id]);
-
-    const loadProduct = async (productId: string) => {
-        setLoading(true);
-        const data = await getProductById(productId);
-        setProduct(data ?? null);
-        // If product is sold, check if current user is the buyer of a pending tx
-        if (data && data.status === 'sold' && user && data.sellerId !== user.id) {
-            getPendingTransaction(data.id, user.id).then(setPendingTx);
-        }
-
-        setLoading(false);
-    };
 
     const handleMarkAsSold = async () => {
         if (!product || !user) return;

@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Product } from '@/types/product';
-import { getMyProducts } from '@/services/productService';
+import { subscribeToMyProducts } from '@/services/productService';
 import { ProductCard } from '@/components/product/ProductCard';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
@@ -20,20 +20,22 @@ export default function MyProductsScreen() {
     const router = useRouter();
 
     useEffect(() => {
-        if (user) loadMyProducts();
+        if (!user) return;
+        
+        setLoading(true);
+        const unsubscribe = subscribeToMyProducts(user.id, (data) => {
+            setProducts(data);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [user]);
 
     const loadMyProducts = async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const data = await getMyProducts(user.id);
-            setProducts(data);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        // No longer used for main loading, subscription handles it.
+        setRefreshing(true);
+        await new Promise(r => setTimeout(r, 800));
+        setRefreshing(false);
     };
 
     const handleRefresh = async () => {

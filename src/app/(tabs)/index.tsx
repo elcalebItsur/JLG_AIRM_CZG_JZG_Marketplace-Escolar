@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Product } from '@/types/product';
-import { getProducts } from '@/services/productService';
+import { subscribeToProducts } from '@/services/productService';
 import { ProductCard } from '@/components/product/ProductCard';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
@@ -55,18 +55,23 @@ export default function HomeScreen() {
 
     const numColumns = getColumns();
 
-    useEffect(() => { loadProducts(); }, []);
+    useEffect(() => {
+        setLoading(true);
+        const unsubscribe = subscribeToProducts((data) => {
+            setProducts(data);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const loadProducts = async () => {
-        setLoading(true);
-        try {
-            const data = await getProducts();
-            setProducts(data);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        // No longer used for main loading, but kept for manual refresh if needed
+        // though subscription handles it automatically.
+        setRefreshing(true);
+        // Small delay to show refresh animation
+        await new Promise(r => setTimeout(r, 800));
+        setRefreshing(false);
     };
 
     const handleRefresh = async () => {
