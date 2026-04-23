@@ -19,7 +19,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [showEmailLogin, setShowEmailLogin] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const { login, loginWithGoogleWeb, loginWithGoogleNative, isLoading } = useAuth();
+    const passwordRef = useRef<TextInput>(null);
 
 
     // Configurar Google Auth Request para nativo (iOS/Android)
@@ -69,11 +74,26 @@ export default function Login() {
     useFocusEffect(
         useCallback(() => {
             setErrorMsg(null);
+            setEmail('');
+            setPassword('');
+            setShowPassword(false);
             return () => {
-                // Cleanup
+                passwordRef.current?.blur();
             };
         }, [])
     );
+
+    const handleEmailLogin = async () => {
+        if (!email || !password) {
+            setErrorMsg('Ingresa tu correo y contraseña');
+            return;
+        }
+        setErrorMsg(null);
+        const { error } = await login(email.trim(), password);
+        if (error) {
+            setErrorMsg(error);
+        }
+    };
 
 
     const handleGoogleLogin = async () => {
@@ -135,24 +155,92 @@ export default function Login() {
                         </View>
                     )}
 
+                    {!showEmailLogin ? (
+                        <>
+                            {/* Modo Google (principal) */}
+                            <View style={styles.infoBox}>
+                                <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                                <Text style={styles.infoText}>
+                                    Usa tu cuenta institucional de Google para acceder al Marketplace.
+                                </Text>
+                            </View>
 
-                    {/* El login tradicional ha sido removido a petición */}
-                    <View style={styles.infoBox}>
-                        <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-                        <Text style={styles.infoText}>
-                            Usa tu cuenta institucional de Google para acceder al Marketplace.
-                        </Text>
-                    </View>
+                            <AppButton
+                                title="Continuar con Google"
+                                onPress={handleGoogleLogin}
+                                loading={isLoading}
+                                variant="primary"
+                                style={styles.googleBtn}
+                                icon={<Ionicons name="logo-google" size={20} color="#fff" />}
+                            />
 
-                    {/* Botón de Google Sign-In como opción principal */}
-                    <AppButton
-                        title="Continuar con Google"
-                        onPress={handleGoogleLogin}
-                        loading={isLoading}
-                        variant="primary" // Cambiado a primary para ser el foco
-                        style={styles.googleBtn}
-                        icon={<Ionicons name="logo-google" size={20} color="#fff" />}
-                    />
+                            <TouchableOpacity
+                                style={styles.toggleBtn}
+                                onPress={() => { setShowEmailLogin(true); setErrorMsg(null); }}
+                            >
+                                <Ionicons name="mail-outline" size={16} color={colors.textMuted} />
+                                <Text style={styles.toggleBtnText}>Iniciar con correo y contraseña</Text>
+                            </TouchableOpacity>
+                        </>
+                    ) : (
+                        <>
+                            {/* Modo Email/Password */}
+                            <AppInput
+                                label="Correo Institucional"
+                                value={email}
+                                onChangeText={setEmail}
+                                placeholder="usuario@alumnos.itsur.edu.mx"
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                                textContentType="emailAddress"
+                                autoComplete="email"
+                                leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
+                                returnKeyType="next"
+                                onSubmitEditing={() => passwordRef.current?.focus()}
+                                blurOnSubmit={false}
+                                autoCorrect={false}
+                            />
+
+                            <AppInput
+                                ref={passwordRef}
+                                label="Contraseña"
+                                value={password}
+                                onChangeText={setPassword}
+                                placeholder="••••••••"
+                                secureTextEntry={!showPassword}
+                                textContentType={showPassword ? 'none' : 'password'}
+                                autoComplete={showPassword ? 'off' : 'password'}
+                                leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
+                                rightIcon={
+                                    <Ionicons
+                                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                        size={18}
+                                        color={colors.textMuted}
+                                    />
+                                }
+                                onRightIconPress={() => setShowPassword(v => !v)}
+                                returnKeyType="done"
+                                onSubmitEditing={handleEmailLogin}
+                                autoCorrect={false}
+                            />
+
+                            <AppButton
+                                title="Iniciar Sesión"
+                                onPress={handleEmailLogin}
+                                loading={isLoading}
+                                variant="primary"
+                                style={styles.googleBtn}
+                            />
+
+                            <TouchableOpacity
+                                style={styles.toggleBtn}
+                                onPress={() => { setShowEmailLogin(false); setErrorMsg(null); }}
+                            >
+                                <Ionicons name="logo-google" size={16} color={colors.textMuted} />
+                                <Text style={styles.toggleBtnText}>Usar Google en su lugar</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
 
                     <View style={styles.linkRow}>
                         <Link href="/auth/admin-login" asChild>
@@ -297,6 +385,19 @@ const styles = StyleSheet.create({
     },
     googleBtn: {
         marginBottom: 14,
+    },
+    toggleBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 10,
+        marginBottom: 4,
+    },
+    toggleBtnText: {
+        ...typography.presets.caption,
+        color: colors.textMuted,
+        textDecorationLine: 'underline',
     },
     linkRow: {
         flexDirection: 'row',
