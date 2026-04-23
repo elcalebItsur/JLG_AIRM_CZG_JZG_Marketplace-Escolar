@@ -107,8 +107,8 @@ export async function updateReportStatus(
 /** Admin: remove a flagged product from the marketplace */
 export async function adminDeleteProduct(productId: string): Promise<{ success: boolean; error?: string }> {
     try {
-        // We mark it as 'removed' (a new status) rather than hard-deleting
-        const { error } = await updateProductStatus(productId, 'removed' as any);
+        // We mark it as 'deleted' (standard status) rather than hard-deleting
+        const { error } = await updateProductStatus(productId, 'deleted');
         if (error) return { success: false, error };
         return { success: true };
     } catch (err) {

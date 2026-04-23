@@ -5,7 +5,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
-    TouchableOpacity, ActivityIndicator, Alert, RefreshControl,
+    ActivityIndicator, RefreshControl, Platform, Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -16,6 +16,7 @@ import { Role } from '@/types/role';
 import { Report, ReportStatus, REPORT_REASON_LABELS } from '@/types/report';
 import { getReports, updateReportStatus, adminDeleteProduct } from '@/services/reportService';
 import { createNotification } from '@/services/notificationService';
+import { showConfirm, showAlert } from '@/utils/crossPlatformAlert';
 
 type FilterTab = 'pending' | 'all';
 
@@ -52,52 +53,78 @@ export default function AdminReportsScreen() {
 
     const onRefresh = async () => { setRefreshing(true); await loadReports(); setRefreshing(false); };
 
-    const handleDismiss = (report: Report) => {
-        Alert.alert('Descartar reporte', '¿Confirmas que este reporte no requiere acción?', [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-                text: 'Descartar', style: 'destructive',
-                onPress: async () => {
-                    setActing(report.id);
-                    const { success } = await updateReportStatus(report.id, 'dismissed');
-                    if (success) {
-                        // Notify reporter
-                        createNotification({
-                            userId: report.reporterId,
-                            type: 'report_resolved',
-                            title: 'Reporte revisado',
-                            body: `Tu reporte sobre "${report.targetTitle}" fue revisado y descartado.`,
-                            relatedId: report.targetId,
-                        });
-                        await loadReports();
-                    }
-                    setActing(null);
-                },
-            },
-        ]);
+    const handleDismiss = async (report: Report) => {
+        try {
+            const confirmed = await showConfirm(
+                'Descartar reporte',
+                '¿Confirmas que este reporte no requiere acción?',
+                'Descartar',
+                'Cancelar',
+            );
+            if (!confirmed) return;
+
+            setActing(report.id);
+            const { success, error } = await updateReportStatus(report.id, 'dismissed');
+            if (success) {
+                createNotification({
+                    userId: report.reporterId,
+                    type: 'report_resolved',
+                    title: 'Reporte revisado',
+                    body: `Tu reporte sobre "${report.targetTitle}" fue revisado y descartado.`,
+                    relatedId: report.targetId,
+                });
+                await loadReports();
+            } else {
+                showAlert('Error', error || 'No se pudo descartar el reporte');
+            }
+        } catch (e) {
+            console.error('handleDismiss error');
+            showAlert('Error', 'Ocurrió un fallo al procesar la acción');
+        } finally {
+            setActing(null);
+        }
     };
 
-    const handleDeleteProduct = (report: Report) => {
+    const handleDeleteProduct = async (report: Report) => {
         if (report.targetType !== 'product') return;
-        Alert.alert('Eliminar publicación', `¿Confirmas eliminar "${report.targetTitle}"? Esta acción no se puede deshacer.`, [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-                text: 'Eliminar', style: 'destructive',
-                onPress: async () => {
-                    setActing(report.id);
-                    await adminDeleteProduct(report.targetId);
-                    await updateReportStatus(report.id, 'reviewed');
-                    createNotification({
-                        userId: report.reporterId,
-                        type: 'report_resolved',
-                        title: 'Reporte resuelto',
-                        body: `La publicación "${report.targetTitle}" fue retirada por un administrador.`,
-                    });
-                    await loadReports();
-                    setActing(null);
-                },
-            },
-        ]);
+
+        try {
+            const confirmed = await showConfirm(
+                'Eliminar publicación',
+                `¿Confirmas eliminar "${report.targetTitle}"? Esta acción no se puede deshacer.`,
+                'Eliminar',
+                'Cancelar',
+            );
+            if (!confirmed) return;
+
+            setActing(report.id);
+            
+            // 1. Mark product as deleted
+            const delRes = await adminDeleteProduct(report.targetId);
+            if (!delRes.success) {
+                showAlert('Error', delRes.error || 'No se pudo eliminar el producto');
+                setActing(null);
+                return;
+            }
+
+            // 2. Mark report as reviewed
+            const repRes = await updateReportStatus(report.id, 'reviewed');
+            
+            // 3. Notify
+            createNotification({
+                userId: report.reporterId,
+                type: 'report_resolved',
+                title: 'Reporte resuelto',
+                body: `La publicación "${report.targetTitle}" fue retirada por un administrador.`,
+            });
+
+            await loadReports();
+        } catch (e) {
+            console.error('handleDeleteProduct error');
+            showAlert('Error', 'Ocurrió un fallo al intentar eliminar');
+        } finally {
+            setActing(null);
+        }
     };
 
     const renderItem = ({ item }: { item: Report }) => (
@@ -132,27 +159,35 @@ export default function AdminReportsScreen() {
 
             {item.status === 'pending' && (
                 <View style={styles.actions}>
-                    <TouchableOpacity
-                        style={[styles.actionBtn, styles.dismissBtn]}
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.actionBtn,
+                            styles.dismissBtn,
+                            { opacity: pressed ? 0.6 : 1, cursor: Platform.OS === 'web' ? 'pointer' : 'auto' } as any
+                        ]}
                         onPress={() => handleDismiss(item)}
                         disabled={acting === item.id}
-                        activeOpacity={0.8}
+                        hitSlop={10}
                     >
                         {acting === item.id ? <ActivityIndicator size="small" color={colors.textMuted} /> : <>
                             <Ionicons name="close-circle-outline" size={16} color={colors.textMuted} />
                             <Text style={styles.dismissBtnText}>Descartar</Text>
                         </>}
-                    </TouchableOpacity>
+                    </Pressable>
                     {item.targetType === 'product' && (
-                        <TouchableOpacity
-                            style={[styles.actionBtn, styles.deleteBtn]}
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.actionBtn,
+                                styles.deleteBtn,
+                                { opacity: pressed ? 0.6 : 1, cursor: Platform.OS === 'web' ? 'pointer' : 'auto' } as any
+                            ]}
                             onPress={() => handleDeleteProduct(item)}
                             disabled={acting === item.id}
-                            activeOpacity={0.8}
+                            hitSlop={10}
                         >
                             <Ionicons name="trash-outline" size={16} color="#fff" />
                             <Text style={styles.deleteBtnText}>Eliminar Producto</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                     )}
                 </View>
             )}
@@ -166,16 +201,19 @@ export default function AdminReportsScreen() {
             {/* Filter tabs */}
             <View style={styles.tabs}>
                 {(['pending', 'all'] as FilterTab[]).map(t => (
-                    <TouchableOpacity
+                    <Pressable
                         key={t}
-                        style={[styles.tab, filter === t && styles.tabActive]}
+                        style={({ pressed }) => [
+                            styles.tab,
+                            filter === t && styles.tabActive,
+                            { opacity: pressed ? 0.7 : 1, cursor: Platform.OS === 'web' ? 'pointer' : 'auto' } as any
+                        ]}
                         onPress={() => setFilter(t)}
-                        activeOpacity={0.8}
                     >
                         <Text style={[styles.tabText, filter === t && styles.tabTextActive]}>
                             {t === 'pending' ? 'Pendientes' : 'Todos'}
                         </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 ))}
             </View>
 
