@@ -40,6 +40,11 @@ export interface CreateReportParams {
 /** Any user can submit a report */
 export async function createReport(params: CreateReportParams): Promise<{ success: boolean; error?: string }> {
     try {
+        // Validación de longitud
+        if (params.details && params.details.length > 2000) {
+            return { success: false, error: 'Detalle muy largo (máx. 2000 caracteres)' };
+        }
+
         const raw: Record<string, unknown> = {
             reporterId: params.reporterId,
             reporterName: params.reporterName,
@@ -54,7 +59,7 @@ export async function createReport(params: CreateReportParams): Promise<{ succes
         await addDoc(collection(db, COL), raw);
         return { success: true };
     } catch (err) {
-        console.error('createReport error:', err);
+        console.error('createReport error');
         return { success: false, error: 'No se pudo enviar el reporte' };
     }
 }
@@ -77,7 +82,7 @@ export async function getReports(status?: ReportStatus): Promise<Report[]> {
         });
         return reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (err) {
-        console.error('getReports error:', err);
+        console.error('getReports error');
         return [];
     }
 }
@@ -94,7 +99,7 @@ export async function updateReportStatus(
         });
         return { success: true };
     } catch (err) {
-        console.error('updateReportStatus error:', err);
+        console.error('updateReportStatus error');
         return { success: false, error: 'No se pudo actualizar el reporte' };
     }
 }
@@ -107,7 +112,7 @@ export async function adminDeleteProduct(productId: string): Promise<{ success: 
         if (error) return { success: false, error };
         return { success: true };
     } catch (err) {
-        console.error('adminDeleteProduct error:', err);
+        console.error('adminDeleteProduct error');
         return { success: false, error: 'No se pudo eliminar el producto' };
     }
 }

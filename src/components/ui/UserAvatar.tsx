@@ -48,7 +48,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
                     setPhoto(url);
                 }
             } catch (error) {
-                console.error('Error fetching UserAvatar:', error);
+                console.error('Error fetching UserAvatar');
             } finally {
                 setLoading(false);
             }

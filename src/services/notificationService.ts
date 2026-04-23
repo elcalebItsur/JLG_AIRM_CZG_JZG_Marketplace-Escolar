@@ -50,7 +50,7 @@ export async function createNotification(params: CreateNotificationParams): Prom
         if (params.relatedId !== undefined) raw.relatedId = params.relatedId;
         await addDoc(collection(db, COL), raw);
     } catch (err) {
-        console.error('createNotification error:', err);
+        console.error('createNotification error');
     }
 }
 
@@ -75,7 +75,7 @@ export function subscribeToNotifications(
         });
         callback(notifs);
     }, (err) => {
-        console.error('subscribeToNotifications error:', err);
+        console.error('subscribeToNotifications error');
         callback([]);
     });
 }
@@ -98,6 +98,6 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
         snap.docs.forEach(d => batch.update(d.ref, { isRead: true }));
         await batch.commit();
     } catch (err) {
-        console.error('markAllNotificationsRead error:', err);
+        console.error('markAllNotificationsRead error');
     }
 }

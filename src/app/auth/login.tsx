@@ -44,8 +44,6 @@ export default function Login() {
     // Procesar la respuesta de Google
     useEffect(() => {
         if (response) {
-            console.log('📱 Google Response Details:', JSON.stringify(response, null, 2));
-
             if (response.type === 'success') {
                 const { id_token } = response.params;
                 const idToken = id_token || response.authentication?.idToken;
@@ -53,13 +51,10 @@ export default function Login() {
                 if (idToken) {
                     handleNativeGoogleResult(idToken);
                 } else {
-                    console.log('⚠️ No se encontró id_token en la respuesta');
                     setErrorMsg('Error al obtener token de Google');
                 }
-            } else if (response.type === 'error' || response.type === 'cancel' || response.type === 'dismiss') {
-                console.log('❌ Auth Falló o Canceló:', response.type);
-                // Si es un error 401 deleted_client, es un tema de configuración en Google Console
             }
+            // Si canceló o falló, no hacemos nada (el usuario puede reintentar)
         }
     }, [response]);
 

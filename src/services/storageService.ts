@@ -12,7 +12,7 @@ const COMPRESS_QUALITY = 0.7; // 70 % JPEG
  */
 export const uploadImage = async (uri: string, _path?: string): Promise<string | null> => {
     try {
-        console.log('[storageService] Processing image:', uri.substring(0, 50) + '...');
+
 
         // 1. Compress the image
         const compressed = await ImageManipulator.manipulateAsync(
@@ -36,11 +36,11 @@ export const uploadImage = async (uri: string, _path?: string): Promise<string |
         const dataUri = `data:image/jpeg;base64,${compressed.base64}`;
 
         const sizeKB = Math.round((compressed.base64.length * 3) / 4 / 1024);
-        console.log(`[storageService] Success: ~${sizeKB} KB`);
+
 
         return dataUri;
     } catch (error) {
-        console.error('[storageService] Error processing image:', error);
+        console.error('[storageService] Error processing image');
         return null;
     }
 };

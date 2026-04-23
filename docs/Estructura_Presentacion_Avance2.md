@@ -1,90 +1,108 @@
-# Estructura Sugerida para la Presentación (2do Avance)
+# Estructura Maestra de Presentación (2do Avance) - Marketplace ITSUR
+**Equipo:** Jovani Zavala, Angel Rocha, Caleb Zacarias, Jovanny Lobato.
 
-A continuación, se detalla el contenido sugerido para cada diapositiva de su presentación del Segundo Avance de Proyecto, ajustado a los requerimientos, al cronograma (considerando la semana 12 como límite actual) y al formato solicitado (PowerPoint, Canva, etc.).
+Esta versión integra los detalles técnicos del módulo de gestión de productos, multimedia y búsqueda en tiempo real dentro de la estructura formal solicitado.
 
 ---
 
 ## Diapositiva 1: Portada
-*   **Nombre del Proyecto:** Marketplace Escolar
+*   **Proyecto:** Marketplace Escolar
 *   **Integrantes:** 
-    *   Jovani Zavala Guerrero
-    *   Angel Ivan Rocha Martinez
-    *   Caleb Zacarias Garcia
-    *   Jovanny Lobato Garcia
+    *   Jovani Zavala Guerrero (JZG)
+    *   Angel Ivan Rocha Martinez (AIRM)
+    *   Caleb Zacarias Garcia (CZG)
+    *   Jovanny Lobato Garcia (JLG)
 *   **Materia:** Taller de Investigación II
-*   **Fecha / Avance:** Segundo Avance de Proyecto (Semana 12)
+*   **Avance:** Segundo Avance (Semana 12)
 
 ---
 
-## Diapositiva 2: Introducción Breve (Recordatorio)
-*   *Nota: Muy breve, solo para recordar a la audiencia el objetivo principal.*
-*   Plataforma digital tipo marketplace para la comunidad del ITSUR.
-*   Objetivo: Solucionar la informalidad y dispersión en la compra-venta de materiales académicos.
-*   Stack Tecnológico: React Native, Expo, Firebase (Firestore, Storage).
+## Diapositiva 2: Introducción y Propósito
+*   **Speaker: Jovanny Lobato (JLG)**
+*   **Contenido:**
+    *   Objetivo: Plataforma para fomentar la **Economía Circular** dentro del ITSUR.
+    *   Solución: Un ecosistema digital centralizado, seguro y eficiente.
+    *   **Punto Clave:** "Ayudando a la economía circular dentro de la institución."
 
 ---
 
-## Diapositiva 3: Metodología - Enfoque y Diseño (Parte Central)
-*   **Tipo de Investigación:** Aplicada y descriptiva.
-*   **Enfoque:** Mixto (Cuantitativo para el análisis de encuestas y cualitativo para el diseño tecnológico).
-*   **Población:** Comunidad estudiantil y docente del ITSUR.
-*   **Técnicas de recolección:** Encuestas (levantamiento de requerimientos) y observación directa.
+## Diapositiva 3: Metodología y Fase Actual
+*   **Speaker: Jovani Zavala (JZG)**
+*   **Contenido:**
+    *   Enfoque mixto: Cualitativo (Diseño) y Cuantitativo (Requerimientos).
+    *   **Fase 3 (Desarrollo):** Estamos integrando lógica de negocio con persistencia en la nube.
+    *   Arquitectura basada en el patrón por capas para escalabilidad.
 
 ---
 
-## Diapositiva 4: Metodología - Procedimiento (Las 5 Fases)
-*Nota: Es muy recomendable insertar aquí el diagrama visual de bloques que tienen (Fase 1 a Fase 5).*
-*   **Fase 1: Investigación:** Encuestas, análisis y definición de requerimientos.
-*   **Fase 2: Diseño Técnico:** Arquitectura en capas y prototipado UI/UX.
-*   **Fase 3: Desarrollo (Fase Actual):** Integración de React Native con Firebase y codificación de módulos core.
-*   **Fase 4: Evaluación:** Pruebas unitarias, evaluación y refinamiento del sistema.
-*   **Fase 5: Cierre:** Preparación del build final y lanzamiento.
+## Diapositiva 4: Actividades Realizadas (Semana 1-12)
+*   **Speaker: Angel Ivan Rocha (AIRM)**
+*   **Estatus:**
+    *   ✅ **Diseño NoSQL:** 100%
+    *   ✅ **Gestión de Productos (CRUD):** 100% (Completado esta semana).
+    *   ✅ **Integración Multimedia:** 100% (Optimización de carga).
+    *   ✅ **Búsqueda y Sync en Tiempo Real:** 100% (Funcionalidad avanzada).
 
 ---
 
-## Diapositiva 5: Actividades Realizadas (Semanas 1 a 12)
-*Se debe evidenciar la coherencia entre lo planeado en su cronograma y lo ejecutado hasta la semana actual.*
-*   ✅ **Levantamiento de requerimientos y análisis:** (Semanas 1-3) - 100%
-*   ✅ **Diseño de la arquitectura de la base de datos:** (Semanas 4-5) - 100%
-*   ✅ **Diseño de la UI con React:** (Semanas 6-9) - 100%
-*   ✅ **Implementación del patrón por capas:** (Semanas 7-9) - 100%
-*   ✅ **Desarrollo del módulo de gestión de productos:** (Semanas 9-12) - Completado en esta semana.
-*   ✅ **Llenado del reporte:** Continuo (Semanas 4-12).
+## Diapositiva 5: Desarrollo Técnico - Gestión de Productos (CRUD)
+*   **Speaker: Angel Ivan Rocha (AIRM)**
+*   **Detalle:**
+    *   Explicación de cómo el usuario puede: Publicar, Leer, Editar y Eliminar sus artículos.
+    *   Manejo de estados: `active` -> `sold` -> `completed`.
+    *   **Seguridad:** Validación de propiedad para edición y diálogos de confirmación multiplataforma.
 
 ---
 
-## Diapositiva 6: Evidencias de Avance (Capturas Reales)
-*Nota: Esta es una de las diapositivas más importantes. Coloquen imágenes que demuestren que realmente están programando y diseñando.*
-*   **Evidencia 1 (Frontend):** 2 o 3 capturas de pantalla de la aplicación corriendo en un emulador o dispositivo físico (Login, Pantalla Principal de Productos).
-*   **Evidencia 2 (Backend):** Captura de la consola de Firebase Firestore mostrando las colecciones creadas (users, products, etc.).
-*   **Evidencia 3 (Código):** Captura de su editor (VS Code) mostrando la estructura de carpetas (separación en capas: `screens`, `components`, `services`).
+## Diapositiva 6: Desarrollo Técnico - Multimedia y Optimización
+*   **Speaker: Caleb Zacarias (CZG)**
+*   **El "Viaje de la Imagen":**
+    1. **Clic:** Selección mediante `expo-image-picker`.
+    2. **Proceso:** `ImageManipulator` redimensiona a 800px y comprime al 70% (eficiencia).
+    3. **Persistencia:** Conversión a **Base64** para almacenamiento directo en Firestore.
+    4. **Resultado:** Carga instantánea sin latencia de descarga de servidores externos.
+*   *(Mostrar Diagrama A de la guía técnica)*
 
 ---
 
-## Diapositiva 7: Actividades Pendientes (Semanas 12 a 15)
-*   ⏳ **Integración de servicios multimedia y búsqueda:** Semanas 11-13 (Actualmente en proceso).
-*   🔜 **Pruebas unitarias, evaluación y documentación:** Semanas 13-14 (Por iniciar).
-*   🔜 **Llenado final del reporte y Entrega:** Semanas 14-15 (Por iniciar).
+## Diapositiva 7: Desarrollo Técnico - Búsqueda y Reactividad
+*   **Speaker: Jovani Zavala (JZG)**
+*   **Innovación:**
+    *   **Debounce (300ms):** Búsqueda fluida sin degradar el rendimiento del dispositivo.
+    *   **Normalización:** Búsqueda inteligente que ignora acentos y mayúsculas.
+    *   **Sincronización:** Uso de `onSnapshot` para que los cambios se vean en todos los usuarios sin recargar.
 
 ---
 
-## Diapositiva 8: Dificultades Encontradas
-*Es importante ser honestos y justificar los retos técnicos, esto demuestra profesionalismo y capacidad de resolución.*
-*   *(Elijan o adapten según lo que realmente les haya pasado)*:
-    *   **Dificultad:** Curva de aprendizaje para la estructuración correcta de datos NoSQL en Firebase para evitar lecturas excesivas.
-    *   **Dificultad:** Integración fluida de Expo Image Picker y subida de imágenes a Firebase Storage.
-    *   **Dificultad:** Mantener los tiempos exactos del cronograma mientras se dividía el trabajo entre los 4 integrantes.
-*   **¿Cómo se solucionó?** *(Agreguen una línea explicando cómo lo resolvieron, ej. "Investigando en documentación oficial", "Reestructurando reuniones de equipo", etc.)*
+## Diapositiva 8: Arquitectura de Datos y Tiempo Real
+*   **Speaker: Jovanny Lobato (JLG)**
+*   **Contenido:**
+    *   Modelo de datos en Firestore.
+    *   Explicación del flujo de sincronización: Un cambio en el vendedor se refleja en milisegundos en el comprador.
+*   *(Mostrar Diagrama B de la guía técnica)*
 
 ---
 
-## Diapositiva 9: Próximos Pasos (Inmediatos)
-*   Finalizar por completo la funcionalidad de subida de imágenes y el buscador de productos (Semana 13).
-*   Iniciar las pruebas de usabilidad y funcionalidad con un pequeño grupo de usuarios reales.
-*   Comenzar a documentar los hallazgos en los Capítulos 6 (Resultados) y 7 (Análisis) del documento formal.
+## Diapositiva 9: Evidencias de Avance (Capturas Reales)
+*   **Contenido Visual:**
+    *   Captura 1: Formulario de venta con previsualización de imagen.
+    *   Captura 2: Resultados del buscador filtrados por categoría.
+    *   Captura 3: Consola de Firebase con documentos `products`.
 
 ---
 
-## Diapositiva 10: Cierre
-*   ¡Gracias por su atención!
-*   ¿Tienen alguna pregunta o comentario sobre el avance del proyecto?
+## Diapositiva 10: Dificultades y Retos Superados
+*   **Reto:** Curva de aprendizaje en la sincronización reactiva de estados con Firebase.
+*   **Reto:** Optimización de imágenes en web móvil (bypass de selectores nativos).
+*   **Solución:** Investigación profunda en documentación de Expo y refactorización de servicios a listeners en tiempo real.
+
+---
+
+## Diapositiva 11: Próximos Pasos e Inicio de Pruebas
+*   Periodo de pruebas unitarias y de usabilidad (Semana 13).
+*   Documentación de resultados finales en el informe escrito.
+
+---
+
+## Diapositiva 12: Cierre y Preguntas
+*   Agradecimiento y espacio para dudas de los evaluadores.

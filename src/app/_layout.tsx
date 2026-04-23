@@ -82,7 +82,7 @@ function RootLayoutNav() {
                         headerTitleStyle: { fontWeight: '700' },
                     }}
                 />
-                <Stack.Screen name="auth/setup-admin" options={{ title: 'Configurar Admin' }} />
+
                 <Stack.Screen
                     name="products/[id]"
                     options={{

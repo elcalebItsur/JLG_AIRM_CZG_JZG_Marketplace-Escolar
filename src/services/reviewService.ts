@@ -58,6 +58,11 @@ export async function addReview(
     params: AddReviewParams
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        // Validación de longitud
+        if (params.comment && params.comment.length > 1000) {
+            return { success: false, error: 'Comentario muy largo (máx. 1000 caracteres)' };
+        }
+
         // Check: only one review per (reviewer, product)
         const existing = await getDocs(
             query(
@@ -80,7 +85,7 @@ export async function addReview(
 
         return { success: true };
     } catch (err) {
-        console.error('addReview error:', err);
+        console.error('addReview error');
         return { success: false, error: 'No se pudo guardar la reseña' };
     }
 }
@@ -100,7 +105,7 @@ async function _updateSellerRating(sellerId: string): Promise<void> {
         });
     } catch (err) {
         // Non-fatal — rating update is best-effort
-        console.warn('_updateSellerRating error:', err);
+        console.warn('_updateSellerRating error');
     }
 }
 
@@ -116,7 +121,7 @@ export async function getSellerReviews(sellerId: string): Promise<Review[]> {
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (err) {
-        console.error('getSellerReviews error:', err);
+        console.error('getSellerReviews error');
         return [];
     }
 }
@@ -151,7 +156,7 @@ export function subscribeToSellerReviews(
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         callback(reviews);
     }, (err) => {
-        console.error('subscribeToSellerReviews error:', err);
+        console.error('subscribeToSellerReviews error');
         callback([]);
     });
 }

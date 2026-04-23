@@ -76,7 +76,7 @@ export async function createTransaction(
         const ref = await addDoc(collection(db, TRANSACTIONS), payload);
         return { txId: ref.id };
     } catch (err) {
-        console.error('createTransaction error:', err);
+        console.error('createTransaction error');
         return { txId: '', error: 'No se pudo registrar la transacción' };
     }
 }
@@ -93,7 +93,7 @@ export async function updateTransactionStatus(
         await updateDoc(doc(db, TRANSACTIONS, txId), update);
         return { success: true };
     } catch (err) {
-        console.error('updateTransactionStatus error:', err);
+        console.error('updateTransactionStatus error');
         return { success: false, error: 'No se pudo actualizar la transacción' };
     }
 }
@@ -110,7 +110,7 @@ export async function getSellerTransactions(sellerId: string): Promise<Transacti
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (err) {
-        console.error('getSellerTransactions error:', err);
+        console.error('getSellerTransactions error');
         return [];
     }
 }
@@ -125,7 +125,7 @@ export async function getBuyerTransactions(buyerId: string): Promise<Transaction
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (err) {
-        console.error('getBuyerTransactions error:', err);
+        console.error('getBuyerTransactions error');
         return [];
     }
 }
@@ -158,7 +158,7 @@ export async function getChatBuyersForProduct(
             return acc;
         }, []);
     } catch (err) {
-        console.error('getChatBuyersForProduct error:', err);
+        console.error('getChatBuyersForProduct error');
         return [];
     }
 }
@@ -179,7 +179,7 @@ export async function getPendingTransaction(
         if (snap.empty) return null;
         return mapTx(snap.docs[0]);
     } catch (err) {
-        console.error('getPendingTransaction error:', err);
+        console.error('getPendingTransaction error');
         return null;
     }
 }

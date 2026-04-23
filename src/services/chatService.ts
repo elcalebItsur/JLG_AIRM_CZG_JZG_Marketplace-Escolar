@@ -108,7 +108,7 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
             return { chatId, isNew: false };
         }
     } catch (err) {
-        console.error('getOrCreateChat error:', err);
+        console.error('getOrCreateChat error');
         return { chatId: '', isNew: false, error: 'No se pudo abrir el chat' };
     }
 }
@@ -125,6 +125,7 @@ export async function sendMessage(
     try {
         const trimmed = text.trim();
         if (!trimmed) return { success: false, error: 'Mensaje vacío' };
+        if (trimmed.length > 2000) return { success: false, error: 'Mensaje muy largo (máx. 2000 caracteres)' };
 
         const msgRef = collection(db, CHATS, chatId, MESSAGES);
         await addDoc(msgRef, {
@@ -163,7 +164,7 @@ export async function sendMessage(
 
         return { success: true };
     } catch (err) {
-        console.error('sendMessage error:', err);
+        console.error('sendMessage error');
         return { success: false, error: 'No se pudo enviar el mensaje' };
     }
 }
@@ -196,7 +197,7 @@ export function subscribeToChats(
             );
         callback(chats);
     }, (err) => {
-        console.error('subscribeToChats error:', err);
+        console.error('subscribeToChats error');
         callback([]);
     });
 }
@@ -222,7 +223,7 @@ export function subscribeToMessages(
         });
         callback(messages);
     }, (err) => {
-        console.error('subscribeToMessages error:', err);
+        console.error('subscribeToMessages error');
         callback([]);
     });
 }

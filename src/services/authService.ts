@@ -43,7 +43,7 @@ export async function registerUser(email: string, password: string, displayName:
     let errorMessage = 'Error al registrarse';
     if (e.code === 'auth/email-already-in-use') errorMessage = 'El correo ya está registrado';
     if (e.code === 'auth/weak-password') errorMessage = 'La contraseña es muy débil';
-    console.error(e);
+    console.error('registerUser error:', e.code || 'unknown');
     return { error: errorMessage };
   }
 }
@@ -70,8 +70,8 @@ export async function registerAdmin(email: string, password: string, displayName
     await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
     return { user: newUser };
   } catch (e: any) {
-    console.error('registerAdmin error:', e);
-    return { error: e.message || 'Error al crear administrador' };
+    console.error('registerAdmin error:', e.code || 'unknown');
+    return { error: 'Error al crear administrador' };
   }
 }
 
@@ -112,7 +112,7 @@ export async function loginUser(email: string, password: string): Promise<{ user
     if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
       errorMessage = 'Credenciales inválidas';
     }
-    console.error(e);
+    console.error('loginUser error:', e.code || 'unknown');
     return { error: errorMessage };
   }
 }
@@ -132,19 +132,13 @@ export async function loginAdmin(email: string, password: string): Promise<{ use
     if (userDoc.exists()) {
       const userData = userDoc.data() as User;
       
-      // Permissive check: Allow if role is ADMIN OR if it's the specific test account 
-      // OR (as requested) if the user simply exists in the database for this project's testing phase.
-      const isTestAccount = userData.email === 'zacariascaleb355@alumnos.itsur.edu.mx';
-      
-      if (userData.role !== Role.ADMIN && !isTestAccount) {
-        // As requested by the user: "dejar pasar a usuarios que están en la base de datos"
-        // We will allow them but we could log a warning if this was production.
-        return { user: userData };
+      // Solo permitir acceso si el usuario tiene rol ADMIN
+      if (userData.role !== Role.ADMIN) {
+        await auth.signOut();
+        return { error: 'Esta cuenta no tiene permisos de administrador.' };
       }
       return { user: userData };
     } else {
-      // If no doc exists, we can't confirm any data, so we still block for absolute safety 
-      // unless we want to auto-create a profile (not requested).
       await auth.signOut();
       return { error: 'Perfil de usuario no encontrado en la base de datos.' };
     }
@@ -154,7 +148,7 @@ export async function loginAdmin(email: string, password: string): Promise<{ use
     if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
       errorMessage = 'Credenciales inválidas';
     }
-    console.error(e);
+    console.error('loginAdmin error:', e.code || 'unknown');
     return { error: errorMessage };
   }
 }
@@ -172,7 +166,7 @@ export async function loginWithGoogleWeb(): Promise<{ user?: User; error?: strin
     return await _processGoogleUser(result.user);
 
   } catch (e: any) {
-    console.error('loginWithGoogleWeb error:', e);
+    console.error('loginWithGoogleWeb error:', e.code || 'unknown');
     if (e.code === 'auth/popup-closed-by-user') {
       return { error: 'Inicio de sesión cancelado' };
     }
@@ -191,7 +185,7 @@ export async function loginWithGoogleNative(idToken: string): Promise<{ user?: U
     return await _processGoogleUser(result.user);
 
   } catch (e: any) {
-    console.error('loginWithGoogleNative error:', e);
+    console.error('loginWithGoogleNative error:', e.code || 'unknown');
     return { error: 'Error al iniciar sesión con Google' };
   }
 }
@@ -259,7 +253,7 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
           // Self-healing: Update Firestore if Auth has photo but Firestore doesn't
           if (!userData.photoURL && firebaseUser.photoURL) {
             setDoc(userDocRef, { photoURL: firebaseUser.photoURL }, { merge: true })
-              .catch(e => console.error("Error auto-syncing photo:", e));
+              .catch(() => console.error("Error auto-syncing photo"));
             callback({ ...userData, photoURL: firebaseUser.photoURL });
           } else {
             callback(userData);
@@ -286,7 +280,7 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
           });
         }
       } catch (e) {
-        console.error("Error fetching user profile", e);
+        console.error("Error fetching user profile");
         callback(null);
       }
     } else {

@@ -91,7 +91,7 @@ export default function ProductDetailScreen() {
         setLoading(true);
         
         // One-time fetch to increment view count
-        getProductById(id).catch(console.error);
+        getProductById(id).catch(() => console.error('getProductById failed'));
 
         // Subscription for real-time updates
         const unsubscribe = subscribeToProductById(id, (data) => {
@@ -170,7 +170,7 @@ export default function ProductDetailScreen() {
                     [{ text: 'OK' }]
                 );
             } catch (e) {
-                console.error('doSell error:', e);
+                console.error('doSell error');
                 Alert.alert('Error', 'Ocurrió un error al marcar como vendido.');
             } finally {
                 setUpdatingStatus(false);
@@ -484,7 +484,7 @@ export default function ProductDetailScreen() {
                                                     sellerPhoto = sellerDoc.data().photoURL || null;
                                                 }
                                             } catch (e) {
-                                                console.error("Error fetching seller photo", e);
+                                                console.error("Error fetching seller photo");
                                             }
 
                                             const { chatId, isNew, error } = await getOrCreateChat({

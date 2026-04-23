@@ -52,7 +52,7 @@ export const getProducts = async (): Promise<Product[]> => {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (error) {
-        console.error('getProducts error:', error);
+        console.error('getProducts error');
         return [];
     }
 };
@@ -67,7 +67,7 @@ export const getProductById = async (id: string): Promise<Product | undefined> =
         updateDoc(ref, { viewCount: increment(1) }).catch(() => { });
         return { id: snap.id, ...snap.data() } as Product;
     } catch (error) {
-        console.error('getProductById error:', error);
+        console.error('getProductById error');
         return undefined;
     }
 };
@@ -86,7 +86,7 @@ export const getMyProducts = async (userId: string): Promise<Product[]> => {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (error) {
-        console.error('getMyProducts error:', error);
+        console.error('getMyProducts error');
         return [];
     }
 };
@@ -109,7 +109,7 @@ export const subscribeToProducts = (
         );
         callback(sorted);
     }, (err) => {
-        console.error('subscribeToProducts error:', err);
+        console.error('subscribeToProducts error');
         callback([]);
     });
 };
@@ -129,7 +129,7 @@ export const subscribeToProductById = (
         // but for real-time we just map the data.
         callback(mapProduct(snap));
     }, (err) => {
-        console.error('subscribeToProductById error:', err);
+        console.error('subscribeToProductById error');
         callback(undefined);
     });
 };
@@ -151,7 +151,7 @@ export const subscribeToMyProducts = (
         );
         callback(sorted);
     }, (err) => {
-        console.error('subscribeToMyProducts error:', err);
+        console.error('subscribeToMyProducts error');
         callback([]);
     });
 };
@@ -161,6 +161,12 @@ export const createProduct = async (
     productData: Omit<Product, 'id' | 'createdAt' | 'status' | 'viewCount'>
 ): Promise<{ success: boolean; product?: Product; error?: string }> => {
     try {
+        // Validación de longitud de campos
+        const title = (productData as any).title || '';
+        const description = (productData as any).description || '';
+        if (title.length > 200) return { success: false, error: 'El título es muy largo (máx. 200 caracteres)' };
+        if (description.length > 5000) return { success: false, error: 'La descripción es muy larga (máx. 5000 caracteres)' };
+
         let imageUrls: string[] = [];
 
         // Limit to 1 image max
@@ -194,7 +200,7 @@ export const createProduct = async (
         const newProduct = { id: ref.id, ...payload, createdAt: new Date().toISOString() } as unknown as Product;
         return { success: true, product: newProduct };
     } catch (error) {
-        console.error('createProduct error:', error);
+        console.error('createProduct error');
         return { success: false, error: 'No se pudo guardar el producto' };
     }
 };
@@ -208,7 +214,7 @@ export const updateProduct = async (
         await updateDoc(doc(db, COLLECTION, id), data);
         return { success: true };
     } catch (error) {
-        console.error('updateProduct error:', error);
+        console.error('updateProduct error');
         return { success: false, error: 'No se pudo actualizar el producto' };
     }
 };
@@ -243,7 +249,7 @@ export const deleteProduct = async (
         await deleteDoc(ref);
         return { success: true };
     } catch (error) {
-        console.error('deleteProduct error:', error);
+        console.error('deleteProduct error');
         return { success: false, error: 'No se pudo eliminar el producto' };
     }
 };

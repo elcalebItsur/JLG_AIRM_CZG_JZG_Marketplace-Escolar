@@ -84,7 +84,7 @@ export default function EditProductScreen() {
                 router.back();
             }
         } catch (e) {
-            console.error('loadProduct error:', e);
+            console.error('loadProduct error');
             showAlert('Error', 'No se pudieron cargar los datos del producto.');
         } finally {
             setLoading(false);
@@ -190,7 +190,7 @@ export default function EditProductScreen() {
                 showAlert('Error', error || 'No se pudo actualizar el producto.');
             }
         } catch (e) {
-            console.error('handleUpdate error:', e);
+            console.error('handleUpdate error');
             showAlert('Error', 'Ocurrió un error al intentar actualizar.');
         } finally {
             setSaving(false);
