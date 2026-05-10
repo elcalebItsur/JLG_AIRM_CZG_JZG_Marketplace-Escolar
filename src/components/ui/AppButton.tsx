@@ -7,7 +7,10 @@ import {
     ViewStyle,
     TextStyle,
     View,
+    Platform,
+    Animated,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 
@@ -37,31 +40,69 @@ export const AppButton: React.FC<AppButtonProps> = ({
     fullWidth = true,
 }) => {
     const isDisabled = disabled || loading;
+    const [isHovered, setIsHovered] = React.useState(false);
+    const scale = React.useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        if (!isDisabled) {
+            Animated.spring(scale, { toValue: 0.97, useNativeDriver: true }).start();
+            if (Platform.OS !== 'web') {
+                Haptics.selectionAsync();
+            }
+        }
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scale, { toValue: isHovered ? 1.02 : 1, useNativeDriver: true }).start();
+    };
+
+    const handleHoverIn = () => {
+        if (Platform.OS === 'web' && !isDisabled) {
+            setIsHovered(true);
+            Animated.timing(scale, { toValue: 1.02, duration: 200, useNativeDriver: true }).start();
+        }
+    };
+
+    const handleHoverOut = () => {
+        if (Platform.OS === 'web' && !isDisabled) {
+            setIsHovered(false);
+            Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+        }
+    };
 
     return (
-        <TouchableOpacity
-            style={[
-                styles.base,
-                styles[variant],
-                isDisabled && styles.disabled,
-                !fullWidth && styles.inline,
-                style,
-            ]}
-            onPress={onPress}
-            disabled={isDisabled}
-            activeOpacity={0.75}
-        >
-            {loading ? (
-                <ActivityIndicator color={variant === 'ghost' ? colors.primary : '#fff'} size="small" />
-            ) : (
-                <View style={styles.row}>
-                    {icon && <View style={styles.iconSlot}>{icon}</View>}
-                    <Text style={[styles.text, styles[`${variant}Text` as keyof typeof styles] as TextStyle, textStyle]}>
-                        {title}
-                    </Text>
-                </View>
-            )}
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale }], width: fullWidth ? '100%' : 'auto' }}>
+            <TouchableOpacity
+                style={[
+                    styles.base,
+                    styles[variant],
+                    isDisabled && styles.disabled,
+                    !fullWidth && styles.inline,
+                    isHovered && styles[`${variant}Hover` as keyof typeof styles],
+                    style,
+                ]}
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                // @ts-ignore
+                onMouseEnter={handleHoverIn}
+                // @ts-ignore
+                onMouseLeave={handleHoverOut}
+                disabled={isDisabled}
+                activeOpacity={1}
+            >
+                {loading ? (
+                    <ActivityIndicator color={variant === 'ghost' ? colors.primary : (variant === 'accent' ? colors.primaryDark : '#fff')} size="small" />
+                ) : (
+                    <View style={styles.row}>
+                        {icon && <View style={styles.iconSlot}>{icon}</View>}
+                        <Text style={[styles.text, styles[`${variant}Text` as keyof typeof styles] as TextStyle, textStyle]}>
+                            {title}
+                        </Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+        </Animated.View>
     );
 };
 
@@ -96,6 +137,22 @@ const styles = StyleSheet.create({
     },
     accent: {
         backgroundColor: colors.accent,
+    },
+    // Hover variants
+    primaryHover: {
+        backgroundColor: colors.primaryLight,
+    },
+    secondaryHover: {
+        backgroundColor: colors.background,
+    },
+    dangerHover: {
+        backgroundColor: '#C53030',
+    },
+    ghostHover: {
+        backgroundColor: colors.primary + '10',
+    },
+    accentHover: {
+        backgroundColor: '#ECC94B',
     },
     disabled: {
         opacity: 0.5,

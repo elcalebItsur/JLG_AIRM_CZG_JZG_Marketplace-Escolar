@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     ActivityIndicator, TouchableOpacity, Alert, Share,
-    useWindowDimensions, Image, Modal, FlatList, Platform,
+    useWindowDimensions, Image, Modal, FlatList, Platform, Animated,
 } from 'react-native';
 import { showAlert, showConfirm } from '@/utils/crossPlatformAlert';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -63,6 +63,12 @@ export default function ProductDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
+    
+    // Animation refs must be at the top level
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(20)).current;
+    
+    const [isSharing, setIsSharing] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -120,6 +126,23 @@ export default function ProductDetailScreen() {
         if (!user || !product) return;
         hasReviewed(user.id, product.id).then(setAlreadyReviewed);
     }, [user, product?.id]);
+
+    useEffect(() => {
+        if (!loading && product) {
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 600,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 600,
+                    useNativeDriver: true,
+                })
+            ]).start();
+        }
+    }, [loading, product]);
 
     const handleMarkAsSold = async () => {
         if (!product || !user) return;
@@ -309,6 +332,7 @@ export default function ProductDetailScreen() {
         );
     }
 
+
     // ─── Render ────────────────────────────────────────────────────────────────
     return (
         <>
@@ -355,7 +379,10 @@ export default function ProductDetailScreen() {
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={isDesktop ? styles.scrollContentDesktop : undefined}
                 >
-                    <View style={styles.content}>
+                    <Animated.View style={[
+                        styles.content,
+                        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+                    ]}>
                         {/* Price + badges row */}
                         <View style={styles.priceBadgesRow}>
                             <Text style={styles.price}>${product.price.toFixed(2)}</Text>
@@ -392,38 +419,42 @@ export default function ProductDetailScreen() {
                     <View style={styles.divider} />
 
                     {/* Description */}
-                    <Text style={styles.sectionLabel}>Descripción</Text>
-                    <Text style={styles.description}>{product.description}</Text>
+                    <View style={styles.sectionContainer}>
+                        <Text style={styles.sectionLabel}>Descripción</Text>
+                        <Text style={styles.description}>{product.description}</Text>
+                    </View>
 
                     <View style={styles.divider} />
 
                     {/* Seller details */}
-                    <Text style={styles.sectionLabel}>Vendedor</Text>
-                    <View style={styles.sellerCard}>
-                        <UserAvatar 
-                            userId={product.sellerId} 
-                            userName={product.sellerName} 
-                            size={48} 
-                        />
-                        <View style={styles.sellerInfo}>
-                            <Text style={styles.sellerName}>{product.sellerName}</Text>
-                            {(() => {
-                                // Compute live avg from real-time reviews subscription
-                                const liveRating = reviews.length > 0
-                                    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-                                    : (product.sellerRating ?? null);
-                                return liveRating != null ? (
-                                    <View style={styles.ratingRow}>
-                                        <Ionicons name="star" size={13} color={colors.accent} />
-                                        <Text style={styles.ratingText}>
-                                            {liveRating.toFixed(1)}
-                                            {reviews.length > 0 && (
-                                                <Text style={styles.ratingCount}> ({reviews.length})</Text>
-                                            )}
-                                        </Text>
-                                    </View>
-                                ) : null;
-                            })()}
+                    <View style={styles.sectionContainer}>
+                        <Text style={styles.sectionLabel}>Vendedor</Text>
+                        <View style={styles.sellerCard}>
+                            <UserAvatar 
+                                userId={product.sellerId} 
+                                userName={product.sellerName} 
+                                size={48} 
+                            />
+                            <View style={styles.sellerInfo}>
+                                <Text style={styles.sellerName}>{product.sellerName}</Text>
+                                {(() => {
+                                    // Compute live avg from real-time reviews subscription
+                                    const liveRating = reviews.length > 0
+                                        ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+                                        : (product.sellerRating ?? null);
+                                    return liveRating != null ? (
+                                        <View style={styles.ratingRow}>
+                                            <Ionicons name="star" size={13} color={colors.accent} />
+                                            <Text style={styles.ratingText}>
+                                                {liveRating.toFixed(1)}
+                                                {reviews.length > 0 && (
+                                                    <Text style={styles.ratingCount}> ({reviews.length})</Text>
+                                                )}
+                                            </Text>
+                                        </View>
+                                    ) : null;
+                                })()}
+                            </View>
                         </View>
                     </View>
 
@@ -608,8 +639,8 @@ export default function ProductDetailScreen() {
                             ))}
                         </View>
                     )}
-                </View>
-            </ScrollView>
+                    </Animated.View>
+                </ScrollView>
         </View>
 
             {/* Review modal */}
@@ -811,26 +842,27 @@ const styles = StyleSheet.create({
     soldOverlayText: { color: '#fff', fontSize: 32, fontWeight: '900', letterSpacing: 4 },
 
     content: { padding: 20, paddingBottom: 40 },
+    sectionContainer: { marginBottom: 4 },
 
-    priceBadgesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-    price: { fontSize: 28, fontWeight: '800', color: colors.primary },
-    conditionBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
-    conditionText: { fontSize: 12, fontWeight: '700' },
+    priceBadgesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+    price: { fontSize: 32, fontWeight: '900', color: colors.primary, letterSpacing: -0.5 },
+    conditionBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
+    conditionText: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase' },
 
-    title: { fontSize: 20, fontWeight: '700', color: colors.text, lineHeight: 28, marginBottom: 12 },
+    title: { fontSize: 24, fontWeight: '800', color: colors.text, lineHeight: 32, marginBottom: 16 },
 
-    metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-    categoryPill: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 4 },
-    categoryText: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
-    locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    locationText: { ...typography.presets.caption, color: colors.textMuted },
-    viewRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    viewText: { ...typography.presets.caption, color: colors.textMuted },
+    metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 },
+    categoryPill: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 6 },
+    categoryText: { fontSize: 13, fontWeight: '600', textTransform: 'capitalize' },
+    locationRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    locationText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+    viewRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    viewText: { fontSize: 13, color: colors.textMuted },
 
-    divider: { height: 1, backgroundColor: colors.border, marginVertical: 20 },
+    divider: { height: 1.5, backgroundColor: colors.border, marginVertical: 24, opacity: 0.6 },
 
-    sectionLabel: { ...typography.presets.label, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 },
-    description: { ...typography.presets.body, color: colors.text, lineHeight: 24 },
+    sectionLabel: { ...typography.presets.label, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 14, fontWeight: '800' },
+    description: { ...typography.presets.body, color: colors.text, lineHeight: 26, fontSize: 16 },
 
     sellerCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     sellerAvatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center' },

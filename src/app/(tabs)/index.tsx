@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types/role';
 import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
 import { useDebounce } from '@/utils/useDebounce';
+import { SkeletonCard } from '@/components/ui/SkeletonCard';
 
 import type { ComponentProps } from 'react';
 
@@ -66,10 +67,7 @@ export default function HomeScreen() {
     }, []);
 
     const loadProducts = async () => {
-        // No longer used for main loading, but kept for manual refresh if needed
-        // though subscription handles it automatically.
         setRefreshing(true);
-        // Small delay to show refresh animation
         await new Promise(r => setTimeout(r, 800));
         setRefreshing(false);
     };
@@ -85,11 +83,9 @@ export default function HomeScreen() {
 
     // Combined filter: category + search text
     const filteredProducts = products.filter(p => {
-        // Category filter
         if (activeCategory !== 'Todos') {
             if (normalize(p.category ?? '') !== normalize(activeCategory)) return false;
         }
-        // Search text filter
         if (debouncedSearch.trim()) {
             const q = normalize(debouncedSearch.trim());
             const inTitle = normalize(p.title ?? '').includes(q);
@@ -100,8 +96,18 @@ export default function HomeScreen() {
         return true;
     });
 
-
     const firstName = user?.displayName?.split(' ')[0] || 'Estudiante';
+
+    const renderSkeletons = () => {
+        const skeletons = Array(8).fill(null);
+        return (
+            <View style={[styles.list, { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }]}>
+                {skeletons.map((_, i) => (
+                    <SkeletonCard key={`skel-${i}`} numColumns={numColumns} />
+                ))}
+            </View>
+        );
+    };
 
     if (user?.role === Role.ADMIN && !showMarketplace) {
         return (
@@ -126,180 +132,172 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.root}>
-            {/* Sticky top section */}
-            <View style={[
-                styles.topBar,
-                { paddingTop: insets.top + (isLargeScreen ? 6 : 10) },
-                isLargeScreen && styles.topBarWeb
-            ]}>
-                {/* Branding row */}
-                <View style={styles.brandRow}>
-                    <View style={styles.brandLeft}>
-                        <View style={styles.brandIconWrap}>
-                            <Ionicons name="storefront-outline" size={22} color={colors.textOnDark} />
-                        </View>
-                        <View>
-                            <Text style={styles.brandTitle}>Marketplace</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                <Ionicons name="hand-left-outline" size={11} color="rgba(255,255,255,0.6)" />
-                                <Text style={styles.greetingSmall}>Hola, {firstName}</Text>
+            <ScrollView 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[isLargeScreen && styles.scrollContentWeb]}
+            >
+                <View style={[isLargeScreen && styles.mainContentWrapperWeb]}>
+                    {/* Sticky top section - Refined for Web */}
+                    <View style={[
+                        styles.topBar,
+                        { paddingTop: insets.top + (isLargeScreen ? 20 : 10) },
+                        isLargeScreen && styles.topBarWeb
+                    ]}>
+                        {/* Branding row */}
+                        <View style={styles.brandRow}>
+                            <View style={styles.brandLeft}>
+                                {!isLargeScreen && (
+                                    <View style={styles.brandIconWrap}>
+                                        <Ionicons name="storefront-outline" size={22} color={colors.textOnDark} />
+                                    </View>
+                                )}
+                                <View>
+                                    <Text style={[styles.brandTitle, isLargeScreen && styles.brandTitleWeb]}>
+                                        {isLargeScreen ? 'Explorar Productos' : 'Marketplace'}
+                                    </Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                        <Ionicons name="hand-left-outline" size={11} color={isLargeScreen ? colors.textMuted : "rgba(255,255,255,0.6)"} />
+                                        <Text style={[styles.greetingSmall, isLargeScreen && styles.greetingSmallWeb]}>Hola, {firstName}</Text>
+                                    </View>
+                                </View>
+                            </View>
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                                {user?.role === Role.ADMIN && (
+                                    <TouchableOpacity
+                                        style={[styles.notificationBtn, isLargeScreen && styles.notificationBtnWeb]}
+                                        onPress={() => setShowMarketplace(false)}
+                                    >
+                                        <Ionicons name="stats-chart" size={20} color={isLargeScreen ? colors.text : colors.textOnDark} />
+                                    </TouchableOpacity>
+                                )}
+                                <TouchableOpacity
+                                    style={[styles.notificationBtn, isLargeScreen && styles.notificationBtnWeb]}
+                                    onPress={() => router.push('/notifications')}
+                                >
+                                    <Ionicons name="notifications-outline" size={22} color={isLargeScreen ? colors.text : colors.textOnDark} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.profileHeaderBtn, isLargeScreen && styles.profileHeaderBtnWeb]}
+                                    onPress={() => router.push('/(tabs)/profile')}
+                                    activeOpacity={0.7}
+                                >
+                                    {user?.photoURL ? (
+                                        <Image source={{ uri: user.photoURL }} style={styles.profileHeaderImage} />
+                                    ) : (
+                                        <View style={styles.profileHeaderFallback}>
+                                            <Text style={styles.profileHeaderFallbackText}>
+                                                {firstName.charAt(0).toUpperCase()}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
                             </View>
                         </View>
+                        {!isLargeScreen && <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>}
                     </View>
-                    <View style={{ flexDirection: 'row', gap: 10 }}>
-                        {user?.role === Role.ADMIN && (
-                            <TouchableOpacity
-                                style={styles.notificationBtn}
-                                onPress={() => setShowMarketplace(false)}
-                            >
-                                <Ionicons name="stats-chart" size={20} color={colors.textOnDark} />
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity
-                            style={styles.notificationBtn}
-                            onPress={() => router.push('/notifications')}
-                        >
-                            <Ionicons name="notifications-outline" size={22} color={colors.textOnDark} />
-                        </TouchableOpacity>
 
-                        {/* User Profile Shortcut */}
-                        <TouchableOpacity
-                            style={styles.profileHeaderBtn}
-                            onPress={() => router.push('/(tabs)/profile')}
-                            activeOpacity={0.7}
-                        >
-                            {user?.photoURL ? (
-                                <Image source={{ uri: user.photoURL }} style={styles.profileHeaderImage} />
-                            ) : (
-                                <View style={styles.profileHeaderFallback}>
-                                    <Text style={styles.profileHeaderFallbackText}>
-                                        {firstName.charAt(0).toUpperCase()}
-                                    </Text>
-                                </View>
+                    <View style={[styles.searchBarWrapper, isLargeScreen && styles.searchBarWrapperWeb]}>
+                        <View style={[styles.searchBar, isLargeScreen && styles.searchBarWeb]}>
+                            <Ionicons name="search-outline" size={20} color={colors.textMuted} />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Buscar productos, vendedores, categorías..."
+                                placeholderTextColor={colors.textMuted}
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                returnKeyType="search"
+                                autoCorrect={false}
+                                clearButtonMode="while-editing"
+                            />
+                            {searchQuery.length > 0 && (
+                                <TouchableOpacity
+                                    onPress={() => setSearchQuery('')}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                >
+                                    <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                                </TouchableOpacity>
                             )}
-                        </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    <View style={[styles.categoriesSection, isLargeScreen && styles.categoriesSectionWeb]}>
+                        <Text style={styles.categoriesLabel}>Categorías</Text>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.categoriesRow}
+                        >
+                            {CATEGORIES.map(cat => {
+                                const isActive = activeCategory === cat.label;
+                                return (
+                                    <TouchableOpacity
+                                        key={cat.label}
+                                        style={[styles.chip, isActive && styles.chipActive]}
+                                        onPress={() => setActiveCategory(cat.label)}
+                                        activeOpacity={0.75}
+                                    >
+                                        <Ionicons
+                                            name={cat.icon}
+                                            size={14}
+                                            color={isActive ? '#fff' : colors.primary}
+                                        />
+                                        <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                                            {cat.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+
+                    {debouncedSearch.trim().length > 0 && !loading && (
+                        <View style={styles.searchResultsBanner}>
+                            <Text style={styles.searchResultsText}>
+                                {filteredProducts.length === 0
+                                    ? `Sin resultados para "${debouncedSearch.trim()}"`
+                                    : `${filteredProducts.length} resultado${filteredProducts.length !== 1 ? 's' : ''} para "${debouncedSearch.trim()}"`}
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* Products grid */}
+                    <View style={styles.gridContainer}>
+                        {loading ? (
+                            renderSkeletons()
+                        ) : filteredProducts.length === 0 ? (
+                            <View style={styles.center}>
+                                <Ionicons
+                                    name={debouncedSearch.trim() ? 'search-outline' : 'file-tray-outline'}
+                                    size={64}
+                                    color={colors.border}
+                                />
+                                <Text style={styles.emptyTitle}>
+                                    {debouncedSearch.trim() ? 'Sin resultados' : 'Sin productos aquí'}
+                                </Text>
+                                <Text style={styles.emptySubtitle}>
+                                    {debouncedSearch.trim()
+                                        ? 'Intenta con otro término de búsqueda o cambia la categoría.'
+                                        : activeCategory !== 'Todos'
+                                            ? `No hay productos en "${activeCategory}" aún.`
+                                            : 'Sé el primero en publicar algo.'}
+                                </Text>
+                            </View>
+                        ) : (
+                            <View style={[styles.list, { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }]}>
+                                {filteredProducts.map(item => (
+                                    <ProductCard
+                                        key={item.id}
+                                        product={item}
+                                        onPress={() => router.push(`/products/${item.id}`)}
+                                        numColumns={numColumns}
+                                    />
+                                ))}
+                            </View>
+                        )}
                     </View>
                 </View>
-                {/* Subtitle */}
-                {!isLargeScreen && <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>}
-            </View>
-
-            {/* ── Functional search bar ────────────────────────── */}
-            <View style={[styles.searchBarWrapper, isLargeScreen && styles.searchBarWrapperWeb]}>
-                <View style={styles.searchBar}>
-                    <Ionicons name="search-outline" size={18} color={colors.textMuted} />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Buscar productos, vendedores..."
-                        placeholderTextColor={colors.textMuted}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        returnKeyType="search"
-                        autoCorrect={false}
-                        clearButtonMode="while-editing"
-                    />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity
-                            onPress={() => setSearchQuery('')}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        >
-                            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-
-            {/* Category filter section */}
-            <View style={styles.categoriesSection}>
-                <Text style={styles.categoriesLabel}>Categorías</Text>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.categoriesRow}
-                >
-                    {CATEGORIES.map(cat => {
-                        const isActive = activeCategory === cat.label;
-                        return (
-                            <TouchableOpacity
-                                key={cat.label}
-                                style={[styles.chip, isActive && styles.chipActive]}
-                                onPress={() => setActiveCategory(cat.label)}
-                                activeOpacity={0.75}
-                            >
-                                <Ionicons
-                                    name={cat.icon}
-                                    size={14}
-                                    color={isActive ? '#fff' : colors.primary}
-                                />
-                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                                    {cat.label}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </ScrollView>
-            </View>
-
-            {/* ── Results summary when searching ─────────────── */}
-            {debouncedSearch.trim().length > 0 && !loading && (
-                <View style={styles.searchResultsBanner}>
-                    <Text style={styles.searchResultsText}>
-                        {filteredProducts.length === 0
-                            ? `Sin resultados para "${debouncedSearch.trim()}"`
-                            : `${filteredProducts.length} resultado${filteredProducts.length !== 1 ? 's' : ''} para "${debouncedSearch.trim()}"`}
-                    </Text>
-                </View>
-            )}
-
-            {/* Products grid */}
-            {loading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.loadingText}>Cargando productos...</Text>
-                </View>
-            ) : filteredProducts.length === 0 ? (
-                <View style={styles.center}>
-                    <Ionicons
-                        name={debouncedSearch.trim() ? 'search-outline' : 'file-tray-outline'}
-                        size={56}
-                        color={colors.border}
-                    />
-                    <Text style={styles.emptyTitle}>
-                        {debouncedSearch.trim() ? 'Sin resultados' : 'Sin productos aquí'}
-                    </Text>
-                    <Text style={styles.emptySubtitle}>
-                        {debouncedSearch.trim()
-                            ? 'Intenta con otro término de búsqueda o cambia la categoría.'
-                            : activeCategory !== 'Todos'
-                                ? `No hay productos en "${activeCategory}" aún.`
-                                : 'Sé el primero en publicar algo.'}
-                    </Text>
-                </View>
-            ) : (
-                <FlatList
-                    data={filteredProducts}
-                    renderItem={({ item }) => (
-                        <ProductCard
-                            product={item}
-                            onPress={() => router.push(`/products/${item.id}`)}
-                            numColumns={numColumns}
-                        />
-                    )}
-                    keyExtractor={item => item.id}
-                    key={`grid-${numColumns}`} // Force refresh columns
-                    numColumns={numColumns}
-                    contentContainerStyle={styles.list}
-                    columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={handleRefresh}
-                            tintColor={colors.primary}
-                        />
-                    }
-                    showsVerticalScrollIndicator={false}
-                />
-            )}
+            </ScrollView>
         </View>
     );
 }
@@ -309,6 +307,15 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.background,
     },
+    scrollContentWeb: {
+        alignItems: 'center',
+        paddingBottom: 40,
+    },
+    mainContentWrapperWeb: {
+        width: '100%',
+        maxWidth: 1400,
+        paddingHorizontal: 20,
+    },
     topBar: {
         backgroundColor: colors.primary,
         paddingHorizontal: 20,
@@ -317,7 +324,8 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     topBarWeb: {
-        paddingTop: 8,
+        backgroundColor: 'transparent',
+        paddingHorizontal: 0,
         paddingBottom: 10,
     },
     brandRow: {
@@ -346,10 +354,20 @@ const styles = StyleSheet.create({
         letterSpacing: -0.3,
         lineHeight: 20,
     },
+    brandTitleWeb: {
+        color: colors.text,
+        fontSize: 24,
+        fontWeight: '900',
+        letterSpacing: -0.8,
+    },
     greetingSmall: {
         color: 'rgba(255,255,255,0.65)',
         fontSize: 11,
         fontWeight: '500',
+    },
+    greetingSmallWeb: {
+        color: colors.textMuted,
+        fontSize: 13,
     },
     greetingBig: {
         color: '#fff',
@@ -366,6 +384,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    notificationBtnWeb: {
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
     profileHeaderBtn: {
         width: 36,
         height: 36,
@@ -373,6 +396,9 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderWidth: 1.5,
         borderColor: 'rgba(255,255,255,0.3)',
+    },
+    profileHeaderBtnWeb: {
+        borderColor: colors.border,
     },
     profileHeaderImage: {
         width: '100%',
@@ -396,30 +422,44 @@ const styles = StyleSheet.create({
         paddingBottom: 16,
     },
     searchBarWrapperWeb: {
-        paddingBottom: 10,
+        backgroundColor: 'transparent',
+        paddingHorizontal: 0,
+        paddingBottom: 20,
     },
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
         backgroundColor: colors.surface,
         borderRadius: 14,
         paddingHorizontal: 14,
-        paddingVertical: 10,
+        paddingVertical: 12,
+    },
+    searchBarWeb: {
+        borderRadius: 16,
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        paddingVertical: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+        elevation: 2,
     },
     searchInput: {
         flex: 1,
-        fontSize: 15,
+        fontSize: 16,
         color: colors.text,
         paddingVertical: 2,
     },
-    // ── Search results banner ─────────────────────────────────────────
     searchResultsBanner: {
         backgroundColor: colors.infoLight,
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        borderRadius: 12,
+        marginBottom: 16,
     },
     searchResultsText: {
         ...typography.presets.caption,
@@ -433,6 +473,12 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
     },
+    categoriesSectionWeb: {
+        backgroundColor: 'transparent',
+        borderBottomWidth: 0,
+        paddingTop: 0,
+        marginBottom: 10,
+    },
     categoriesLabel: {
         fontSize: 11,
         fontWeight: '700',
@@ -443,18 +489,18 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     categoriesRow: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 0,
         paddingBottom: 12,
-        gap: 8,
+        gap: 10,
     },
     chip: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 5,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: colors.background,
+        gap: 6,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 22,
+        backgroundColor: colors.surface,
         borderWidth: 1.5,
         borderColor: colors.border,
     },
@@ -463,7 +509,7 @@ const styles = StyleSheet.create({
         borderColor: colors.primary,
     },
     chipText: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '600',
         color: colors.textSecondary,
     },
@@ -471,8 +517,11 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '700',
     },
+    gridContainer: {
+        marginTop: 10,
+    },
     list: {
-        paddingHorizontal: 12,
+        paddingHorizontal: 0,
         paddingBottom: 20,
     },
     columnWrapper: {
@@ -482,24 +531,26 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 8,
+        gap: 12,
+        paddingVertical: 60,
     },
     loadingText: {
         ...typography.presets.caption,
         color: colors.textMuted,
         marginTop: 8,
     },
-
     emptyTitle: {
         ...typography.presets.sectionTitle,
         color: colors.text,
-        marginTop: 8,
+        fontSize: 22,
+        marginTop: 12,
     },
     emptySubtitle: {
         ...typography.presets.body,
         color: colors.textSecondary,
         textAlign: 'center',
         paddingHorizontal: 40,
+        maxWidth: 400,
     },
     marketplaceToggle: {
         flexDirection: 'row',

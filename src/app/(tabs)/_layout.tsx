@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Platform, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { colors } from '@/theme/colors';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToChats } from '@/services/chatService';
@@ -16,11 +16,13 @@ export default function TabLayout() {
 
     const { width } = useWindowDimensions();
     const isWeb = Platform.OS === 'web' && width > 800;
+    const router = useRouter();
+    const segments = useSegments();
+    const currentTab = segments[segments.length - 1];
 
     useEffect(() => {
         if (!user) return;
 
-        // Subscribe to chats for message badge
         const unsubChats = subscribeToChats(user.id, (chats: Chat[]) => {
             const count = chats
                 .filter(c => c.lastSenderId !== user.id)
@@ -28,7 +30,6 @@ export default function TabLayout() {
             setTotalUnreadChats(count);
         });
 
-        // Subscribe to notifications for alert badge
         const unsubNotifs = subscribeToNotifications(user.id, (notifs: AppNotification[]) => {
             const count = notifs.filter(n => !n.isRead).length;
             setUnreadNotifs(count);
@@ -40,7 +41,25 @@ export default function TabLayout() {
         };
     }, [user]);
 
-    return (
+    const SidebarItem = ({ name, icon, label, focused, badge, route }: { name: string, icon: any, label: string, focused: boolean, badge?: number, route: string }) => (
+        <TouchableOpacity 
+            style={[styles.sidebarItem, focused && styles.sidebarItemActive]}
+            onPress={() => router.push(route as any)}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.sidebarIconWrap, focused && styles.sidebarIconWrapActive]}>
+                <Ionicons name={focused ? icon : `${icon}-outline`} size={22} color={focused ? colors.primary : colors.textSecondary} />
+                {badge && badge > 0 ? (
+                    <View style={styles.sidebarBadge}>
+                        <Text style={styles.sidebarBadgeText}>{badge > 9 ? '9+' : badge}</Text>
+                    </View>
+                ) : null}
+            </View>
+            <Text style={[styles.sidebarLabel, focused && styles.sidebarLabelActive]}>{label}</Text>
+        </TouchableOpacity>
+    );
+
+    const content = (
         <Tabs
             screenOptions={{
                 headerShown: true,
@@ -58,9 +77,9 @@ export default function TabLayout() {
                 tabBarActiveTintColor: colors.primary,
                 tabBarInactiveTintColor: colors.textMuted,
                 tabBarStyle: {
+                    display: isWeb ? 'none' : 'flex',
                     backgroundColor: colors.surface,
                     borderTopWidth: 0,
-                    // Shadow for iOS / elevation for Android
                     ...Platform.select({
                         ios: {
                             shadowColor: '#000',
@@ -71,18 +90,15 @@ export default function TabLayout() {
                         android: { elevation: 12 },
                         web: { boxShadow: '0 -2px 12px rgba(0,0,0,0.07)' },
                     }),
-                    paddingBottom: isWeb ? 4 : (Platform.OS === 'ios' ? 22 : 12),
-                    paddingTop: isWeb ? 4 : 8,
-                    height: isWeb ? 56 : (Platform.OS === 'ios' ? 84 : 72),
+                    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
+                    paddingTop: 8,
+                    height: Platform.OS === 'ios' ? 84 : 72,
                 },
                 tabBarLabelStyle: {
-                    fontSize: isWeb ? 10 : 11,
+                    fontSize: 11,
                     fontWeight: '600',
-                    marginTop: isWeb ? 0 : 2,
+                    marginTop: 2,
                 },
-                tabBarIconStyle: {
-                    marginBottom: isWeb ? -2 : 0,
-                }
             }}
         >
             <Tabs.Screen
@@ -94,7 +110,7 @@ export default function TabLayout() {
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
                             name={focused ? 'home' : 'home-outline'}
-                            size={isWeb ? 20 : 24}
+                            size={24}
                             color={color}
                         />
                     ),
@@ -109,11 +125,10 @@ export default function TabLayout() {
                         <View style={[
                             styles.publishIcon, 
                             focused && styles.publishIconActive,
-                            isWeb && styles.publishIconWeb
                         ]}>
                             <Ionicons
                                 name="add"
-                                size={isWeb ? 22 : 28}
+                                size={28}
                                 color={focused ? colors.primary : colors.textOnDark}
                             />
                         </View>
@@ -129,7 +144,7 @@ export default function TabLayout() {
                         <View>
                             <Ionicons
                                 name={focused ? 'chatbubbles' : 'chatbubbles-outline'}
-                                size={isWeb ? 20 : 24}
+                                size={24}
                                 color={color}
                             />
                             {totalUnreadChats > 0 && (
@@ -152,7 +167,7 @@ export default function TabLayout() {
                         <View>
                             <Ionicons
                                 name={focused ? 'person' : 'person-outline'}
-                                size={isWeb ? 20 : 24}
+                                size={24}
                                 color={color}
                             />
                             {unreadNotifs > 0 && (
@@ -168,9 +183,181 @@ export default function TabLayout() {
             />
         </Tabs>
     );
+
+    if (isWeb) {
+        return (
+            <View style={styles.webContainer}>
+                <View style={styles.sidebar}>
+                    <View style={styles.sidebarHeader}>
+                        <View style={styles.logoWrap}>
+                            <Ionicons name="storefront" size={24} color="#fff" />
+                        </View>
+                        <View>
+                            <Text style={styles.logoText}>Marketplace</Text>
+                            <Text style={styles.logoSubtext}>ITSUR</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.sidebarContent}>
+                        <SidebarItem 
+                            name="index" 
+                            icon="home" 
+                            label="Inicio" 
+                            focused={currentTab === 'index' || currentTab === '(tabs)'} 
+                            route="/(tabs)" 
+                        />
+                        <SidebarItem 
+                            name="publish" 
+                            icon="add-circle" 
+                            label="Vender" 
+                            focused={currentTab === 'publish'} 
+                            route="/(tabs)/publish" 
+                        />
+                        <SidebarItem 
+                            name="chats" 
+                            icon="chatbubbles" 
+                            label="Chats" 
+                            focused={currentTab === 'chats'} 
+                            badge={totalUnreadChats} 
+                            route="/(tabs)/chats" 
+                        />
+                        <SidebarItem 
+                            name="profile" 
+                            icon="person" 
+                            label="Mi Perfil" 
+                            focused={currentTab === 'profile'} 
+                            badge={unreadNotifs} 
+                            route="/(tabs)/profile" 
+                        />
+                    </View>
+
+                    <View style={styles.sidebarFooter}>
+                        <Text style={styles.footerText}>© 2024 Marketplace ITSUR</Text>
+                        <Text style={styles.footerSubtext}>v2.1.0 Premium</Text>
+                    </View>
+                </View>
+                <View style={styles.webMainContent}>
+                    {content}
+                </View>
+            </View>
+        );
+    }
+
+    return content;
 }
 
 const styles = StyleSheet.create({
+    webContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: colors.background,
+    },
+    sidebar: {
+        width: 280,
+        backgroundColor: colors.surface,
+        borderRightWidth: 1,
+        borderRightColor: colors.border,
+        paddingVertical: 32,
+        paddingHorizontal: 20,
+        justifyContent: 'space-between',
+        // Optional subtle shadow for depth
+        boxShadow: '4px 0 10px rgba(0,0,0,0.02)',
+    },
+    sidebarHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        marginBottom: 48,
+        paddingHorizontal: 8,
+    },
+    logoWrap: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    logoText: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: colors.primary,
+        letterSpacing: -0.5,
+    },
+    logoSubtext: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: colors.textMuted,
+        marginTop: -2,
+    },
+    sidebarContent: {
+        flex: 1,
+        gap: 8,
+    },
+    sidebarItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        gap: 12,
+    },
+    sidebarItemActive: {
+        backgroundColor: colors.primary + '10',
+    },
+    sidebarIconWrap: {
+        width: 24,
+        alignItems: 'center',
+    },
+    sidebarIconWrapActive: {
+        // any active icon wrap styles
+    },
+    sidebarLabel: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: colors.textSecondary,
+    },
+    sidebarLabelActive: {
+        color: colors.primary,
+        fontWeight: '700',
+    },
+    sidebarBadge: {
+        position: 'absolute',
+        top: -8,
+        right: -10,
+        backgroundColor: colors.error,
+        borderRadius: 10,
+        minWidth: 18,
+        height: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    sidebarBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: '800',
+    },
+    sidebarFooter: {
+        paddingTop: 20,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        paddingHorizontal: 8,
+    },
+    footerText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: colors.textMuted,
+    },
+    footerSubtext: {
+        fontSize: 11,
+        color: colors.textMuted,
+        opacity: 0.7,
+        marginTop: 2,
+    },
+    webMainContent: {
+        flex: 1,
+    },
     publishIcon: {
         width: 42,
         height: 42,
@@ -184,12 +371,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4,
         shadowRadius: 8,
         elevation: 6,
-    },
-    publishIconWeb: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        marginTop: -4,
     },
     publishIconActive: {
         backgroundColor: colors.accentLight,
@@ -214,4 +395,3 @@ const styles = StyleSheet.create({
         fontWeight: '800',
     },
 });
-

@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     Animated,
     useWindowDimensions,
+    Platform,
 } from 'react-native';
 import { Product } from '@/types/product';
 import { colors } from '@/theme/colors';
@@ -37,10 +38,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     numColumns = 2
 }) => {
     const scale = useRef(new Animated.Value(1)).current;
+    const hoverScale = useRef(new Animated.Value(1)).current;
+    const [isHovered, setIsHovered] = React.useState(false);
     const { width } = useWindowDimensions();
 
     // Responsive card width calculation
-    const horizontalPadding = 24; // (list paddingHorizontal 12)*2
+    const horizontalPadding = 24; 
     const gap = 10;
     const cardWidth = (width - horizontalPadding - (numColumns - 1) * gap) / numColumns;
 
@@ -49,6 +52,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     };
     const handlePressOut = () => {
         Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50 }).start();
+    };
+
+    const handleHoverIn = () => {
+        if (Platform.OS === 'web') {
+            setIsHovered(true);
+            Animated.timing(hoverScale, { toValue: 1.02, duration: 200, useNativeDriver: true }).start();
+        }
+    };
+
+    const handleHoverOut = () => {
+        if (Platform.OS === 'web') {
+            setIsHovered(false);
+            Animated.timing(hoverScale, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+        }
     };
 
     const categoryKey = product.category?.toLowerCase() || 'otros';
@@ -63,9 +80,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             onPress={onPress}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
+            // @ts-ignore - Web only props
+            onMouseEnter={handleHoverIn}
+            onMouseLeave={handleHoverOut}
             activeOpacity={1}
         >
-            <Animated.View style={[styles.card, { width: cardWidth, transform: [{ scale }] }]}>
+            <Animated.View 
+                style={[
+                    styles.card, 
+                    { 
+                        width: cardWidth, 
+                        transform: [{ scale: Animated.multiply(scale, hoverScale) }],
+                        shadowOpacity: isHovered ? 0.15 : 0.08,
+                        elevation: isHovered ? 8 : 4,
+                        borderColor: isHovered ? colors.primary + '40' : colors.border,
+                    }
+                ]}
+            >
                 {/* Image / Fallback */}
                 <View style={styles.imageContainer}>
                     {imageUri && (imageUri.startsWith('data:') || imageUri.startsWith('http')) ? (
@@ -140,10 +171,12 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         marginBottom: 12,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: colors.border,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
-        shadowRadius: 8,
+        shadowRadius: 12,
         elevation: 4,
     },
     imageContainer: {
@@ -191,7 +224,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     content: {
-        padding: 10,
+        padding: 12,
     },
     categoryPill: {
         flexDirection: 'row',
@@ -210,8 +243,8 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     title: {
-        fontSize: 13,
-        fontWeight: '600',
+        fontSize: 14,
+        fontWeight: '700',
         color: colors.text,
         lineHeight: 18,
         marginBottom: 8,
