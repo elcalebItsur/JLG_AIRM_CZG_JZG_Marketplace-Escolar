@@ -164,7 +164,7 @@ export default function ProductDetailScreen() {
             const { success: stockSuccess, error: stockError } = await reduceProductStock(product.id, saleQuantity);
             
             if (!stockSuccess) {
-                Alert.alert('Error', stockError || 'No se pudo actualizar el stock.');
+                showAlert('Error', stockError || 'No se pudo actualizar el stock.');
                 return;
             }
 
@@ -193,15 +193,14 @@ export default function ProductDetailScreen() {
             }
 
             // Show success message
-            Alert.alert(
+            showAlert(
                 '¡Venta registrada!',
-                `Has vendido ${saleQuantity} unidad(es) de "${product.title}".${buyerName ? `\nComprador: ${buyerName}` : ''}`,
-                [{ text: 'OK' }]
+                `Has vendido ${saleQuantity} unidad(es) de "${product.title}".${buyerName ? `\nComprador: ${buyerName}` : ''}`
             );
             setSaleQuantity(1); // Reset
         } catch (e) {
             console.error('doSell error');
-            Alert.alert('Error', 'Ocurrió un error al marcar como vendido.');
+            showAlert('Error', 'Ocurrió un error al marcar como vendido.');
         } finally {
             setUpdatingStatus(false);
         }
@@ -772,7 +771,7 @@ export default function ProductDetailScreen() {
                                             buyerName: 'Comprador externo',
                                             quantity: saleQuantity,
                                         });
-                                        Alert.alert('Venta registrada', 'Stock actualizado correctamente.');
+                                        showAlert('Venta registrada', 'Stock actualizado correctamente.');
                                     }
                                     setUpdatingStatus(false);
                                 }
