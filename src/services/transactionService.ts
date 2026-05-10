@@ -138,32 +138,41 @@ export async function getChatBuyersForProduct(
     productId: string
 ): Promise<Array<{ uid: string; name: string }>> {
     try {
-        // Query chats where seller is involved AND the current product is/was the topic.
-        // Note: since chat IDs are now per user-pair, a chat can be reused across products.
-        // We rely on the `productId` field stored on the chat document.
-        const snap = await getDocs(
-            query(
-                collection(db, 'chats'),
-                where('participants', 'array-contains', sellerId),
-                where('discussedProductIds', 'array-contains', productId),
-            )
+        // To satisfy security rules, we MUST filter by participants array contains current user ID.
+        // We fetch ALL chats for the seller and filter by product in memory.
+        // This avoids "Missing Permissions" and "Multiple array-contains" errors.
+        const q = query(
+            collection(db, 'chats'),
+            where('participants', 'array-contains', sellerId)
         );
-        // De-duplicate and find the "other" person (the potential buyer)
+
+        const snap = await getDocs(q);
         const seen = new Set<string>();
-        return snap.docs.reduce<Array<{ uid: string; name: string }>>((acc, d) => {
+        const acc: Array<{ uid: string; name: string }> = [];
+
+        snap.docs.forEach(d => {
             const data = d.data();
-            const participants = data.participants as string[];
+            
+            // Check if this chat is relevant to the product
+            const isRelevant = 
+                data.productId === productId || 
+                (data.discussedProductIds && Array.isArray(data.discussedProductIds) && data.discussedProductIds.includes(productId));
+
+            if (!isRelevant) return;
+
+            const participants = (data.participants || []) as string[];
             const otherId = participants.find(id => id !== sellerId);
             
-            if (!otherId || seen.has(otherId)) return acc;
+            if (!otherId || seen.has(otherId)) return;
             seen.add(otherId);
             
             const name = (data.participantsMap as Record<string, string>)[otherId] ?? 'Interesado';
             acc.push({ uid: otherId, name });
-            return acc;
-        }, []);
-    } catch (err) {
-        console.error('getChatBuyersForProduct error');
+        });
+
+        return acc;
+    } catch (err: any) {
+        console.error('getChatBuyersForProduct error:', err);
         return [];
     }
 }

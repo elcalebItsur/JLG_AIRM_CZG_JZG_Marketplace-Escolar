@@ -132,62 +132,9 @@ export default function ProductDetailScreen() {
             console.warn('Could not fetch chat buyers:', e);
         }
 
-        const doSell = async (buyerId?: string, buyerName?: string) => {
-            setUpdatingStatus(true);
-            try {
-                // 1. Reduce stock
-                const { success: stockSuccess, error: stockError } = await reduceProductStock(product.id, saleQuantity);
-                
-                if (!stockSuccess) {
-                    Alert.alert('Error', stockError || 'No se pudo actualizar el stock.');
-                    return;
-                }
-
-                // Create transaction record
-                await createTransaction({
-                    productId: product.id,
-                    productTitle: product.title,
-                    productImage: product.images?.[0],
-                    price: product.price,
-                    sellerId: user.id,
-                    sellerName: user.displayName,
-                    buyerId: buyerId ?? 'anonymous',
-                    buyerName: buyerName ?? 'Comprador externo',
-                    quantity: saleQuantity,
-                });
-
-                // Notify the buyer if identified
-                if (buyerId) {
-                    createNotification({
-                        userId: buyerId,
-                        type: 'sold',
-                        title: '¡Tu compra fue confirmada!',
-                        body: `El vendedor marcó ${saleQuantity > 1 ? `${saleQuantity} unidades de` : ''} "${product.title}" como vendido para ti.`,
-                        relatedId: product.id,
-                    });
-                }
-
-                // Show success message
-                Alert.alert(
-                    '¡Venta registrada!',
-                    `Has vendido ${saleQuantity} unidad(es) de "${product.title}".${buyerName ? `\nComprador: ${buyerName}` : ''}`,
-                    [{ text: 'OK' }]
-                );
-                setSaleQuantity(1); // Reset
-            } catch (e) {
-                console.error('doSell error');
-                Alert.alert('Error', 'Ocurrió un error al marcar como vendido.');
-            } finally {
-                setUpdatingStatus(false);
-            }
-        };
-
         if (buyers.length === 0) {
             // No chat buyers — prompt for quantity if stock > 1
             if ((product.stock ?? 1) > 1) {
-                // For simplicity, on multiple units we suggest going through the picker 
-                // or we could show a quantity prompt here. 
-                // Let's use the picker modal even with 0 buyers if stock > 1 to select quantity.
                 setChatBuyers([]);
                 setShowBuyerModal(true);
             } else {
@@ -206,6 +153,57 @@ export default function ProductDetailScreen() {
             setChatBuyers(buyers);
             setSaleQuantity(1);
             setShowBuyerModal(true);
+        }
+    };
+
+    const doSell = async (buyerId?: string, buyerName?: string) => {
+        if (!product || !user) return;
+        setUpdatingStatus(true);
+        try {
+            // 1. Reduce stock
+            const { success: stockSuccess, error: stockError } = await reduceProductStock(product.id, saleQuantity);
+            
+            if (!stockSuccess) {
+                Alert.alert('Error', stockError || 'No se pudo actualizar el stock.');
+                return;
+            }
+
+            // Create transaction record
+            await createTransaction({
+                productId: product.id,
+                productTitle: product.title,
+                productImage: product.images?.[0],
+                price: product.price,
+                sellerId: user.id,
+                sellerName: user.displayName,
+                buyerId: buyerId ?? 'anonymous',
+                buyerName: buyerName ?? 'Comprador externo',
+                quantity: saleQuantity,
+            });
+
+            // Notify the buyer if identified
+            if (buyerId) {
+                createNotification({
+                    userId: buyerId,
+                    type: 'sold',
+                    title: '¡Tu compra fue confirmada!',
+                    body: `El vendedor marcó ${saleQuantity > 1 ? `${saleQuantity} unidades de` : ''} "${product.title}" como vendido para ti.`,
+                    relatedId: product.id,
+                });
+            }
+
+            // Show success message
+            Alert.alert(
+                '¡Venta registrada!',
+                `Has vendido ${saleQuantity} unidad(es) de "${product.title}".${buyerName ? `\nComprador: ${buyerName}` : ''}`,
+                [{ text: 'OK' }]
+            );
+            setSaleQuantity(1); // Reset
+        } catch (e) {
+            console.error('doSell error');
+            Alert.alert('Error', 'Ocurrió un error al marcar como vendido.');
+        } finally {
+            setUpdatingStatus(false);
         }
     };
 
