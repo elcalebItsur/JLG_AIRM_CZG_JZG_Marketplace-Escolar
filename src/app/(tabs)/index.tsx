@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     View, FlatList, StyleSheet, ActivityIndicator,
     Text, TouchableOpacity, ScrollView, RefreshControl,
-    TextInput, useWindowDimensions, Platform, Image,
+    TextInput, useWindowDimensions, Platform, Image, Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +38,10 @@ export default function HomeScreen() {
     const [activeCategory, setActiveCategory] = useState<string>('Todos');
     const [showMarketplace, setShowMarketplace] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
+    const [selectedCondition, setSelectedCondition] = useState<string | null>(null);
     const debouncedSearch = useDebounce(searchQuery, 300);
     const { user } = useAuth();
     const router = useRouter();
@@ -81,11 +85,13 @@ export default function HomeScreen() {
     const normalize = (s: string) =>
         s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-    // Combined filter: category + search text
+    // Combined filter: category + search text + price + condition
     const filteredProducts = products.filter(p => {
+        // Category
         if (activeCategory !== 'Todos') {
             if (normalize(p.category ?? '') !== normalize(activeCategory)) return false;
         }
+        // Search text
         if (debouncedSearch.trim()) {
             const q = normalize(debouncedSearch.trim());
             const inTitle = normalize(p.title ?? '').includes(q);
@@ -93,6 +99,13 @@ export default function HomeScreen() {
             const inSeller = normalize(p.sellerName ?? '').includes(q);
             if (!inTitle && !inDesc && !inSeller) return false;
         }
+        // Min Price
+        if (minPrice && p.price < parseFloat(minPrice)) return false;
+        // Max Price
+        if (maxPrice && p.price > parseFloat(maxPrice)) return false;
+        // Condition
+        if (selectedCondition && p.condition !== selectedCondition) return false;
+
         return true;
     });
 
@@ -220,27 +233,53 @@ export default function HomeScreen() {
                     <View style={[isLargeScreen && styles.twoColumnLayout]}>
                         <View style={[isLargeScreen && styles.leftColumn]}>
                             <View style={[styles.searchBarWrapper, isLargeScreen && styles.searchBarWrapperWeb]}>
-                                <View style={[styles.searchBar, isLargeScreen && styles.searchBarWeb]}>
-                                    <Ionicons name="search-outline" size={20} color={colors.textMuted} />
-                                    <TextInput
-                                        style={styles.searchInput}
-                                        placeholder="Buscar productos, vendedores, categorías..."
-                                        placeholderTextColor={colors.textMuted}
-                                        value={searchQuery}
-                                        onChangeText={setSearchQuery}
-                                        returnKeyType="search"
-                                        autoCorrect={false}
-                                        clearButtonMode="while-editing"
-                                    />
-                                    {searchQuery.length > 0 && (
-                                        <TouchableOpacity
-                                            onPress={() => setSearchQuery('')}
-                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                        >
-                                            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-                                        </TouchableOpacity>
-                                    )}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                    <View style={[styles.searchBar, { flex: 1 }, isLargeScreen && styles.searchBarWeb]}>
+                                        <Ionicons name="search-outline" size={20} color={colors.textMuted} />
+                                        <TextInput
+                                            style={styles.searchInput}
+                                            placeholder="Buscar productos..."
+                                            placeholderTextColor={colors.textMuted}
+                                            value={searchQuery}
+                                            onChangeText={setSearchQuery}
+                                            returnKeyType="search"
+                                            autoCorrect={false}
+                                        />
+                                        {searchQuery.length > 0 && (
+                                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                    <TouchableOpacity 
+                                        style={[styles.filterBtn, (minPrice || maxPrice || selectedCondition) && styles.filterBtnActive]}
+                                        onPress={() => setShowFilters(true)}
+                                    >
+                                        <Ionicons name="options-outline" size={20} color={(minPrice || maxPrice || selectedCondition) ? '#fff' : colors.primary} />
+                                        {isLargeScreen && <Text style={[styles.filterBtnText, (minPrice || maxPrice || selectedCondition) && { color: '#fff' }]}>Filtros</Text>}
+                                    </TouchableOpacity>
                                 </View>
+                                
+                                {/* Search Suggestions Dropdown */}
+                                {searchQuery.length > 1 && (
+                                    <View style={styles.suggestionsBox}>
+                                        {CATEGORIES.filter(c => c.label !== 'Todos' && normalize(c.label).includes(normalize(searchQuery)))
+                                            .map(c => (
+                                                <TouchableOpacity 
+                                                    key={c.label} 
+                                                    style={styles.suggestionItem}
+                                                    onPress={() => {
+                                                        setActiveCategory(c.label);
+                                                        setSearchQuery('');
+                                                    }}
+                                                >
+                                                    <Ionicons name={c.icon} size={16} color={colors.textMuted} />
+                                                    <Text style={styles.suggestionText}>Buscar en <Text style={{ fontWeight: '700' }}>{c.label}</Text></Text>
+                                                </TouchableOpacity>
+                                            ))
+                                        }
+                                    </View>
+                                )}
                             </View>
 
                             <View style={[styles.categoriesSection, isLargeScreen && styles.categoriesSectionWeb]}>
@@ -362,6 +401,91 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </ScrollView>
+
+            {/* Advanced Filters Modal */}
+            <Modal
+                visible={showFilters}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowFilters(false)}
+            >
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.filterSheet}>
+                        <View style={styles.sheetHeader}>
+                            <Text style={styles.sheetTitle}>Filtros Avanzados</Text>
+                            <TouchableOpacity onPress={() => setShowFilters(false)}>
+                                <Ionicons name="close" size={24} color={colors.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.sheetContent}>
+                            {/* Price Range */}
+                            <Text style={styles.filterLabel}>Rango de Precio</Text>
+                            <View style={styles.priceInputs}>
+                                <View style={styles.priceField}>
+                                    <Text style={styles.pricePrefix}>$</Text>
+                                    <TextInput
+                                        style={styles.priceInput}
+                                        placeholder="Min"
+                                        keyboardType="numeric"
+                                        value={minPrice}
+                                        onChangeText={setMinPrice}
+                                    />
+                                </View>
+                                <View style={styles.priceField}>
+                                    <Text style={styles.pricePrefix}>$</Text>
+                                    <TextInput
+                                        style={styles.priceInput}
+                                        placeholder="Max"
+                                        keyboardType="numeric"
+                                        value={maxPrice}
+                                        onChangeText={setMaxPrice}
+                                    />
+                                </View>
+                            </View>
+
+                            {/* Condition */}
+                            <Text style={styles.filterLabel}>Estado del Producto</Text>
+                            <View style={styles.conditionRow}>
+                                {['new', 'good', 'fair'].map(cond => {
+                                    const labels: any = { new: 'Nuevo', good: 'Buen estado', fair: 'Desgastado' };
+                                    const isActive = selectedCondition === cond;
+                                    return (
+                                        <TouchableOpacity
+                                            key={cond}
+                                            style={[styles.conditionChip, isActive && styles.conditionChipActive]}
+                                            onPress={() => setSelectedCondition(isActive ? null : cond)}
+                                        >
+                                            <Text style={[styles.conditionChipText, isActive && styles.conditionChipTextActive]}>
+                                                {labels[cond]}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+
+                            <TouchableOpacity 
+                                style={styles.resetBtn}
+                                onPress={() => {
+                                    setMinPrice('');
+                                    setMaxPrice('');
+                                    setSelectedCondition(null);
+                                    setActiveCategory('Todos');
+                                }}
+                            >
+                                <Text style={styles.resetBtnText}>Limpiar todos los filtros</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+
+                        <TouchableOpacity 
+                            style={styles.applyBtn}
+                            onPress={() => setShowFilters(false)}
+                        >
+                            <Text style={styles.applyBtnText}>Ver resultados</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -764,5 +888,169 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
         color: colors.primary,
+    },
+
+    // ─── Filter & Search Phase 2 Styles ─────────────────────────────────
+    filterBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: colors.surface,
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        paddingHorizontal: 16,
+        height: 50,
+        borderRadius: 14,
+    },
+    filterBtnActive: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
+    },
+    filterBtnText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: colors.primary,
+    },
+    suggestionsBox: {
+        position: 'absolute',
+        top: 60,
+        left: 0,
+        right: 0,
+        backgroundColor: colors.surface,
+        borderRadius: 12,
+        padding: 8,
+        zIndex: 100,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    suggestionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        padding: 12,
+        borderRadius: 8,
+    },
+    suggestionText: {
+        fontSize: 14,
+        color: colors.text,
+    },
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    filterSheet: {
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        padding: 24,
+        maxHeight: '80%',
+    },
+    sheetHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    sheetTitle: {
+        fontSize: 20,
+        fontWeight: '900',
+        color: colors.text,
+    },
+    sheetContent: {
+        marginBottom: 20,
+    },
+    filterLabel: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: colors.text,
+        marginBottom: 12,
+        marginTop: 16,
+    },
+    priceInputs: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    priceField: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.backgroundAlt,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        height: 50,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    pricePrefix: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: colors.textSecondary,
+        marginRight: 4,
+    },
+    priceInput: {
+        flex: 1,
+        fontSize: 15,
+        color: colors.text,
+    },
+    conditionRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+    },
+    conditionChip: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+        backgroundColor: colors.backgroundAlt,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    conditionChipActive: {
+        backgroundColor: colors.primary + '15',
+        borderColor: colors.primary,
+    },
+    conditionChipText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.textSecondary,
+    },
+    conditionChipTextActive: {
+        color: colors.primary,
+        fontWeight: '700',
+    },
+    applyBtn: {
+        backgroundColor: colors.primary,
+        height: 56,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 10,
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    applyBtnText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    resetBtn: {
+        alignSelf: 'center',
+        marginTop: 30,
+        padding: 10,
+    },
+    resetBtnText: {
+        fontSize: 14,
+        color: colors.error,
+        fontWeight: '600',
+        textDecorationLine: 'underline',
     },
 });
