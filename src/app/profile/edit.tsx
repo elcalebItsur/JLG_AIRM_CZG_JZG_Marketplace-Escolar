@@ -15,12 +15,14 @@ import { updateUserProfile } from '@/services/userService';
 import { showAlert } from '@/utils/crossPlatformAlert';
 
 const MAJORS = [
-    'Ingeniería en Sistemas',
+    'Ingeniería en Sistemas Computacionales',
     'Ingeniería Industrial',
     'Ingeniería Electrónica',
-    'Ingeniería Mecatrónica',
-    'Licenciatura en Administración',
+    'Ingeniería en Gestión Empresarial',
+    'Ingeniería en Sistemas Automotrices',
     'Gastronomía',
+    'Ingeniería en Semiconductores',
+    'Ingeniería Ambiental',
     'Otra'
 ];
 
@@ -76,12 +78,12 @@ export default function EditProfileScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
-            <Stack.Screen options={{ 
+            <Stack.Screen options={{
                 title: 'Editar Perfil',
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: colors.background }
             }} />
-            
+
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
@@ -131,11 +133,11 @@ export default function EditProfileScreen() {
                         placeholder="Selecciona o escribe tu carrera"
                         leftIcon={<Ionicons name="school-outline" size={18} color={colors.textMuted} />}
                     />
-                    
+
                     <View style={styles.majorChips}>
                         {MAJORS.map(m => (
-                            <TouchableOpacity 
-                                key={m} 
+                            <TouchableOpacity
+                                key={m}
                                 style={[styles.chip, major === m && styles.chipActive]}
                                 onPress={() => setMajor(m)}
                             >
@@ -171,7 +173,7 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
     scrollContent: { padding: 20, paddingBottom: 40 },
-    
+
     header: { alignItems: 'center', marginBottom: 32 },
     avatarWrap: {
         width: 100,
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: colors.background,
     },
-    
+
     infoTitle: { ...typography.presets.h3, color: colors.text, marginBottom: 4 },
     infoSubtitle: { ...typography.presets.body, color: colors.textSecondary, marginBottom: 12 },
     readOnlyBadge: {
@@ -215,15 +217,15 @@ const styles = StyleSheet.create({
     readOnlyText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
 
     section: { marginBottom: 24 },
-    sectionTitle: { 
-        ...typography.presets.sectionTitle, 
-        color: colors.text, 
+    sectionTitle: {
+        ...typography.presets.sectionTitle,
+        color: colors.text,
         marginBottom: 16,
-        letterSpacing: 0.5 
+        letterSpacing: 0.5
     },
 
     bioInput: { minHeight: 100, textAlignVertical: 'top', paddingTop: 12 },
-    
+
     majorChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: -8, marginBottom: 20 },
     chip: {
         paddingHorizontal: 12,
