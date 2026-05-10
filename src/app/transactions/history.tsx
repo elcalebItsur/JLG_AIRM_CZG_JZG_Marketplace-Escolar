@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
-    ActivityIndicator, TouchableOpacity,
+    ActivityIndicator, TouchableOpacity, Image,
 } from 'react-native';
 import { showAlert, showConfirm } from '@/utils/crossPlatformAlert';
 import { useRouter } from 'expo-router';
@@ -108,11 +108,15 @@ export default function TransactionHistoryScreen() {
                 {/* Header row */}
                 <View style={styles.cardHeader}>
                     <View style={styles.cardIcon}>
-                        <Ionicons
-                            name={isBuyer ? 'bag-outline' : 'cube-outline'}
-                            size={22}
-                            color={colors.primary}
-                        />
+                        {item.productImage ? (
+                            <Image source={{ uri: item.productImage }} style={styles.productThumb} />
+                        ) : (
+                            <Ionicons
+                                name={isBuyer ? 'bag-outline' : 'cube-outline'}
+                                size={22}
+                                color={colors.primary}
+                            />
+                        )}
                     </View>
                     <View style={styles.cardMeta}>
                         <Text style={styles.cardTitle} numberOfLines={1}>{item.productTitle}</Text>
@@ -292,6 +296,11 @@ const styles = StyleSheet.create({
     cardTitle: { ...typography.presets.bodyMedium, color: colors.text },
     cardDate: { ...typography.presets.caption, color: colors.textMuted, marginTop: 2 },
     cardPrice: { fontSize: 18, fontWeight: '800', color: colors.primary },
+    productThumb: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+    },
 
     participantRow: {
         flexDirection: 'row',

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
     TextInput, TouchableOpacity, KeyboardAvoidingView,
-    Platform, ActivityIndicator, Image,
+    Platform, ActivityIndicator, Image, LayoutAnimation,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +30,25 @@ function formatMsgTime(iso: string): string {
 /** Group consecutive messages by sender */
 function isSameSender(a?: ChatMessage, b?: ChatMessage) {
     return a?.senderId === b?.senderId;
+}
+
+/** Group messages by date */
+function groupMessagesByDate(messages: ChatMessage[]) {
+    const groups: { date: string; messages: ChatMessage[] }[] = [];
+    messages.forEach(msg => {
+        const date = new Date(msg.createdAt).toLocaleDateString('es-MX', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+        });
+        const lastGroup = groups[groups.length - 1];
+        if (lastGroup && lastGroup.date === date) {
+            lastGroup.messages.push(msg);
+        } else {
+            groups.push({ date, messages: [msg] });
+        }
+    });
+    return groups;
 }
 
 export default function ChatRoomScreen() {
@@ -61,6 +80,9 @@ export default function ChatRoomScreen() {
     useEffect(() => {
         if (!chatId) return;
         const unsub = subscribeToMessages(chatId, (msgs) => {
+            if (Platform.OS !== 'web') {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            }
             setMessages(msgs);
             setLoading(false);
         });
@@ -193,10 +215,22 @@ export default function ChatRoomScreen() {
                 {/* Product info strip */}
                 {chat && (
                     <View style={styles.productStrip}>
-                        <Ionicons name="cube-outline" size={16} color={colors.primary} />
-                        <Text style={styles.productStripText} numberOfLines={1}>
-                            {chat.productTitle} · ${chat.productPrice.toFixed(2)}
-                        </Text>
+                        <Image 
+                            source={{ uri: chat.productImage || chat.participantsPhotosMap?.[getOtherUserId()] }} 
+                            style={styles.productStripThumb} 
+                        />
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.productStripText} numberOfLines={1}>
+                                {chat.productTitle}
+                            </Text>
+                            <Text style={styles.productStripPrice}>${chat.productPrice.toFixed(2)}</Text>
+                        </View>
+                        <TouchableOpacity 
+                            style={styles.viewProductBtn}
+                            onPress={() => router.push(`/products/${chat.productId}`)}
+                        >
+                            <Text style={styles.viewProductText}>Ver</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -213,9 +247,30 @@ export default function ChatRoomScreen() {
                 ) : (
                     <FlatList
                         ref={listRef}
-                        data={messages}
+                        data={(() => {
+                            const groups = groupMessagesByDate(messages);
+                            const flattened: (ChatMessage | { type: 'header'; date: string; id: string })[] = [];
+                            groups.forEach(g => {
+                                flattened.push({ type: 'header', date: g.date, id: `header-${g.date}` });
+                                flattened.push(...g.messages);
+                            });
+                            return flattened;
+                        })()}
                         keyExtractor={m => m.id}
-                        renderItem={renderMessage}
+                        renderItem={({ item, index }) => {
+                            if ('type' in item && item.type === 'header') {
+                                return (
+                                    <View style={styles.dateHeader}>
+                                        <View style={styles.dateLine} />
+                                        <Text style={styles.dateHeaderText}>{item.date}</Text>
+                                        <View style={styles.dateLine} />
+                                    </View>
+                                );
+                            }
+                            // Re-calculate context for the message item
+                            const msgIndex = messages.findIndex(m => m.id === item.id);
+                            return renderMessage({ item: item as ChatMessage, index: msgIndex });
+                        }}
                         contentContainerStyle={styles.messageList}
                         showsVerticalScrollIndicator={false}
                         onLayout={() => listRef.current?.scrollToEnd({ animated: false })}
@@ -277,20 +332,70 @@ const styles = StyleSheet.create({
     productStrip: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        backgroundColor: colors.accentLight,
+        gap: 12,
+        backgroundColor: colors.surface,
         paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+        elevation: 2,
+        zIndex: 10,
+    },
+    productStripThumb: {
+        width: 40,
+        height: 40,
+        borderRadius: 8,
+        backgroundColor: colors.backgroundAlt,
     },
     productStripText: {
-        ...typography.presets.label,
-        color: colors.primary,
-        flex: 1,
+        fontSize: 14,
+        fontWeight: '700',
+        color: colors.text,
     },
-
-    messageList: { padding: 12, paddingBottom: 8 },
+    productStripPrice: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: colors.primary,
+        marginTop: 1,
+    },
+    viewProductBtn: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: colors.backgroundAlt,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    viewProductText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: colors.textSecondary,
+    },
+    dateHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginVertical: 16,
+        paddingHorizontal: 20,
+    },
+    dateLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: colors.border,
+        opacity: 0.5,
+    },
+    dateHeaderText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: colors.textMuted,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    messageList: { padding: 12, paddingBottom: 20 },
 
     msgWrapper: { marginVertical: 2, maxWidth: '85%' },
     msgWrapperMe: { alignSelf: 'flex-end', alignItems: 'flex-end' },
