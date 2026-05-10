@@ -197,102 +197,166 @@ export default function HomeScreen() {
                         {!isLargeScreen && <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>}
                     </View>
 
-                    <View style={[styles.searchBarWrapper, isLargeScreen && styles.searchBarWrapperWeb]}>
-                        <View style={[styles.searchBar, isLargeScreen && styles.searchBarWeb]}>
-                            <Ionicons name="search-outline" size={20} color={colors.textMuted} />
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="Buscar productos, vendedores, categorías..."
-                                placeholderTextColor={colors.textMuted}
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                returnKeyType="search"
-                                autoCorrect={false}
-                                clearButtonMode="while-editing"
-                            />
-                            {searchQuery.length > 0 && (
-                                <TouchableOpacity
-                                    onPress={() => setSearchQuery('')}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    {/* Banner Hero - Only for Web Large Screens */}
+                    {isLargeScreen && (
+                        <View style={styles.heroBanner}>
+                            <View style={styles.heroContent}>
+                                <Text style={styles.heroTitle}>Marketplace Escolar ITSUR</Text>
+                                <Text style={styles.heroSubtitle}>Compra y vende tus materiales escolares de forma segura con tus compañeros.</Text>
+                                <TouchableOpacity 
+                                    style={styles.heroButton}
+                                    onPress={() => router.push('/(tabs)/publish')}
                                 >
-                                    <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                                    <Text style={styles.heroButtonText}>Vender algo ahora</Text>
+                                    <Ionicons name="arrow-forward" size={18} color="#fff" />
                                 </TouchableOpacity>
-                            )}
-                        </View>
-                    </View>
-
-                    <View style={[styles.categoriesSection, isLargeScreen && styles.categoriesSectionWeb]}>
-                        <Text style={styles.categoriesLabel}>Categorías</Text>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.categoriesRow}
-                        >
-                            {CATEGORIES.map(cat => {
-                                const isActive = activeCategory === cat.label;
-                                return (
-                                    <TouchableOpacity
-                                        key={cat.label}
-                                        style={[styles.chip, isActive && styles.chipActive]}
-                                        onPress={() => setActiveCategory(cat.label)}
-                                        activeOpacity={0.75}
-                                    >
-                                        <Ionicons
-                                            name={cat.icon}
-                                            size={14}
-                                            color={isActive ? '#fff' : colors.primary}
-                                        />
-                                        <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                                            {cat.label}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </ScrollView>
-                    </View>
-
-                    {debouncedSearch.trim().length > 0 && !loading && (
-                        <View style={styles.searchResultsBanner}>
-                            <Text style={styles.searchResultsText}>
-                                {filteredProducts.length === 0
-                                    ? `Sin resultados para "${debouncedSearch.trim()}"`
-                                    : `${filteredProducts.length} resultado${filteredProducts.length !== 1 ? 's' : ''} para "${debouncedSearch.trim()}"`}
-                            </Text>
+                            </View>
+                            <View style={styles.heroDecoration}>
+                                <Ionicons name="cart" size={120} color="rgba(255,255,255,0.15)" />
+                            </View>
                         </View>
                     )}
 
-                    {/* Products grid */}
-                    <View style={styles.gridContainer}>
-                        {loading ? (
-                            renderSkeletons()
-                        ) : filteredProducts.length === 0 ? (
-                            <View style={styles.center}>
-                                <Ionicons
-                                    name={debouncedSearch.trim() ? 'search-outline' : 'file-tray-outline'}
-                                    size={64}
-                                    color={colors.border}
-                                />
-                                <Text style={styles.emptyTitle}>
-                                    {debouncedSearch.trim() ? 'Sin resultados' : 'Sin productos aquí'}
-                                </Text>
-                                <Text style={styles.emptySubtitle}>
-                                    {debouncedSearch.trim()
-                                        ? 'Intenta con otro término de búsqueda o cambia la categoría.'
-                                        : activeCategory !== 'Todos'
-                                            ? `No hay productos en "${activeCategory}" aún.`
-                                            : 'Sé el primero en publicar algo.'}
-                                </Text>
-                            </View>
-                        ) : (
-                            <View style={[styles.list, { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }]}>
-                                {filteredProducts.map(item => (
-                                    <ProductCard
-                                        key={item.id}
-                                        product={item}
-                                        onPress={() => router.push(`/products/${item.id}`)}
-                                        numColumns={numColumns}
+                    <View style={[isLargeScreen && styles.twoColumnLayout]}>
+                        <View style={[isLargeScreen && styles.leftColumn]}>
+                            <View style={[styles.searchBarWrapper, isLargeScreen && styles.searchBarWrapperWeb]}>
+                                <View style={[styles.searchBar, isLargeScreen && styles.searchBarWeb]}>
+                                    <Ionicons name="search-outline" size={20} color={colors.textMuted} />
+                                    <TextInput
+                                        style={styles.searchInput}
+                                        placeholder="Buscar productos, vendedores, categorías..."
+                                        placeholderTextColor={colors.textMuted}
+                                        value={searchQuery}
+                                        onChangeText={setSearchQuery}
+                                        returnKeyType="search"
+                                        autoCorrect={false}
+                                        clearButtonMode="while-editing"
                                     />
-                                ))}
+                                    {searchQuery.length > 0 && (
+                                        <TouchableOpacity
+                                            onPress={() => setSearchQuery('')}
+                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                        >
+                                            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </View>
+
+                            <View style={[styles.categoriesSection, isLargeScreen && styles.categoriesSectionWeb]}>
+                                <Text style={styles.categoriesLabel}>Categorías</Text>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.categoriesRow}
+                                >
+                                    {CATEGORIES.map(cat => {
+                                        const isActive = activeCategory === cat.label;
+                                        return (
+                                            <TouchableOpacity
+                                                key={cat.label}
+                                                style={[styles.chip, isActive && styles.chipActive]}
+                                                onPress={() => setActiveCategory(cat.label)}
+                                                activeOpacity={0.75}
+                                            >
+                                                <Ionicons
+                                                    name={cat.icon}
+                                                    size={14}
+                                                    color={isActive ? '#fff' : colors.primary}
+                                                />
+                                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                                                    {cat.label}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
+                            </View>
+
+                            {debouncedSearch.trim().length > 0 && !loading && (
+                                <View style={styles.searchResultsBanner}>
+                                    <Text style={styles.searchResultsText}>
+                                        {filteredProducts.length === 0
+                                            ? `Sin resultados para "${debouncedSearch.trim()}"`
+                                            : `${filteredProducts.length} resultado${filteredProducts.length !== 1 ? 's' : ''} para "${debouncedSearch.trim()}"`}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Products grid */}
+                            <View style={styles.gridContainer}>
+                                {loading ? (
+                                    renderSkeletons()
+                                ) : filteredProducts.length === 0 ? (
+                                    <View style={styles.center}>
+                                        <Ionicons
+                                            name={debouncedSearch.trim() ? 'search-outline' : 'file-tray-outline'}
+                                            size={64}
+                                            color={colors.border}
+                                        />
+                                        <Text style={styles.emptyTitle}>
+                                            {debouncedSearch.trim() ? 'Sin resultados' : 'Sin productos aquí'}
+                                        </Text>
+                                        <Text style={styles.emptySubtitle}>
+                                            {debouncedSearch.trim()
+                                                ? 'Intenta con otro término de búsqueda o cambia la categoría.'
+                                                : activeCategory !== 'Todos'
+                                                    ? `No hay productos en "${activeCategory}" aún.`
+                                                    : 'Sé el primero en publicar algo.'}
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <View style={[styles.list, { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }]}>
+                                        {filteredProducts.map(item => (
+                                            <ProductCard
+                                                key={item.id}
+                                                product={item}
+                                                onPress={() => router.push(`/products/${item.id}`)}
+                                                numColumns={numColumns}
+                                            />
+                                        ))}
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+
+                        {/* Right Sidebar - Web only */}
+                        {isLargeScreen && (
+                            <View style={styles.rightSidebar}>
+                                <View style={styles.sidebarSection}>
+                                    <Text style={styles.sidebarSectionTitle}>Recién llegados</Text>
+                                    {products.slice(0, 3).map(p => (
+                                        <TouchableOpacity 
+                                            key={`recent-${p.id}`} 
+                                            style={styles.recentItem}
+                                            onPress={() => router.push(`/products/${p.id}`)}
+                                        >
+                                            <Image source={{ uri: p.images?.[0] }} style={styles.recentThumb} />
+                                            <View style={styles.recentInfo}>
+                                                <Text style={styles.recentTitle} numberOfLines={1}>{p.title}</Text>
+                                                <Text style={styles.recentPrice}>${p.price}</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                <View style={styles.sidebarSection}>
+                                    <View style={styles.statsCard}>
+                                        <Ionicons name="stats-chart" size={24} color={colors.primary} />
+                                        <View>
+                                            <Text style={styles.statsValue}>{products.length}</Text>
+                                            <Text style={styles.statsLabel}>Productos activos</Text>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={styles.sidebarSection}>
+                                    <Text style={styles.sidebarSectionTitle}>Tips para vender</Text>
+                                    <View style={styles.tipCard}>
+                                        <Ionicons name="bulb-outline" size={20} color={colors.accent} />
+                                        <Text style={styles.tipText}>Usa buenas fotos con luz natural para vender más rápido.</Text>
+                                    </View>
+                                </View>
                             </View>
                         )}
                     </View>
@@ -315,6 +379,141 @@ const styles = StyleSheet.create({
         width: '100%',
         maxWidth: 1400,
         paddingHorizontal: 20,
+    },
+    heroBanner: {
+        backgroundColor: colors.primary,
+        borderRadius: 24,
+        padding: 40,
+        marginBottom: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        overflow: 'hidden',
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 8,
+    },
+    heroContent: {
+        flex: 1,
+        zIndex: 2,
+    },
+    heroTitle: {
+        fontSize: 32,
+        fontWeight: '900',
+        color: '#fff',
+        marginBottom: 12,
+        letterSpacing: -1,
+    },
+    heroSubtitle: {
+        fontSize: 16,
+        color: 'rgba(255,255,255,0.85)',
+        marginBottom: 24,
+        maxWidth: 500,
+        lineHeight: 24,
+    },
+    heroButton: {
+        backgroundColor: colors.accent,
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        alignSelf: 'flex-start',
+    },
+    heroButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    heroDecoration: {
+        position: 'absolute',
+        right: -20,
+        bottom: -20,
+        zIndex: 1,
+    },
+    twoColumnLayout: {
+        flexDirection: 'row',
+        gap: 30,
+    },
+    leftColumn: {
+        flex: 1,
+    },
+    rightSidebar: {
+        width: 320,
+        gap: 24,
+    },
+    sidebarSection: {
+        backgroundColor: colors.surface,
+        borderRadius: 20,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    sidebarSectionTitle: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: colors.text,
+        marginBottom: 16,
+    },
+    recentItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 12,
+    },
+    recentThumb: {
+        width: 50,
+        height: 50,
+        borderRadius: 10,
+        backgroundColor: colors.background,
+    },
+    recentInfo: {
+        flex: 1,
+    },
+    recentTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.text,
+    },
+    recentPrice: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: colors.primary,
+        marginTop: 2,
+    },
+    statsCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    statsValue: {
+        fontSize: 24,
+        fontWeight: '900',
+        color: colors.primary,
+    },
+    statsLabel: {
+        fontSize: 13,
+        color: colors.textMuted,
+        fontWeight: '500',
+    },
+    tipCard: {
+        flexDirection: 'row',
+        gap: 12,
+        backgroundColor: colors.accent + '10',
+        padding: 14,
+        borderRadius: 12,
+        borderLeftWidth: 4,
+        borderLeftColor: colors.accent,
+    },
+    tipText: {
+        flex: 1,
+        fontSize: 13,
+        color: colors.textSecondary,
+        lineHeight: 18,
+        fontWeight: '500',
     },
     topBar: {
         backgroundColor: colors.primary,

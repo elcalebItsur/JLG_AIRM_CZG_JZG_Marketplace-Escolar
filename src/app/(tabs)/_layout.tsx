@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Platform, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Linking } from 'react-native';
 import { colors } from '@/theme/colors';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToChats } from '@/services/chatService';
@@ -42,7 +42,7 @@ export default function TabLayout() {
     }, [user]);
 
     const SidebarItem = ({ name, icon, label, focused, badge, route }: { name: string, icon: any, label: string, focused: boolean, badge?: number, route: string }) => (
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[styles.sidebarItem, focused && styles.sidebarItemActive]}
             onPress={() => router.push(route as any)}
             activeOpacity={0.7}
@@ -123,7 +123,7 @@ export default function TabLayout() {
                     tabBarLabel: 'Vender',
                     tabBarIcon: ({ focused }) => (
                         <View style={[
-                            styles.publishIcon, 
+                            styles.publishIcon,
                             focused && styles.publishIconActive,
                         ]}>
                             <Ionicons
@@ -199,41 +199,73 @@ export default function TabLayout() {
                     </View>
 
                     <View style={styles.sidebarContent}>
-                        <SidebarItem 
-                            name="index" 
-                            icon="home" 
-                            label="Inicio" 
-                            focused={currentTab === 'index' || currentTab === '(tabs)'} 
-                            route="/(tabs)" 
+                        <SidebarItem
+                            name="index"
+                            icon="home"
+                            label="Inicio"
+                            focused={currentTab === 'index' || currentTab === '(tabs)'}
+                            route="/(tabs)"
                         />
-                        <SidebarItem 
-                            name="publish" 
-                            icon="add-circle" 
-                            label="Vender" 
-                            focused={currentTab === 'publish'} 
-                            route="/(tabs)/publish" 
+                        <SidebarItem
+                            name="notifications"
+                            icon="notifications"
+                            label="Notificaciones"
+                            focused={currentTab === 'notifications'}
+                            route="/notifications"
                         />
-                        <SidebarItem 
-                            name="chats" 
-                            icon="chatbubbles" 
-                            label="Chats" 
-                            focused={currentTab === 'chats'} 
-                            badge={totalUnreadChats} 
-                            route="/(tabs)/chats" 
+                        <SidebarItem
+                            name="publish"
+                            icon="add-circle"
+                            label="Vender"
+                            focused={currentTab === 'publish'}
+                            route="/(tabs)/publish"
                         />
-                        <SidebarItem 
-                            name="profile" 
-                            icon="person" 
-                            label="Mi Perfil" 
-                            focused={currentTab === 'profile'} 
-                            badge={unreadNotifs} 
-                            route="/(tabs)/profile" 
+                        <SidebarItem
+                            name="chats"
+                            icon="chatbubbles"
+                            label="Chats"
+                            focused={currentTab === 'chats'}
+                            badge={totalUnreadChats}
+                            route="/(tabs)/chats"
                         />
+                        <SidebarItem
+                            name="profile"
+                            icon="person"
+                            label="Mi Perfil"
+                            focused={currentTab === 'profile'}
+                            badge={unreadNotifs}
+                            route="/(tabs)/profile"
+                        />
+                        
+                        <View style={styles.sidebarDivider} />
+                        
+                        <TouchableOpacity
+                            style={styles.sidebarItem}
+                            onPress={() => {
+                                const supportEmail = 'soporte.marketplaceitsur@gmail.com';
+                                const subject = 'Ayuda y Soporte - Marketplace ITSUR';
+                                const body = `Hola equipo de soporte,\n\n` +
+                                    `Datos del usuario:\n` +
+                                    `- Nombre: ${user?.displayName || 'N/A'}\n` +
+                                    `- Correo: ${user?.email || 'N/A'}\n` +
+                                    `- ID: ${user?.id || 'N/A'}\n\n` +
+                                    `[Describe tu problema o duda aquí]\n\n` +
+                                    `---`;
+                                const url = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                                Linking.openURL(url);
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.sidebarIconWrap}>
+                                <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+                            </View>
+                            <Text style={styles.sidebarLabel}>Ayuda y Soporte</Text>
+                        </TouchableOpacity>
                     </View>
 
                     <View style={styles.sidebarFooter}>
-                        <Text style={styles.footerText}>© 2024 Marketplace ITSUR</Text>
-                        <Text style={styles.footerSubtext}>v2.1.0 Premium</Text>
+                        <Text style={styles.footerText}>© 2026 Marketplace ITSUR</Text>
+                        <Text style={styles.footerSubtext}>v2.0.1</Text>
                     </View>
                 </View>
                 <View style={styles.webMainContent}>
@@ -320,6 +352,13 @@ const styles = StyleSheet.create({
     sidebarLabelActive: {
         color: colors.primary,
         fontWeight: '700',
+    },
+    sidebarDivider: {
+        height: 1,
+        backgroundColor: colors.border,
+        marginVertical: 12,
+        marginHorizontal: 12,
+        opacity: 0.6,
     },
     sidebarBadge: {
         position: 'absolute',
