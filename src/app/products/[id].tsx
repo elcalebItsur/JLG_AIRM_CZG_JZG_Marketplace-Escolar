@@ -27,6 +27,7 @@ import { ReportReason, REPORT_REASON_LABELS } from '@/types/report';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { AppButton } from '@/components/ui/AppButton';
 import { ReviewModal } from '@/components/ui/ReviewModal';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -69,6 +70,7 @@ export default function ProductDetailScreen() {
     const slideAnim = useRef(new Animated.Value(20)).current;
     
     const [isSharing, setIsSharing] = useState(false);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -85,6 +87,7 @@ export default function ProductDetailScreen() {
     const [reportSubmitting, setReportSubmitting] = useState(false);
     const router = useRouter();
     const { user } = useAuth();
+    const { showToast } = useToast();
     const { width, height } = useWindowDimensions();
 
     const isDesktop = width > 900;
@@ -307,7 +310,7 @@ export default function ProductDetailScreen() {
         setReportSubmitting(false);
         setShowReportModal(false);
         if (success) {
-            showAlert('Reporte enviado', 'Gracias. Un administrador revisará tu reporte.');
+            showToast('Reporte enviado', 'success');
         } else {
             showAlert('Error', error ?? 'No se pudo enviar el reporte');
         }
@@ -348,14 +351,46 @@ export default function ProductDetailScreen() {
             />
 
             <View style={[styles.root, isDesktop && styles.rootDesktop]}>
-                {/* 1. Left Column: Image (on Desktop) or Top Hero (on Mobile) */}
+                {/* 1. Left Column: Image Carousel (on Desktop) or Top Hero (on Mobile) */}
                 <View style={[styles.imageContainer, isDesktop ? styles.imageContainerDesktop : { height: width * 0.75 }]}>
-                    {product.images?.[0] && (product.images[0].startsWith('data:') || product.images[0].startsWith('http')) ? (
-                        <Image
-                            source={{ uri: product.images[0] }}
-                            style={styles.image}
-                            resizeMode="contain"
-                        />
+                    {product.images && product.images.length > 0 ? (
+                        <>
+                            <FlatList
+                                data={product.images}
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                keyExtractor={(item, index) => `img-${index}`}
+                                onScroll={(e) => {
+                                    const offset = e.nativeEvent.contentOffset.x;
+                                    const index = Math.round(offset / (isDesktop ? 600 : width));
+                                    setActiveImageIndex(index);
+                                }}
+                                renderItem={({ item }) => (
+                                    <View style={{ width: isDesktop ? 600 : width, height: '100%' }}>
+                                        <Image
+                                            source={{ uri: item }}
+                                            style={styles.image}
+                                            resizeMode="contain"
+                                        />
+                                    </View>
+                                )}
+                            />
+                            {/* Pagination Indicators */}
+                            {product.images.length > 1 && (
+                                <View style={styles.pagination}>
+                                    {product.images.map((_, i) => (
+                                        <View 
+                                            key={i} 
+                                            style={[
+                                                styles.paginationDot, 
+                                                activeImageIndex === i && styles.paginationDotActive
+                                            ]} 
+                                        />
+                                    ))}
+                                </View>
+                            )}
+                        </>
                     ) : (
                         <View style={[styles.imageFallback, { backgroundColor: catColor }]}>
                             <Ionicons
@@ -832,6 +867,26 @@ const styles = StyleSheet.create({
     imageContainer: { width: '100%', backgroundColor: colors.backgroundAlt },
     imageContainerDesktop: { width: '45%', height: '100%', borderRadius: 20, overflow: 'hidden' },
     image: { width: '100%', height: '100%' },
+    pagination: {
+        position: 'absolute',
+        bottom: 16,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+    },
+    paginationDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255,255,255,0.4)',
+    },
+    paginationDotActive: {
+        backgroundColor: '#fff',
+        width: 20,
+    },
     imageFallback: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     soldOverlay: {
         ...StyleSheet.absoluteFillObject,

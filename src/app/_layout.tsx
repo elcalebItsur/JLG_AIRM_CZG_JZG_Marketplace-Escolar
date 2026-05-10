@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { colors } from '@/theme/colors';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ToastProvider } from '@/context/ToastContext';
 import { useEffect } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import Head from 'expo-router/head';
@@ -143,7 +144,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
     return (
         <AuthProvider>
-            <RootLayoutNav />
+            <ToastProvider>
+                <RootLayoutNav />
+            </ToastProvider>
         </AuthProvider>
     );
 }
