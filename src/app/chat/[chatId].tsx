@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
     TextInput, TouchableOpacity, KeyboardAvoidingView,
-    Platform, ActivityIndicator, Image, LayoutAnimation,
+    Platform, ActivityIndicator, Image,
     useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -87,9 +87,6 @@ export default function ChatRoomScreen() {
     useEffect(() => {
         if (!chatId) return;
         const unsub = subscribeToMessages(chatId, (msgs) => {
-            if (Platform.OS !== 'web') {
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            }
             setMessages(msgs);
             setLoading(false);
         });
@@ -101,12 +98,6 @@ export default function ChatRoomScreen() {
         if (chatId) markChatAsRead(chatId).catch(() => { });
     }, [chatId]);
 
-    // Auto-scroll to bottom on new messages
-    useEffect(() => {
-        if (messages.length > 0) {
-            setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-        }
-    }, [messages.length]);
 
     const handleSend = useCallback(async () => {
         if (!chatId || !user || !text.trim()) return;
@@ -137,6 +128,7 @@ export default function ChatRoomScreen() {
     // ─── Render a single bubble ──────────────────────────────────────────────
     const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
         const isMe = item.senderId === user?.id;
+        // In the inverted list, "previous" visually is actually index+1 and "next" is index-1
         const prevMsg = messages[index - 1];
         const nextMsg = messages[index + 1];
         const isFirstInGroup = !isSameSender(prevMsg, item);
@@ -197,7 +189,7 @@ export default function ChatRoomScreen() {
         );
     };
 
-    // ─── Build flat data from grouped messages ──────────────────────────────
+    // ─── Build INVERTED flat data (newest first for inverted FlatList) ────────
     const flatData = React.useMemo(() => {
         const groups = groupMessagesByDate(messages);
         const flattened: (ChatMessage | { type: 'header'; date: string; id: string })[] = [];
@@ -205,7 +197,8 @@ export default function ChatRoomScreen() {
             flattened.push({ type: 'header', date: g.date, id: `header-${g.date}` });
             flattened.push(...g.messages);
         });
-        return flattened;
+        // Reverse so newest messages come first — FlatList inverted will flip it visually
+        return flattened.reverse();
     }, [messages]);
 
     return (
@@ -306,6 +299,7 @@ export default function ChatRoomScreen() {
                     <FlatList
                         ref={listRef}
                         data={flatData}
+                        inverted
                         keyExtractor={m => m.id}
                         renderItem={({ item, index }) => {
                             if ('type' in item && item.type === 'header') {
@@ -317,16 +311,12 @@ export default function ChatRoomScreen() {
                                     </View>
                                 );
                             }
-                            // Re-calculate context for the message item
+                            // Find original index in messages array for grouping logic
                             const msgIndex = messages.findIndex(m => m.id === item.id);
                             return renderMessage({ item: item as ChatMessage, index: msgIndex });
                         }}
-                        contentContainerStyle={[
-                            styles.messageList, 
-                            { paddingBottom: Platform.OS === 'android' ? 12 : 20 }
-                        ]}
+                        contentContainerStyle={styles.messageList}
                         showsVerticalScrollIndicator={false}
-                        onLayout={() => listRef.current?.scrollToEnd({ animated: false })}
                     />
                 )}
 
