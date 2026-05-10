@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
@@ -89,6 +89,35 @@ export default function ProfileScreen() {
                 { text: 'Cancelar', style: 'cancel' },
                 { text: 'Salir', style: 'destructive', onPress: logout },
             ]);
+        }
+    };
+
+    const handleSupport = async () => {
+        const supportEmail = 'soporte.marketplaceitsur@gmail.com';
+        const subject = 'Ayuda y Soporte - Marketplace ITSUR';
+        const body = `Hola equipo de soporte,\n\n` +
+            `Datos del usuario:\n` +
+            `- Nombre: ${user.displayName}\n` +
+            `- Correo: ${user.email}\n` +
+            `- ID: ${user.id}\n\n` +
+            `[Describe tu problema o duda aquí]\n\n` +
+            `---`;
+
+        const url = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        
+        try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+                await Linking.openURL(url);
+            } else {
+                if (Platform.OS === 'web') {
+                    window.location.href = url;
+                } else {
+                    Alert.alert('Error', 'No se pudo abrir la aplicación de correo.');
+                }
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Ocurrió un error al intentar contactar a soporte.');
         }
     };
 
@@ -193,7 +222,7 @@ export default function ProfileScreen() {
                 <MenuItem
                     icon="help-circle-outline"
                     label="Ayuda y Soporte"
-                    onPress={() => { }}
+                    onPress={handleSupport}
                 />
             </View>
 
