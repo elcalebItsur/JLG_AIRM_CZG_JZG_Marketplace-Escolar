@@ -9,7 +9,7 @@ import {
   signInWithCredential,
   signInWithPopup
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { deriveRoleFromEmail, validateEmailDomainForRegistration } from '../utils/validators';
 import { User } from '../types/user';
@@ -241,14 +241,22 @@ export async function logoutUser() {
 }
 
 export function subscribeToAuthChanges(callback: (user: User | null) => void): () => void {
-  return onAuthStateChanged(auth, async (firebaseUser) => {
-    if (firebaseUser) {
-      try {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
+  let unsubDoc: (() => void) | null = null;
 
-        if (userDoc.exists()) {
-          const userData = userDoc.data() as User;
+  return onAuthStateChanged(auth, async (firebaseUser) => {
+    // Clear previous document listener if any
+    if (unsubDoc) {
+      unsubDoc();
+      unsubDoc = null;
+    }
+
+    if (firebaseUser) {
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+
+      // We use onSnapshot to listen for real-time changes to the profile (edit profile)
+      unsubDoc = onSnapshot(userDocRef, (snap) => {
+        if (snap.exists()) {
+          const userData = snap.data() as User;
           
           // Self-healing: Update Firestore if Auth has photo but Firestore doesn't
           if (!userData.photoURL && firebaseUser.photoURL) {
@@ -259,14 +267,12 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
             callback(userData);
           }
         } else {
-          // Si no hay perfil en Firestore, es un nuevo usuario (Google o Email recién creado)
-          // Debemos validar el dominio antes de dejarlo "entrar" a la app
+          // If no profile in Firestore (new user or Google first login)
           const email = firebaseUser.email || '';
           const validation = validateEmailDomainForRegistration(email);
 
           if (!validation.ok) {
-            console.warn("Bloqueando acceso: Dominio no válido para nuevo usuario", email);
-            await auth.signOut();
+            auth.signOut();
             callback(null);
             return;
           }
@@ -275,14 +281,15 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
             id: firebaseUser.uid,
             displayName: firebaseUser.displayName || 'Usuario',
             email: email,
-            role: Role.STUDENT,
-            createdAt: new Date().toISOString()
+            role: deriveRoleFromEmail(email) as Role,
+            createdAt: new Date().toISOString(),
+            photoURL: firebaseUser.photoURL || undefined
           });
         }
-      } catch (e) {
-        console.error("Error fetching user profile");
+      }, (err) => {
+        console.error("Error subscribing to user doc:", err);
         callback(null);
-      }
+      });
     } else {
       callback(null);
     }

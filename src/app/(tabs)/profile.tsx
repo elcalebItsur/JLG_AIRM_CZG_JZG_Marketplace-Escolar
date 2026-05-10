@@ -111,6 +111,17 @@ export default function ProfileScreen() {
                 </View>
                 <Text style={styles.name}>{user.displayName}</Text>
                 <Text style={styles.email}>{user.email}</Text>
+                
+                {user.major && (
+                    <View style={styles.majorBadge}>
+                        <Ionicons name="school" size={12} color="rgba(255,255,255,0.9)" />
+                        <Text style={styles.majorText}>{user.major}</Text>
+                    </View>
+                )}
+                
+                {user.bio && (
+                    <Text style={styles.bio} numberOfLines={2}>{user.bio}</Text>
+                )}
             </View>
 
             {/* Stats row */}
@@ -171,7 +182,7 @@ export default function ProfileScreen() {
                 <MenuItem
                     icon="person-outline"
                     label="Editar Perfil"
-                    onPress={() => { }}
+                    onPress={() => router.push('/profile/edit')}
                 />
                 <MenuItem
                     icon="notifications-outline"
@@ -257,6 +268,29 @@ const styles = StyleSheet.create({
     email: {
         fontSize: 13,
         color: 'rgba(255,255,255,0.7)',
+        marginBottom: 8,
+    },
+    majorBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginBottom: 10,
+    },
+    majorText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    bio: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.85)',
+        textAlign: 'center',
+        fontStyle: 'italic',
+        paddingHorizontal: 30,
     },
     statsRow: {
         flexDirection: 'row',
