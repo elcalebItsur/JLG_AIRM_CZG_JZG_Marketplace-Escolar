@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
+import { NativeTabs, Icon, Label, Badge } from 'expo-router/unstable-native-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,6 +62,56 @@ export default function TabLayout() {
         </TouchableOpacity>
     );
 
+    // ─── iOS: Native Liquid Glass Tab Bar ─────────────────────────────────────
+    if (Platform.OS === 'ios') {
+        return (
+            <NativeTabs 
+                minimizeBehavior="onScrollDown"
+                tintColor={colors.primary}
+            >
+                <NativeTabs.Trigger 
+                    name="index"
+                    options={{
+                        title: 'Inicio',
+                        icon: { sf: 'house' },
+                        selectedIcon: { sf: 'house.fill' }
+                    }}
+                />
+
+                <NativeTabs.Trigger 
+                    name="publish"
+                    options={{
+                        title: 'Vender',
+                        icon: { sf: 'plus.circle' },
+                        selectedIcon: { sf: 'plus.circle.fill' }
+                    }}
+                />
+
+                <NativeTabs.Trigger 
+                    name="chats"
+                    options={{
+                        title: 'Chats',
+                        icon: { sf: 'bubble.left.and.bubble.right' },
+                        selectedIcon: { sf: 'bubble.left.and.bubble.right.fill' },
+                        badgeValue: totalUnreadChats > 0 ? (totalUnreadChats > 9 ? '9+' : String(totalUnreadChats)) : undefined
+                    }}
+                />
+
+                <NativeTabs.Trigger 
+                    name="profile"
+                    options={{
+                        title: 'Perfil',
+                        icon: { sf: 'person' },
+                        selectedIcon: { sf: 'person.fill' },
+                        badgeValue: unreadNotifs > 0 ? (unreadNotifs > 9 ? '9+' : String(unreadNotifs)) : undefined
+                    }}
+                />
+            </NativeTabs>
+        );
+    }
+
+
+    // ─── Android & Web: JavaScript Tab Bar ────────────────────────────────────
     const content = (
         <Tabs
             screenOptions={{
@@ -83,18 +134,12 @@ export default function TabLayout() {
                     backgroundColor: colors.surface,
                     borderTopWidth: 0,
                     ...Platform.select({
-                        ios: {
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: -3 },
-                            shadowOpacity: 0.06,
-                            shadowRadius: 10,
-                        },
                         android: { elevation: 8 },
                         web: { boxShadow: '0 -2px 12px rgba(0,0,0,0.07)' },
                     }),
-                    paddingBottom: Platform.OS === 'ios' ? 22 : Math.max(insets.bottom, 10),
+                    paddingBottom: Math.max(insets.bottom, 10),
                     paddingTop: 8,
-                    height: Platform.OS === 'ios' ? 84 : (68 + Math.max(insets.bottom - 10, 0)),
+                    height: 68 + Math.max(insets.bottom - 10, 0),
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,

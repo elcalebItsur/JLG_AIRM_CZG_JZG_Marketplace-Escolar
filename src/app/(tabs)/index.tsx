@@ -147,7 +147,10 @@ export default function HomeScreen() {
         <View style={styles.root}>
             <ScrollView 
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={[isLargeScreen && styles.scrollContentWeb]}
+                contentContainerStyle={[
+                    isLargeScreen && styles.scrollContentWeb,
+                    !isLargeScreen && { paddingBottom: Math.max(insets.bottom + 100, 120) }
+                ]}
             >
                 <View style={[isLargeScreen && styles.mainContentWrapperWeb]}>
                     {/* Sticky top section - Refined for Web */}

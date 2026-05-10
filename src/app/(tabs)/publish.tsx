@@ -3,7 +3,9 @@ import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, KeyboardAvoidingView, Platform, TextInput,
     Image, ActivityIndicator,
+    Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAlert, showConfirm, showImageSourcePicker } from '@/utils/crossPlatformAlert';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -181,6 +183,8 @@ export default function PublishScreen() {
         }
     };
 
+    const insets = useSafeAreaInsets();
+
     return (
         <KeyboardAvoidingView
             style={styles.root}
@@ -188,7 +192,13 @@ export default function PublishScreen() {
             keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    {
+                        paddingTop: Math.max(insets.top, 16),
+                        paddingBottom: Math.max(insets.bottom + 80, 100) // Extra padding for floating tab bar
+                    }
+                ]}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
@@ -372,7 +382,7 @@ export default function PublishScreen() {
 
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { padding: 16, paddingBottom: 48 },
+    scrollContent: { paddingHorizontal: 16 },
 
     // ── Image upload placeholder ───────────────────────────────────────
     imageUpload: {

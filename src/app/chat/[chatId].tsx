@@ -246,8 +246,8 @@ export default function ChatRoomScreen() {
 
             <KeyboardAvoidingView
                 style={styles.root}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : Platform.OS === 'android' ? 56 : 60}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
             >
                 {/* Product info strip */}
                 {chat && (
