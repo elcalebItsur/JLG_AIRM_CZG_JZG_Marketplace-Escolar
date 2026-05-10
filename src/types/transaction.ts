@@ -6,6 +6,7 @@ export interface Transaction {
     productTitle: string;
     productImage?: string;
     price: number;
+    quantity: number;
     sellerId: string;
     sellerName: string;
     buyerId: string;

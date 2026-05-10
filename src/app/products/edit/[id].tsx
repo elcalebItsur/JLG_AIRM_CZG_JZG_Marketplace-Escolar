@@ -42,6 +42,7 @@ export default function EditProductScreen() {
     const [location, setLocation] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedCondition, setSelectedCondition] = useState<ProductCondition>('good');
+    const [stock, setStock] = useState('1');
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [originalImage, setOriginalImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -51,6 +52,7 @@ export default function EditProductScreen() {
     const router = useRouter();
 
     const priceRef = useRef<TextInput>(null);
+    const stockRef = useRef<TextInput>(null);
     const locationRef = useRef<TextInput>(null);
     const descriptionRef = useRef<TextInput>(null);
 
@@ -76,6 +78,7 @@ export default function EditProductScreen() {
                 setLocation(product.location || '');
                 setSelectedCategory(product.category);
                 setSelectedCondition(product.condition);
+                setStock(product.stock?.toString() ?? '1');
                 const img = product.images?.[0] || null;
                 setImageUri(img);
                 setOriginalImage(img);
@@ -155,6 +158,12 @@ export default function EditProductScreen() {
             return;
         }
 
+        const parsedStock = parseInt(stock);
+        if (isNaN(parsedStock) || parsedStock <= 0) {
+            showAlert('Stock inválido', 'Ingresa un stock válido');
+            return;
+        }
+
         const confirmed = await showConfirm(
             'Guardar cambios',
             '¿Deseas actualizar la información de este producto?',
@@ -178,6 +187,7 @@ export default function EditProductScreen() {
                 description,
                 category: selectedCategory,
                 condition: selectedCondition,
+                stock: parsedStock,
                 location: location.trim() || undefined,
                 images: finalImageUri ? [finalImageUri] : [],
             });
@@ -255,6 +265,17 @@ export default function EditProductScreen() {
                         placeholder="0.00"
                         keyboardType="numeric"
                         leftIcon={<Text style={styles.currencyIcon}>$</Text>}
+                        onSubmitEditing={() => stockRef.current?.focus()}
+                    />
+
+                    <AppInput
+                        ref={stockRef}
+                        label="Stock / Unidades disponibles *"
+                        value={stock}
+                        onChangeText={setStock}
+                        placeholder="1"
+                        keyboardType="numeric"
+                        leftIcon={<Ionicons name="layers-outline" size={18} color={colors.textMuted} />}
                         onSubmitEditing={() => locationRef.current?.focus()}
                     />
 

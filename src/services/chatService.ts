@@ -16,6 +16,7 @@ import {
     onSnapshot,
     serverTimestamp,
     increment,
+    arrayUnion,
     Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
@@ -73,6 +74,7 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
                 productId: params.productId,
                 productTitle: params.productTitle,
                 productPrice: params.productPrice,
+                discussedProductIds: [params.productId],
                 participants: [params.buyerId, params.sellerId],
                 participantsMap: {
                     [params.buyerId]: params.buyerName,
@@ -97,6 +99,7 @@ export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ 
                 productId: params.productId,
                 productTitle: params.productTitle,
                 productPrice: params.productPrice,
+                discussedProductIds: arrayUnion(params.productId),
             };
             if (params.productImage !== undefined) update.productImage = params.productImage;
             

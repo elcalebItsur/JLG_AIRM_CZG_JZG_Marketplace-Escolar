@@ -40,12 +40,14 @@ export default function PublishScreen() {
     const [location, setLocation] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedCondition, setSelectedCondition] = useState<ProductCondition>('good');
+    const [stock, setStock] = useState('1');
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
 
     const priceRef = useRef<TextInput>(null);
+    const stockRef = useRef<TextInput>(null);
     const locationRef = useRef<TextInput>(null);
     const descriptionRef = useRef<TextInput>(null);
 
@@ -131,6 +133,12 @@ export default function PublishScreen() {
             return;
         }
 
+        const parsedStock = parseInt(stock);
+        if (isNaN(parsedStock) || parsedStock <= 0) {
+            showAlert('Stock inválido', 'La cantidad disponible debe ser al menos 1');
+            return;
+        }
+
         // ── Confirmation dialog (works on web + native) ──
         const confirmed = await showConfirm(
             'Confirmar publicación',
@@ -146,6 +154,7 @@ export default function PublishScreen() {
             description,
             category: selectedCategory,
             condition: selectedCondition,
+            stock: parsedStock,
             location: location.trim() || undefined,
             images: imageUri ? [imageUri] : [],
             sellerId: user.id,
@@ -159,7 +168,7 @@ export default function PublishScreen() {
             // Reset form
             setTitle(''); setPrice(''); setDescription('');
             setLocation(''); setSelectedCategory('');
-            setSelectedCondition('good'); setImageUri(null);
+            setSelectedCondition('good'); setStock('1'); setImageUri(null);
 
             // Show success and navigate
             showAlert(
@@ -236,6 +245,19 @@ export default function PublishScreen() {
                         placeholder="0.00"
                         keyboardType="numeric"
                         leftIcon={<Text style={styles.currencyIcon}>$</Text>}
+                        returnKeyType="next"
+                        onSubmitEditing={() => stockRef.current?.focus()}
+                        blurOnSubmit={false}
+                    />
+
+                    <AppInput
+                        ref={stockRef}
+                        label="Stock / Unidades disponibles *"
+                        value={stock}
+                        onChangeText={setStock}
+                        placeholder="1"
+                        keyboardType="numeric"
+                        leftIcon={<Ionicons name="layers-outline" size={18} color={colors.textMuted} />}
                         returnKeyType="next"
                         onSubmitEditing={() => locationRef.current?.focus()}
                         blurOnSubmit={false}

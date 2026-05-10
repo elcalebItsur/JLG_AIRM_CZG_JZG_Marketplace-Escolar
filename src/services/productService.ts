@@ -11,6 +11,7 @@ import {
     increment,
     serverTimestamp,
     onSnapshot,
+    runTransaction,
     Timestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -192,6 +193,7 @@ export const createProduct = async (
             images: imageUrls,
             status: 'active',
             viewCount: 0,
+            stock: productData.stock ?? 1,
             isFeatured: false,
             createdAt: serverTimestamp(),
         };
@@ -251,5 +253,40 @@ export const deleteProduct = async (
     } catch (error) {
         console.error('deleteProduct error');
         return { success: false, error: 'No se pudo eliminar el producto' };
+    }
+};
+
+/** 
+ * Safely reduce stock using a transaction. 
+ * If stock reaches 0, status is set to 'sold'.
+ */
+export const reduceProductStock = async (
+    productId: string,
+    quantity: number
+): Promise<{ success: boolean; newStock: number; error?: string }> => {
+    try {
+        const productRef = doc(db, COLLECTION, productId);
+        
+        return await runTransaction(db, async (transaction) => {
+            const productDoc = await transaction.get(productRef);
+            if (!productDoc.exists()) {
+                throw new Error('El producto no existe');
+            }
+
+            const data = productDoc.data() as Product;
+            const currentStock = data.stock ?? 1;
+            const newStock = Math.max(0, currentStock - quantity);
+
+            const update: Partial<Product> = { stock: newStock };
+            if (newStock <= 0) {
+                update.status = 'sold';
+            }
+
+            transaction.update(productRef, update);
+            return { success: true, newStock };
+        });
+    } catch (error: any) {
+        console.error('reduceProductStock error:', error);
+        return { success: false, newStock: 0, error: error.message || 'No se pudo actualizar el stock' };
     }
 };

@@ -13,6 +13,7 @@ export interface Product {
   sellerRating?: number;
   status: ProductStatus;
   condition: ProductCondition;
+  stock?: number;
   location?: string;
   viewCount?: number;
   isFeatured?: boolean;

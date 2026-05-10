@@ -11,7 +11,7 @@ import { Product } from '@/types/product';
 import { Review } from '@/types/review';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { getProductById, updateProductStatus, deleteProduct, subscribeToProductById } from '@/services/productService';
+import { getProductById, updateProductStatus, deleteProduct, subscribeToProductById, reduceProductStock } from '@/services/productService';
 import { getOrCreateChat, sendMessage } from '@/services/chatService';
 import { subscribeToSellerReviews, hasReviewed } from '@/services/reviewService';
 import {
@@ -72,6 +72,7 @@ export default function ProductDetailScreen() {
     const [chatBuyers, setChatBuyers] = useState<Array<{ uid: string; name: string }>>([]);
     const [pendingTx, setPendingTx] = useState<Transaction | null>(null);
     const [confirmingTx, setConfirmingTx] = useState(false);
+    const [saleQuantity, setSaleQuantity] = useState(1);
     // Report state
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportReason, setReportReason] = useState<ReportReason>('spam');
@@ -134,41 +135,45 @@ export default function ProductDetailScreen() {
         const doSell = async (buyerId?: string, buyerName?: string) => {
             setUpdatingStatus(true);
             try {
-                const { success } = await updateProductStatus(product.id, 'sold');
-                if (!success) {
-                    Alert.alert('Error', 'No se pudo actualizar el estado. Inténtalo de nuevo.');
+                // 1. Reduce stock
+                const { success: stockSuccess, error: stockError } = await reduceProductStock(product.id, saleQuantity);
+                
+                if (!stockSuccess) {
+                    Alert.alert('Error', stockError || 'No se pudo actualizar el stock.');
                     return;
                 }
-                setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
 
-                // Create transaction record if a buyer is identified
-                if (buyerId && buyerName) {
-                    await createTransaction({
-                        productId: product.id,
-                        productTitle: product.title,
-                        productImage: product.images?.[0],
-                        price: product.price,
-                        sellerId: user.id,
-                        sellerName: user.displayName,
-                        buyerId,
-                        buyerName,
-                    });
-                    // Notify the buyer
+                // Create transaction record
+                await createTransaction({
+                    productId: product.id,
+                    productTitle: product.title,
+                    productImage: product.images?.[0],
+                    price: product.price,
+                    sellerId: user.id,
+                    sellerName: user.displayName,
+                    buyerId: buyerId ?? 'anonymous',
+                    buyerName: buyerName ?? 'Comprador externo',
+                    quantity: saleQuantity,
+                });
+
+                // Notify the buyer if identified
+                if (buyerId) {
                     createNotification({
                         userId: buyerId,
                         type: 'sold',
                         title: '¡Tu compra fue confirmada!',
-                        body: `El vendedor marcó "${product.title}" como vendido para ti.`,
+                        body: `El vendedor marcó ${saleQuantity > 1 ? `${saleQuantity} unidades de` : ''} "${product.title}" como vendido para ti.`,
                         relatedId: product.id,
                     });
                 }
 
                 // Show success message
                 Alert.alert(
-                    '¡Vendido!',
-                    `"${product.title}" ha sido marcado como vendido exitosamente.${buyerName ? `\nComprador: ${buyerName}` : ''}`,
+                    '¡Venta registrada!',
+                    `Has vendido ${saleQuantity} unidad(es) de "${product.title}".${buyerName ? `\nComprador: ${buyerName}` : ''}`,
                     [{ text: 'OK' }]
                 );
+                setSaleQuantity(1); // Reset
             } catch (e) {
                 console.error('doSell error');
                 Alert.alert('Error', 'Ocurrió un error al marcar como vendido.');
@@ -178,16 +183,28 @@ export default function ProductDetailScreen() {
         };
 
         if (buyers.length === 0) {
-            // No chat buyers — simple confirm
-            const confirmed = await showConfirm(
-                'Marcar como vendido',
-                `¿Confirmas que "${product.title}" fue vendido?`,
-                'Sí, vendido',
-            );
-            if (confirmed) doSell();
+            // No chat buyers — prompt for quantity if stock > 1
+            if ((product.stock ?? 1) > 1) {
+                // For simplicity, on multiple units we suggest going through the picker 
+                // or we could show a quantity prompt here. 
+                // Let's use the picker modal even with 0 buyers if stock > 1 to select quantity.
+                setChatBuyers([]);
+                setShowBuyerModal(true);
+            } else {
+                const confirmed = await showConfirm(
+                    'Marcar como vendido',
+                    `¿Confirmas que "${product.title}" fue vendido?`,
+                    'Sí, vendido',
+                );
+                if (confirmed) {
+                    setSaleQuantity(1);
+                    doSell();
+                }
+            }
         } else {
             // Show buyer picker
             setChatBuyers(buyers);
+            setSaleQuantity(1);
             setShowBuyerModal(true);
         }
     };
@@ -422,7 +439,7 @@ export default function ProductDetailScreen() {
                             {product.status === 'active' && (
                                 <>
                                     <AppButton
-                                        title="Marcar como vendido"
+                                        title={(product.stock ?? 1) > 1 ? "Marcar venta" : "Marcar como vendido"}
                                         onPress={handleMarkAsSold}
                                         variant="secondary"
                                         loading={updatingStatus}
@@ -662,15 +679,51 @@ export default function ProductDetailScreen() {
             <Modal
                 visible={showBuyerModal}
                 transparent
-                animationType="slide"
+                animationType="fade"
                 onRequestClose={() => setShowBuyerModal(false)}
             >
-                <View style={styles.modalBackdrop}>
-                    <View style={styles.buyerSheet}>
+                <TouchableOpacity 
+                    style={styles.modalBackdrop} 
+                    activeOpacity={1} 
+                    onPress={() => setShowBuyerModal(false)}
+                >
+                    <TouchableOpacity 
+                        activeOpacity={1} 
+                        style={styles.buyerSheet}
+                        onPress={e => e.stopPropagation()} 
+                    >
                         <View style={styles.buyerSheetHandle} />
-                        <Text style={styles.buyerSheetTitle}>¿A quién le vendiste?</Text>
+                        <Text style={styles.buyerSheetTitle}>
+                            {(product.stock ?? 1) > 1 ? 'Registrar venta' : '¿A quién le vendiste?'}
+                        </Text>
+                        
+                        {/* Quantity Selector if stock > 1 */}
+                        {(product.stock ?? 1) > 1 && (
+                            <View style={styles.quantitySection}>
+                                <Text style={styles.buyerSheetSub}>Cantidad a vender:</Text>
+                                <View style={styles.qtyControls}>
+                                    <TouchableOpacity 
+                                        style={styles.qtyBtn} 
+                                        onPress={() => setSaleQuantity(q => Math.max(1, q - 1))}
+                                    >
+                                        <Ionicons name="remove" size={20} color={colors.primary} />
+                                    </TouchableOpacity>
+                                    <Text style={styles.qtyText}>{saleQuantity}</Text>
+                                    <TouchableOpacity 
+                                        style={styles.qtyBtn} 
+                                        onPress={() => setSaleQuantity(q => Math.min(product.stock ?? 1, q + 1))}
+                                    >
+                                        <Ionicons name="add" size={20} color={colors.primary} />
+                                    </TouchableOpacity>
+                                    <Text style={styles.qtyAvailable}>de {product.stock} disponibles</Text>
+                                </View>
+                            </View>
+                        )}
+
                         <Text style={styles.buyerSheetSub}>
-                            Selecciona el comprador para registrar la transacción.
+                            {chatBuyers.length > 0 
+                                ? 'Selecciona al comprador de tus chats:' 
+                                : 'No hay chats recientes para este producto.'}
                         </Text>
                         <FlatList
                             data={chatBuyers}
@@ -682,30 +735,7 @@ export default function ProductDetailScreen() {
                                     style={styles.buyerRow}
                                     onPress={() => {
                                         setShowBuyerModal(false);
-                                        const doSellWithBuyer = async () => {
-                                            if (!product || !user) return;
-                                            setUpdatingStatus(true);
-                                            const { success } = await updateProductStatus(product.id, 'sold');
-                                            if (!success) {
-                                                setUpdatingStatus(false);
-                                                Alert.alert('Error', 'No se pudo actualizar el estado');
-                                                return;
-                                            }
-                                            setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
-                                            await createTransaction({
-                                                productId: product.id,
-                                                productTitle: product.title,
-                                                productImage: product.images?.[0],
-                                                price: product.price,
-                                                sellerId: user.id,
-                                                sellerName: user.displayName,
-                                                buyerId: item.uid,
-                                                buyerName: item.name,
-                                            });
-                                            setUpdatingStatus(false);
-                                            Alert.alert('Vendido', 'Transacción registrada correctamente');
-                                        };
-                                        doSellWithBuyer();
+                                        doSell(item.uid, item.name);
                                     }}
                                     activeOpacity={0.75}
                                 >
@@ -721,18 +751,39 @@ export default function ProductDetailScreen() {
                         />
                         <TouchableOpacity
                             style={styles.buyerSkipBtn}
-                            onPress={() => {
+                            onPress={async () => {
                                 setShowBuyerModal(false);
                                 if (!product || !user) return;
-                                updateProductStatus(product.id, 'sold').then(({ success }) => {
-                                    if (success) setProduct(prev => prev ? { ...prev, status: 'sold' } : null);
-                                });
+                                const confirmed = await showConfirm(
+                                    'Confirmar venta',
+                                    `¿Confirmas la venta de ${saleQuantity} unidad(es) sin registrar comprador?`,
+                                    'Confirmar venta'
+                                );
+                                if (confirmed) {
+                                    setUpdatingStatus(true);
+                                    const { success } = await reduceProductStock(product.id, saleQuantity);
+                                    if (success) {
+                                        await createTransaction({
+                                            productId: product.id,
+                                            productTitle: product.title,
+                                            productImage: product.images?.[0],
+                                            price: product.price,
+                                            sellerId: user.id,
+                                            sellerName: user.displayName,
+                                            buyerId: 'anonymous',
+                                            buyerName: 'Comprador externo',
+                                            quantity: saleQuantity,
+                                        });
+                                        Alert.alert('Venta registrada', 'Stock actualizado correctamente.');
+                                    }
+                                    setUpdatingStatus(false);
+                                }
                             }}
                         >
-                            <Text style={styles.buyerSkipText}>Marcar como vendido sin registrar comprador</Text>
+                            <Text style={styles.buyerSkipText}>Marcar venta sin registrar comprador</Text>
                         </TouchableOpacity>
-                    </View>
-                </View>
+                    </TouchableOpacity>
+                </TouchableOpacity>
             </Modal>
 
         </>
@@ -940,5 +991,41 @@ const styles = StyleSheet.create({
         height: 10,
         borderRadius: 5,
         backgroundColor: colors.primary,
+    },
+
+    // ─── Quantity selector ─────────────────────────────────────────────
+    quantitySection: {
+        marginBottom: 16,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    qtyControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        marginTop: 8,
+    },
+    qtyBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: colors.backgroundAlt,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    qtyText: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: colors.text,
+        minWidth: 30,
+        textAlign: 'center',
+    },
+    qtyAvailable: {
+        ...typography.presets.caption,
+        color: colors.textMuted,
+        marginLeft: 4,
     },
 });

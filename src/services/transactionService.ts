@@ -53,6 +53,7 @@ export interface CreateTransactionParams {
     sellerName: string;
     buyerId: string;
     buyerName: string;
+    quantity: number;
 }
 
 export async function createTransaction(
@@ -67,6 +68,7 @@ export async function createTransaction(
             sellerName: params.sellerName,
             buyerId: params.buyerId,
             buyerName: params.buyerName,
+            quantity: params.quantity,
             status: 'pending' as TransactionStatus,
             createdAt: serverTimestamp(),
         };
@@ -142,19 +144,22 @@ export async function getChatBuyersForProduct(
         const snap = await getDocs(
             query(
                 collection(db, 'chats'),
-                where('sellerId', '==', sellerId),
-                where('productId', '==', productId),
+                where('participants', 'array-contains', sellerId),
+                where('discussedProductIds', 'array-contains', productId),
             )
         );
-        // De-duplicate in case there are legacy chats per-product from before the migration
+        // De-duplicate and find the "other" person (the potential buyer)
         const seen = new Set<string>();
         return snap.docs.reduce<Array<{ uid: string; name: string }>>((acc, d) => {
             const data = d.data();
-            const buyerId = data.buyerId as string;
-            if (seen.has(buyerId)) return acc;
-            seen.add(buyerId);
-            const name = (data.participantsMap as Record<string, string>)[buyerId] ?? 'Comprador';
-            acc.push({ uid: buyerId, name });
+            const participants = data.participants as string[];
+            const otherId = participants.find(id => id !== sellerId);
+            
+            if (!otherId || seen.has(otherId)) return acc;
+            seen.add(otherId);
+            
+            const name = (data.participantsMap as Record<string, string>)[otherId] ?? 'Interesado';
+            acc.push({ uid: otherId, name });
             return acc;
         }, []);
     } catch (err) {
