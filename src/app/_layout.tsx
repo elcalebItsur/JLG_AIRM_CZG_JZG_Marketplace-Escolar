@@ -56,20 +56,27 @@ function RootLayoutNav() {
                     <meta name="apple-mobile-web-app-title" content="Marketplace" />
                 </Head>
             )}
-            <StatusBar style="dark" />
+            <StatusBar style="light" />
             <Stack
                 screenOptions={{
                     headerStyle: {
                         backgroundColor: colors.primary,
+                        ...Platform.select({
+                            android: { elevation: 0 },
+                            ios: { shadowOpacity: 0 },
+                        }),
                     },
                     headerTintColor: colors.surface,
                     headerTitleStyle: {
-                        fontWeight: 'bold',
+                        fontWeight: '700',
+                        fontSize: 18,
+                        letterSpacing: -0.3,
                     },
                     contentStyle: {
                         backgroundColor: colors.background,
                     },
                     headerBackVisible: true,
+                    animation: Platform.OS === 'android' ? 'slide_from_right' : 'default',
                 }}
             >
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

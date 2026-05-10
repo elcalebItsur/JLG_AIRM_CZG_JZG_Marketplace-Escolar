@@ -168,21 +168,25 @@ function getCategoryIcon(cat: string): keyof typeof Ionicons.glyphMap {
 const styles = StyleSheet.create({
     card: {
         backgroundColor: colors.surface,
-        borderRadius: 16,
+        borderRadius: 18,
         marginBottom: 12,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: colors.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 4,
+        ...Platform.select({
+            android: { elevation: 3 },
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.08,
+                shadowRadius: 12,
+            },
+        }),
     },
     imageContainer: {
         position: 'relative',
         width: '100%',
-        height: 140,
+        height: 150,
     },
     image: {
         width: '100%',
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         color: colors.text,
-        lineHeight: 18,
+        lineHeight: 20,
         marginBottom: 8,
     },
     sellerRow: {

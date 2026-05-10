@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
-    TouchableOpacity, ActivityIndicator,
+    TouchableOpacity, ActivityIndicator, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -127,7 +127,9 @@ export default function ChatsScreen() {
     if (chats.length === 0) {
         return (
             <View style={styles.center}>
-                <Ionicons name="chatbubbles-outline" size={64} color={colors.border} />
+                <View style={styles.emptyIconWrap}>
+                    <Ionicons name="chatbubbles-outline" size={52} color={colors.primary} />
+                </View>
                 <Text style={styles.emptyTitle}>Sin conversaciones</Text>
                 <Text style={styles.emptySub}>
                     Cuando contactes a un vendedor, el chat aparecerá aquí
@@ -159,36 +161,46 @@ const styles = StyleSheet.create({
         padding: 32,
         backgroundColor: colors.background,
     },
-    emptyTitle: { ...typography.presets.sectionTitle, color: colors.text },
-    emptySub: { ...typography.presets.body, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
+    emptyIconWrap: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: colors.primary + '12',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    emptyTitle: { ...typography.presets.sectionTitle, color: colors.text, fontSize: 18 },
+    emptySub: { ...typography.presets.body, color: colors.textMuted, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
 
     chatRow: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingVertical: Platform.OS === 'android' ? 14 : 14,
         backgroundColor: colors.surface,
         gap: 14,
+        minHeight: 76,
     },
-    chatContent: { flex: 1, gap: 2 },
+    chatContent: { flex: 1, gap: 3 },
     chatHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    chatName: { ...typography.presets.bodyMedium, color: colors.text, flex: 1, marginRight: 8 },
-    chatNameBold: { fontWeight: '700' },
-    chatTime: { ...typography.presets.caption, color: colors.textMuted },
+    chatName: { fontSize: 16, fontWeight: '600', color: colors.text, flex: 1, marginRight: 8 },
+    chatNameBold: { fontWeight: '800' },
+    chatTime: { fontSize: 12, color: colors.textMuted },
     chatProductRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    chatProductTitle: { ...typography.presets.caption, color: colors.textSecondary, flex: 1 },
+    chatProductTitle: { fontSize: 12, color: colors.textSecondary, flex: 1 },
     lastMsgRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    lastMsg: { ...typography.presets.caption, color: colors.textMuted, flex: 1 },
+    lastMsg: { fontSize: 14, color: colors.textMuted, flex: 1, lineHeight: 20 },
     lastMsgBold: { fontWeight: '700', color: colors.text },
     badge: {
         backgroundColor: colors.primary,
         borderRadius: 12,
-        minWidth: 22,
-        height: 22,
+        minWidth: 24,
+        height: 24,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 6,
     },
-    badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-    separator: { height: 1, backgroundColor: colors.border, marginLeft: 82 },
+    badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+    separator: { height: 1, backgroundColor: colors.border, marginLeft: 82, opacity: 0.6 },
 });

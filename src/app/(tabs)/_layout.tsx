@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Linking } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/theme/colors';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToChats } from '@/services/chatService';
@@ -15,6 +16,7 @@ export default function TabLayout() {
     const [unreadNotifs, setUnreadNotifs] = useState(0);
 
     const { width } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
     const isWeb = Platform.OS === 'web' && width > 800;
     const router = useRouter();
     const segments = useSegments();
@@ -87,17 +89,18 @@ export default function TabLayout() {
                             shadowOpacity: 0.06,
                             shadowRadius: 10,
                         },
-                        android: { elevation: 12 },
+                        android: { elevation: 8 },
                         web: { boxShadow: '0 -2px 12px rgba(0,0,0,0.07)' },
                     }),
-                    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
+                    paddingBottom: Platform.OS === 'ios' ? 22 : Math.max(insets.bottom, 10),
                     paddingTop: 8,
-                    height: Platform.OS === 'ios' ? 84 : 72,
+                    height: Platform.OS === 'ios' ? 84 : (68 + Math.max(insets.bottom - 10, 0)),
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
                     fontWeight: '600',
                     marginTop: 2,
+                    letterSpacing: 0.1,
                 },
             }}
         >
