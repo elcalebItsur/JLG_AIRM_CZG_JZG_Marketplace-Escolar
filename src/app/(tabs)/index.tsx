@@ -17,6 +17,7 @@ import { Role } from '@/types/role';
 import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
 import { useDebounce } from '@/utils/useDebounce';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
+import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 
 import type { ComponentProps } from 'react';
 
@@ -49,6 +50,7 @@ export default function HomeScreen() {
     const { width } = useWindowDimensions();
 
     const isLargeScreen = width > 800;
+    const isMobileWeb = Platform.OS === 'web' && width <= 800;
 
     // Responsive columns logic
     const getColumns = () => {
@@ -157,7 +159,8 @@ export default function HomeScreen() {
                     <View style={[
                         styles.topBar,
                         { paddingTop: insets.top + (isLargeScreen ? 20 : 10) },
-                        isLargeScreen && styles.topBarWeb
+                        isLargeScreen && styles.topBarWeb,
+                        isMobileWeb && styles.topBarMobileWeb
                     ]}>
                         {/* Branding row */}
                         <View style={styles.brandRow}>
@@ -213,6 +216,9 @@ export default function HomeScreen() {
                         {!isLargeScreen && <Text style={styles.greetingBig}>¿Qué buscas hoy?</Text>}
                     </View>
 
+                    {/* PWA Install Prompt for Mobile Web */}
+                    {isMobileWeb && <PWAInstallPrompt />}
+
                     {/* Banner Hero - Only for Web Large Screens */}
                     {isLargeScreen && (
                         <View style={styles.heroBanner}>
@@ -235,9 +241,18 @@ export default function HomeScreen() {
 
                     <View style={[isLargeScreen && styles.twoColumnLayout]}>
                         <View style={[isLargeScreen && styles.leftColumn]}>
-                            <View style={[styles.searchBarWrapper, isLargeScreen && styles.searchBarWrapperWeb]}>
+                            <View style={[
+                                styles.searchBarWrapper, 
+                                isLargeScreen && styles.searchBarWrapperWeb,
+                                isMobileWeb && styles.searchBarWrapperMobileWeb
+                            ]}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                                    <View style={[styles.searchBar, { flex: 1 }, isLargeScreen && styles.searchBarWeb]}>
+                                    <View style={[
+                                        styles.searchBar, 
+                                        { flex: 1 }, 
+                                        isLargeScreen && styles.searchBarWeb,
+                                        isMobileWeb && styles.searchBarMobileWeb
+                                    ]}>
                                         <Ionicons name="search-outline" size={20} color={colors.textMuted} />
                                         <TextInput
                                             style={styles.searchInput}
@@ -255,11 +270,15 @@ export default function HomeScreen() {
                                         )}
                                     </View>
                                     <TouchableOpacity 
-                                        style={[styles.filterBtn, (minPrice || maxPrice || selectedCondition) && styles.filterBtnActive]}
+                                        style={[
+                                            styles.filterBtn, 
+                                            (minPrice || maxPrice || selectedCondition) && styles.filterBtnActive,
+                                            isMobileWeb && styles.filterBtnMobileWeb
+                                        ]}
                                         onPress={() => setShowFilters(true)}
                                     >
                                         <Ionicons name="options-outline" size={20} color={(minPrice || maxPrice || selectedCondition) ? '#fff' : colors.primary} />
-                                        {isLargeScreen && <Text style={[styles.filterBtnText, (minPrice || maxPrice || selectedCondition) && { color: '#fff' }]}>Filtros</Text>}
+                                        {(isLargeScreen || isMobileWeb) && <Text style={[styles.filterBtnText, (minPrice || maxPrice || selectedCondition) && { color: '#fff' }]}>Filtros</Text>}
                                     </TouchableOpacity>
                                 </View>
                                 
@@ -1055,5 +1074,33 @@ const styles = StyleSheet.create({
         color: colors.error,
         fontWeight: '600',
         textDecorationLine: 'underline',
+    },
+
+    // ─── Mobile Web Specific Styles ──────────────────────────────────
+    topBarMobileWeb: {
+        backgroundColor: colors.primary,
+    },
+    searchBarWrapperMobileWeb: {
+        // @ts-ignore: sticky is supported in web
+        position: Platform.OS === 'web' ? 'sticky' : 'relative',
+        top: 0,
+        zIndex: 100,
+        backgroundColor: colors.primary,
+        paddingBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+    },
+    searchBarMobileWeb: {
+        height: 48,
+    },
+    filterBtnMobileWeb: {
+        height: 48,
+        paddingHorizontal: 12,
+    },
+    chipMobileWeb: {
+        paddingVertical: 12,
+        paddingHorizontal: 18,
     },
 });
