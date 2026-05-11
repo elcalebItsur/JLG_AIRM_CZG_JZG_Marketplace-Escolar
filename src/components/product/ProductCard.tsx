@@ -43,7 +43,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const { width } = useWindowDimensions();
 
     // Responsive card width calculation
-    const horizontalPadding = 24; 
+    const horizontalPadding = 32; // Matching the 16px padding on each side of the list
     const gap = 10;
     const cardWidth = (width - horizontalPadding - (numColumns - 1) * gap) / numColumns;
 

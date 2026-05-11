@@ -147,6 +147,19 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.root}>
+            {/* Notch/Status Bar Background for Mobile */}
+            {!isLargeScreen && (
+                <View style={{ 
+                    height: insets.top, 
+                    backgroundColor: colors.primary, 
+                    position: 'absolute', 
+                    top: 0, 
+                    left: 0, 
+                    right: 0, 
+                    zIndex: 1000 
+                }} />
+            )}
+            
             <ScrollView 
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={[
@@ -367,7 +380,7 @@ export default function HomeScreen() {
                                         </Text>
                                     </View>
                                 ) : (
-                                    <View style={[styles.list, { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }]}>
+                                    <View style={[styles.list, { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }]}>
                                         {filteredProducts.map(item => (
                                             <ProductCard
                                                 key={item.id}
@@ -866,7 +879,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     list: {
-        paddingHorizontal: 0,
+        paddingHorizontal: 16,
         paddingBottom: 20,
     },
     columnWrapper: {
