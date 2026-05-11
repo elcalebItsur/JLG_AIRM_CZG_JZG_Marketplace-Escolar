@@ -18,7 +18,8 @@ export default function TabLayout() {
 
     const { width } = useWindowDimensions();
     const insets = useSafeAreaInsets();
-    const isWeb = Platform.OS === 'web' && width > 800;
+    const isDesktopWeb = Platform.OS === 'web' && width > 800;
+    const isMobileWeb = Platform.OS === 'web' && width <= 800;
     const router = useRouter();
     const segments = useSegments();
     const currentTab = segments[segments.length - 1];
@@ -130,16 +131,16 @@ export default function TabLayout() {
                 tabBarActiveTintColor: colors.primary,
                 tabBarInactiveTintColor: colors.textMuted,
                 tabBarStyle: {
-                    display: isWeb ? 'none' : 'flex',
+                    display: isDesktopWeb ? 'none' : 'flex',
                     backgroundColor: colors.surface,
                     borderTopWidth: 0,
                     ...Platform.select({
                         android: { elevation: 8 },
                         web: { boxShadow: '0 -2px 12px rgba(0,0,0,0.07)' },
                     }),
-                    paddingBottom: Math.max(insets.bottom, 10),
+                    paddingBottom: isMobileWeb ? 8 : Math.max(insets.bottom, 10),
                     paddingTop: 8,
-                    height: 68 + Math.max(insets.bottom - 10, 0),
+                    height: isMobileWeb ? 60 : (68 + Math.max(insets.bottom - 10, 0)),
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
@@ -232,7 +233,7 @@ export default function TabLayout() {
         </Tabs>
     );
 
-    if (isWeb) {
+    if (isDesktopWeb) {
         return (
             <View style={styles.webContainer}>
                 <View style={styles.sidebar}>

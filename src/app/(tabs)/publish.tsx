@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, KeyboardAvoidingView, Platform, TextInput,
-    Image, ActivityIndicator,
+    Image, ActivityIndicator, useWindowDimensions,
     Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -184,6 +184,8 @@ export default function PublishScreen() {
     };
 
     const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
+    const isMobileWeb = Platform.OS === 'web' && width <= 800;
 
     return (
         <KeyboardAvoidingView
@@ -196,7 +198,7 @@ export default function PublishScreen() {
                     styles.scrollContent,
                     {
                         paddingTop: Math.max(insets.top, 16),
-                        paddingBottom: Math.max(insets.bottom + 80, 100) // Extra padding for floating tab bar
+                        paddingBottom: isMobileWeb ? 80 : Math.max(insets.bottom + 80, 100)
                     }
                 ]}
                 keyboardShouldPersistTaps="handled"

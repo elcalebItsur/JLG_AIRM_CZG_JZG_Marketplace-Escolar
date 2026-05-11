@@ -146,32 +146,20 @@ export default function HomeScreen() {
     }
 
     return (
-        <View style={styles.root}>
-            {/* Notch/Status Bar Background for Mobile */}
-            {!isLargeScreen && (
-                <View style={{ 
-                    height: insets.top, 
-                    backgroundColor: colors.primary, 
-                    position: 'absolute', 
-                    top: 0, 
-                    left: 0, 
-                    right: 0, 
-                    zIndex: 1000 
-                }} />
-            )}
-            
+        <View style={[styles.root, !isLargeScreen && { backgroundColor: colors.primary }]}>
             <ScrollView 
                 showsVerticalScrollIndicator={false}
+                style={{ backgroundColor: colors.background }}
                 contentContainerStyle={[
                     isLargeScreen && styles.scrollContentWeb,
-                    !isLargeScreen && { paddingBottom: Math.max(insets.bottom + 100, 120) }
+                    !isLargeScreen && { paddingBottom: isMobileWeb ? 80 : Math.max(insets.bottom + 100, 120) }
                 ]}
             >
                 <View style={[isLargeScreen && styles.mainContentWrapperWeb]}>
                     {/* Sticky top section - Refined for Web */}
                     <View style={[
                         styles.topBar,
-                        { paddingTop: insets.top + (isLargeScreen ? 20 : 10) },
+                        { paddingTop: insets.top + 8 },
                         isLargeScreen && styles.topBarWeb,
                         isMobileWeb && styles.topBarMobileWeb
                     ]}>
@@ -678,8 +666,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.primary,
         paddingHorizontal: 20,
         paddingTop: 14,
-        paddingBottom: 20,
-        gap: 6,
+        paddingBottom: 14,
+        gap: 4,
     },
     topBarWeb: {
         backgroundColor: 'transparent',
