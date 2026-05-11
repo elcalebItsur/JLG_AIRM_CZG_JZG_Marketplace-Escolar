@@ -4,8 +4,9 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList,
-    TouchableOpacity, ActivityIndicator,
+    TouchableOpacity, ActivityIndicator, Platform, useWindowDimensions
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
@@ -40,6 +41,9 @@ function formatTime(iso: string): string {
 export default function NotificationsScreen() {
     const { user } = useAuth();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
+    const isMobileWeb = Platform.OS === 'web' && width <= 800;
     const [notifs, setNotifs] = useState<AppNotification[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -117,7 +121,10 @@ export default function NotificationsScreen() {
                     data={notifs}
                     keyExtractor={n => n.id}
                     renderItem={renderItem}
-                    contentContainerStyle={styles.list}
+                    contentContainerStyle={[
+                        styles.list,
+                        { paddingBottom: isMobileWeb ? Math.max(insets.bottom, 20) : 20 }
+                    ]}
                     showsVerticalScrollIndicator={false}
                     ItemSeparatorComponent={() => <View style={styles.separator} />}
                 />

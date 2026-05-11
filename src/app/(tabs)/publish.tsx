@@ -197,8 +197,8 @@ export default function PublishScreen() {
                 contentContainerStyle={[
                     styles.scrollContent,
                     {
-                        paddingTop: Math.max(insets.top, 16),
-                        paddingBottom: isMobileWeb ? 80 : Math.max(insets.bottom + 80, 100)
+                        paddingTop: isMobileWeb ? Math.max(insets.top, 16) : Math.max(insets.top, 16),
+                        paddingBottom: isMobileWeb ? (80 + Math.max(insets.bottom, 16)) : Math.max(insets.bottom + 80, 100)
                     }
                 ]}
                 keyboardShouldPersistTaps="handled"

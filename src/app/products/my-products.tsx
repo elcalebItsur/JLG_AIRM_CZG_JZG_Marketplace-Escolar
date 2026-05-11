@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, FlatList, StyleSheet, ActivityIndicator,
-    Text, TouchableOpacity, RefreshControl,
+    Text, TouchableOpacity, RefreshControl, Platform, useWindowDimensions
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Product } from '@/types/product';
@@ -18,6 +19,9 @@ export default function MyProductsScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
+    const isMobileWeb = Platform.OS === 'web' && width <= 800;
 
     useEffect(() => {
         if (!user) return;
@@ -99,7 +103,10 @@ export default function MyProductsScreen() {
                     )}
                     keyExtractor={item => item.id}
                     numColumns={2}
-                    contentContainerStyle={styles.list}
+                    contentContainerStyle={[
+                        styles.list,
+                        { paddingBottom: isMobileWeb ? Math.max(insets.bottom, 24) : 24 }
+                    ]}
                     columnWrapperStyle={styles.columnWrapper}
                     refreshControl={
                         <RefreshControl

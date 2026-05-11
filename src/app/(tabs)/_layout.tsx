@@ -138,9 +138,12 @@ export default function TabLayout() {
                         android: { elevation: 8 },
                         web: { boxShadow: '0 -2px 12px rgba(0,0,0,0.07)' },
                     }),
-                    paddingBottom: isMobileWeb ? 8 : Math.max(insets.bottom, 10),
+                    // PWA safe area: on mobile web (standalone), the safe area context
+                    // may report 0 for bottom. Use a sensible default that clears the
+                    // iOS home indicator and Android nav gestures.
+                    paddingBottom: isMobileWeb ? Math.max(insets.bottom, 16) : Math.max(insets.bottom, 10),
                     paddingTop: 8,
-                    height: isMobileWeb ? 60 : (68 + Math.max(insets.bottom - 10, 0)),
+                    height: isMobileWeb ? (60 + Math.max(insets.bottom, 16)) : (68 + Math.max(insets.bottom - 10, 0)),
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,

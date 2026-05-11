@@ -89,6 +89,8 @@ export default function ProductDetailScreen() {
     const { user } = useAuth();
     const { showToast } = useToast();
     const { width, height } = useWindowDimensions();
+    const isMobileWeb = Platform.OS === 'web' && width <= 900;
+    const imageHeight = Math.min(width * 0.75, 400);
 
     const isDesktop = width > 900;
     const isOwner = product?.sellerId === user?.id;
@@ -352,7 +354,7 @@ export default function ProductDetailScreen() {
 
             <View style={[styles.root, isDesktop && styles.rootDesktop]}>
                 {/* 1. Left Column: Image Carousel (on Desktop) or Top Hero (on Mobile) */}
-                <View style={[styles.imageContainer, isDesktop ? styles.imageContainerDesktop : { height: width * 0.75 }]}>
+                <View style={[styles.imageContainer, isDesktop ? styles.imageContainerDesktop : { height: imageHeight }]}>
                     {product.images && product.images.length > 0 ? (
                         <>
                             <FlatList
@@ -366,12 +368,13 @@ export default function ProductDetailScreen() {
                                     const index = Math.round(offset / (isDesktop ? 600 : width));
                                     setActiveImageIndex(index);
                                 }}
+                                style={{ height: isDesktop ? '100%' : imageHeight }}
                                 renderItem={({ item }) => (
-                                    <View style={{ width: isDesktop ? 600 : width, height: '100%' }}>
+                                    <View style={{ width: isDesktop ? 600 : width, height: isDesktop ? '100%' : imageHeight }}>
                                         <Image
                                             source={{ uri: item }}
                                             style={styles.image}
-                                            resizeMode="contain"
+                                            resizeMode="cover"
                                         />
                                     </View>
                                 )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image, Linking, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
@@ -44,6 +45,9 @@ const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
 export default function ProfileScreen() {
     const { user, logout } = useAuth();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
+    const isMobileWeb = Platform.OS === 'web' && width <= 800;
 
     const [productCount, setProductCount] = useState<number | null>(null);
     const [reviewCount, setReviewCount] = useState<number | null>(null);
@@ -122,9 +126,15 @@ export default function ProfileScreen() {
     };
 
     return (
-        <ScrollView style={styles.root} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+            style={styles.root} 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+                paddingBottom: isMobileWeb ? (40 + Math.max(insets.bottom, 16)) : 40
+            }}
+        >
             {/* Header banner */}
-            <View style={styles.headerBanner}>
+            <View style={[styles.headerBanner, { paddingTop: Math.max(insets.top, isMobileWeb ? 44 : 20) + 8 }]}>
                 {/* Avatar */}
                 <View style={styles.avatarWrapper}>
                     <View style={styles.avatar}>

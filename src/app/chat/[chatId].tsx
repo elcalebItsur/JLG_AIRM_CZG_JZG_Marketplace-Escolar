@@ -323,7 +323,7 @@ export default function ChatRoomScreen() {
                 {/* Input bar */}
                 <View style={[
                     styles.inputBar, 
-                    { paddingBottom: Math.max(insets.bottom, 12) }
+                    { paddingBottom: Math.max(insets.bottom, Platform.OS === 'web' ? 20 : 12) }
                 ]}>
                     <View style={styles.inputWrapper}>
                         <TextInput

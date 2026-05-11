@@ -152,14 +152,14 @@ export default function HomeScreen() {
                 style={{ backgroundColor: colors.background }}
                 contentContainerStyle={[
                     isLargeScreen && styles.scrollContentWeb,
-                    !isLargeScreen && { paddingBottom: isMobileWeb ? 80 : Math.max(insets.bottom + 100, 120) }
+                    !isLargeScreen && { paddingBottom: isMobileWeb ? (80 + Math.max(insets.bottom, 16)) : Math.max(insets.bottom + 100, 120) }
                 ]}
             >
                 <View style={[isLargeScreen && styles.mainContentWrapperWeb]}>
                     {/* Sticky top section - Refined for Web */}
                     <View style={[
                         styles.topBar,
-                        { paddingTop: insets.top + 8 },
+                        { paddingTop: (isMobileWeb ? Math.max(insets.top, 44) : insets.top) + 8 },
                         isLargeScreen && styles.topBarWeb,
                         isMobileWeb && styles.topBarMobileWeb
                     ]}>
@@ -1080,6 +1080,8 @@ const styles = StyleSheet.create({
     // ─── Mobile Web Specific Styles ──────────────────────────────────
     topBarMobileWeb: {
         backgroundColor: colors.primary,
+        // Extend background behind status bar / dynamic island in PWA mode
+        // The paddingTop is handled dynamically via insets in the component
     },
     searchBarWrapperMobileWeb: {
         // @ts-ignore: sticky is supported in web
