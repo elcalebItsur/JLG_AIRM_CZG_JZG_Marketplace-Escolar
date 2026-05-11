@@ -90,9 +90,9 @@ export default function ProductDetailScreen() {
     const { showToast } = useToast();
     const { width, height } = useWindowDimensions();
     const isMobileWeb = Platform.OS === 'web' && width <= 900;
-    const imageHeight = Math.min(width * 0.75, 400);
-
     const isDesktop = width > 900;
+    const imageHeight = isDesktop ? Math.max(500, height - 160) : Math.min(width * 0.75, 400);
+    const itemWidth = isDesktop ? Math.min(600, width * 0.45) : width;
     const isOwner = product?.sellerId === user?.id;
     const catColor = CATEGORY_COLORS[product?.category?.toLowerCase() ?? 'otros'] ?? '#4A5568';
     const conditionStyle = CONDITION_COLORS[product?.condition ?? 'good'];
@@ -352,9 +352,9 @@ export default function ProductDetailScreen() {
                 }}
             />
 
-            <View style={[styles.root, isDesktop && styles.rootDesktop]}>
+            <View style={[styles.root, isDesktop && styles.rootDesktop, isDesktop && { minHeight: height - 100 }]}>
                 {/* 1. Left Column: Image Carousel (on Desktop) or Top Hero (on Mobile) */}
-                <View style={[styles.imageContainer, isDesktop ? styles.imageContainerDesktop : { height: imageHeight }]}>
+                <View style={[styles.imageContainer, isDesktop ? [styles.imageContainerDesktop, { height: imageHeight }] : { height: imageHeight }]}>
                     {product.images && product.images.length > 0 ? (
                         <>
                             <FlatList
@@ -368,9 +368,9 @@ export default function ProductDetailScreen() {
                                     const index = Math.round(offset / (isDesktop ? 600 : width));
                                     setActiveImageIndex(index);
                                 }}
-                                style={{ height: isDesktop ? '100%' : imageHeight }}
+                                style={{ height: imageHeight, width: '100%' }}
                                 renderItem={({ item }) => (
-                                    <View style={{ width: isDesktop ? 600 : width, height: isDesktop ? '100%' : imageHeight }}>
+                                    <View style={{ width: itemWidth, height: imageHeight }}>
                                         <Image
                                             source={{ uri: item }}
                                             style={styles.image}
@@ -867,8 +867,8 @@ const styles = StyleSheet.create({
     contentDesktop: { flex: 1, backgroundColor: colors.surface, borderRadius: 20, overflow: 'hidden' },
     scrollContentDesktop: { paddingBottom: 40 },
 
-    imageContainer: { width: '100%', backgroundColor: colors.backgroundAlt },
-    imageContainerDesktop: { width: '45%', height: '100%', borderRadius: 20, overflow: 'hidden' },
+    imageContainer: { width: '100%', backgroundColor: colors.backgroundAlt, overflow: 'hidden' },
+    imageContainerDesktop: { width: '45%', borderRadius: 20 },
     image: { width: '100%', height: '100%' },
     pagination: {
         position: 'absolute',

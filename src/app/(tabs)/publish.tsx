@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import type { ComponentProps } from 'react';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
+import { getSafeTopInset, getSafeBottomInset } from '@/utils/pwa';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppInput } from '@/components/ui/AppInput';
 import { createProduct } from '@/services/productService';
@@ -197,8 +198,8 @@ export default function PublishScreen() {
                 contentContainerStyle={[
                     styles.scrollContent,
                     {
-                        paddingTop: isMobileWeb ? Math.max(insets.top, 16) : Math.max(insets.top, 16),
-                        paddingBottom: isMobileWeb ? (80 + Math.max(insets.bottom, 16)) : Math.max(insets.bottom + 80, 100)
+                        paddingTop: getSafeTopInset(insets.top) + 16,
+                        paddingBottom: isMobileWeb ? (80 + getSafeBottomInset(insets.bottom)) : Math.max(insets.bottom + 80, 100)
                     }
                 ]}
                 keyboardShouldPersistTaps="handled"

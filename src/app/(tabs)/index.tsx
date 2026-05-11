@@ -12,6 +12,7 @@ import { subscribeToProducts } from '@/services/productService';
 import { ProductCard } from '@/components/product/ProductCard';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
+import { getSafeTopInset, getSafeBottomInset } from '@/utils/pwa';
 import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types/role';
 import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
@@ -152,14 +153,13 @@ export default function HomeScreen() {
                 style={{ backgroundColor: colors.background }}
                 contentContainerStyle={[
                     isLargeScreen && styles.scrollContentWeb,
-                    !isLargeScreen && { paddingBottom: isMobileWeb ? (80 + Math.max(insets.bottom, 16)) : Math.max(insets.bottom + 100, 120) }
+                    !isLargeScreen && { paddingBottom: isMobileWeb ? (80 + getSafeBottomInset(insets.bottom)) : Math.max(insets.bottom + 100, 120) }
                 ]}
             >
                 <View style={[isLargeScreen && styles.mainContentWrapperWeb]}>
-                    {/* Sticky top section - Refined for Web */}
                     <View style={[
                         styles.topBar,
-                        { paddingTop: (isMobileWeb ? Math.max(insets.top, 44) : insets.top) + 8 },
+                        { paddingTop: getSafeTopInset(insets.top) + 8 },
                         isLargeScreen && styles.topBarWeb,
                         isMobileWeb && styles.topBarMobileWeb
                     ]}>

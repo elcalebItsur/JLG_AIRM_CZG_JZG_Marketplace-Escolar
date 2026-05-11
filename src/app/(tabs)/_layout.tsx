@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/theme/colors';
+import { typography } from '@/theme/typography';
+import { getSafeBottomInset } from '@/utils/pwa';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToChats } from '@/services/chatService';
 import { subscribeToNotifications } from '@/services/notificationService';
@@ -141,9 +143,9 @@ export default function TabLayout() {
                     // PWA safe area: on mobile web (standalone), the safe area context
                     // may report 0 for bottom. Use a sensible default that clears the
                     // iOS home indicator and Android nav gestures.
-                    paddingBottom: isMobileWeb ? Math.max(insets.bottom, 16) : Math.max(insets.bottom, 10),
+                    paddingBottom: isMobileWeb ? getSafeBottomInset(insets.bottom) : Math.max(insets.bottom, 10),
                     paddingTop: 8,
-                    height: isMobileWeb ? (60 + Math.max(insets.bottom, 16)) : (68 + Math.max(insets.bottom - 10, 0)),
+                    height: isMobileWeb ? (60 + getSafeBottomInset(insets.bottom)) : (68 + Math.max(insets.bottom - 10, 0)),
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,

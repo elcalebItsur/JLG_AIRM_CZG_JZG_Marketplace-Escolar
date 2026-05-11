@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 import { typography } from '@/theme/typography';
+import { getSafeTopInset, getSafeBottomInset } from '@/utils/pwa';
 import { Role } from '@/types/role';
 import { getMyProducts } from '@/services/productService';
 import { getSellerReviews } from '@/services/reviewService';
@@ -130,11 +131,11 @@ export default function ProfileScreen() {
             style={styles.root} 
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-                paddingBottom: isMobileWeb ? (40 + Math.max(insets.bottom, 16)) : 40
+                paddingBottom: isMobileWeb ? (40 + getSafeBottomInset(insets.bottom)) : 40
             }}
         >
             {/* Header banner */}
-            <View style={[styles.headerBanner, { paddingTop: Math.max(insets.top, isMobileWeb ? 44 : 20) + 8 }]}>
+            <View style={[styles.headerBanner, { paddingTop: getSafeTopInset(insets.top) + 16 }]}>
                 {/* Avatar */}
                 <View style={styles.avatarWrapper}>
                     <View style={styles.avatar}>
