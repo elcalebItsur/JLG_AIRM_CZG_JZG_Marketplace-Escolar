@@ -17,6 +17,7 @@ import { Report, ReportStatus, REPORT_REASON_LABELS } from '@/types/report';
 import { getReports, updateReportStatus, adminDeleteProduct } from '@/services/reportService';
 import { createNotification } from '@/services/notificationService';
 import { showConfirm, showAlert } from '@/utils/crossPlatformAlert';
+import { logger } from '@/utils/logger';
 
 type FilterTab = 'pending' | 'all';
 
@@ -78,7 +79,7 @@ export default function AdminReportsScreen() {
                 showAlert('Error', error || 'No se pudo descartar el reporte');
             }
         } catch (e) {
-            console.error('handleDismiss error');
+            logger.error('handleDismiss error');
             showAlert('Error', 'Ocurrió un fallo al procesar la acción');
         } finally {
             setActing(null);
@@ -120,7 +121,7 @@ export default function AdminReportsScreen() {
 
             await loadReports();
         } catch (e) {
-            console.error('handleDeleteProduct error');
+            logger.error('handleDeleteProduct error');
             showAlert('Error', 'Ocurrió un fallo al intentar eliminar');
         } finally {
             setActing(null);

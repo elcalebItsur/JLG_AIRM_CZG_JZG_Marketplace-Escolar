@@ -31,6 +31,7 @@ import { useToast } from '@/context/ToastContext';
 import { AppButton } from '@/components/ui/AppButton';
 import { ReviewModal } from '@/components/ui/ReviewModal';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { logger } from '@/utils/logger';
 
 const CATEGORY_COLORS: Record<string, string> = {
     libros: '#2B6CB0', electronica: '#6B46C1', ropa: '#C05621',
@@ -81,6 +82,8 @@ export default function ProductDetailScreen() {
     const [pendingTx, setPendingTx] = useState<Transaction | null>(null);
     const [confirmingTx, setConfirmingTx] = useState(false);
     const [saleQuantity, setSaleQuantity] = useState(1);
+    // Contact seller loading guard
+    const [contactingLoading, setContactingLoading] = useState(false);
     // Report state
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportReason, setReportReason] = useState<ReportReason>('spam');
@@ -103,7 +106,7 @@ export default function ProductDetailScreen() {
         setLoading(true);
         
         // One-time fetch to increment view count
-        getProductById(id).catch(() => console.error('getProductById failed'));
+        getProductById(id).catch(() => logger.error('getProductById failed'));
 
         // Subscription for real-time updates
         const unsubscribe = subscribeToProductById(id, (data) => {
@@ -157,7 +160,7 @@ export default function ProductDetailScreen() {
         try {
             buyers = await getChatBuyersForProduct(user.id, product.id);
         } catch (e) {
-            console.warn('Could not fetch chat buyers:', e);
+            logger.warn('Could not fetch chat buyers:', e);
         }
 
         if (buyers.length === 0) {
@@ -227,7 +230,7 @@ export default function ProductDetailScreen() {
             );
             setSaleQuantity(1); // Reset
         } catch (e) {
-            console.error('doSell error');
+            logger.error('doSell error');
             showAlert('Error', 'Ocurrió un error al marcar como vendido.');
         } finally {
             setUpdatingStatus(false);
@@ -555,50 +558,60 @@ export default function ProductDetailScreen() {
                             product.status === 'active' && (
                                 <View style={styles.actionsCol}>
                                     <AppButton
-                                        title="Contactar Vendedor"
+                                        title={contactingLoading ? 'Abriendo chat...' : 'Contactar Vendedor'}
+                                        loading={contactingLoading}
+                                        disabled={contactingLoading}
                                         onPress={async () => {
-                                            if (!user) return;
+                                            if (!user || contactingLoading) return;
+                                            setContactingLoading(true);
                                             
-                                            // Fetch seller photo for synchronization
-                                            let sellerPhoto: string | null = null;
                                             try {
-                                                const sellerDoc = await getDoc(doc(db, 'users', product.sellerId));
-                                                if (sellerDoc.exists()) {
-                                                    sellerPhoto = sellerDoc.data().photoURL || null;
+                                                // Fetch seller photo for synchronization
+                                                let sellerPhoto: string | null = null;
+                                                try {
+                                                    const sellerDoc = await getDoc(doc(db, 'users', product.sellerId));
+                                                    if (sellerDoc.exists()) {
+                                                        sellerPhoto = sellerDoc.data().photoURL || null;
+                                                    }
+                                                } catch (e) {
+                                                    logger.error("Error fetching seller photo");
                                                 }
+
+                                                const { chatId, isNew, error } = await getOrCreateChat({
+                                                    buyerId: user.id,
+                                                    buyerName: user.displayName,
+                                                    buyerPhoto: user.photoURL,
+                                                    sellerId: product.sellerId,
+                                                    sellerName: product.sellerName,
+                                                    sellerPhoto: sellerPhoto,
+                                                    productId: product.id,
+                                                    productTitle: product.title,
+                                                    productImage: product.images?.[0],
+                                                    productPrice: product.price,
+                                                });
+                                                if (error || !chatId) {
+                                                    showAlert('Error', error ?? 'No se pudo abrir el chat');
+                                                    return;
+                                                }
+
+                                                // Automatically send interest message if it's a new conversation
+                                                if (isNew) {
+                                                    await sendMessage(
+                                                        chatId,
+                                                        user.id,
+                                                        user.displayName,
+                                                        `¡Hola! Me interesa tu producto: "${product.title}"`,
+                                                        user.photoURL
+                                                    );
+                                                }
+
+                                                router.push(`/chat/${chatId}`);
                                             } catch (e) {
-                                                console.error("Error fetching seller photo");
+                                                logger.error('Contact seller error:', e);
+                                                showAlert('Error', 'No se pudo contactar al vendedor. Intenta de nuevo.');
+                                            } finally {
+                                                setContactingLoading(false);
                                             }
-
-                                            const { chatId, isNew, error } = await getOrCreateChat({
-                                                buyerId: user.id,
-                                                buyerName: user.displayName,
-                                                buyerPhoto: user.photoURL,
-                                                sellerId: product.sellerId,
-                                                sellerName: product.sellerName,
-                                                sellerPhoto: sellerPhoto,
-                                                productId: product.id,
-                                                productTitle: product.title,
-                                                productImage: product.images?.[0],
-                                                productPrice: product.price,
-                                            });
-                                            if (error || !chatId) {
-                                                Alert.alert('Error', error ?? 'No se pudo abrir el chat');
-                                                return;
-                                            }
-
-                                            // Automatically send interest message if it's a new conversation
-                                            if (isNew) {
-                                                await sendMessage(
-                                                    chatId,
-                                                    user.id,
-                                                    user.displayName,
-                                                    `¡Hola! Me interesa tu producto: "${product.title}"`,
-                                                    user.photoURL
-                                                );
-                                            }
-
-                                            router.push(`/chat/${chatId}`);
                                         }}
                                         icon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
                                     />

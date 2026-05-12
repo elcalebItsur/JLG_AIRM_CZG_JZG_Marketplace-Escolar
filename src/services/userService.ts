@@ -1,6 +1,7 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { User } from '@/types/user';
+import { logger } from '@/utils/logger';
 
 const USERS = 'users';
 
@@ -16,7 +17,7 @@ export const updateUserProfile = async (
         await updateDoc(userRef, data);
         return { success: true };
     } catch (error: any) {
-        console.error('updateUserProfile error:', error);
+        logger.error('updateUserProfile error:', error);
         return { 
             success: false, 
             error: error.message || 'No se pudo actualizar el perfil' 

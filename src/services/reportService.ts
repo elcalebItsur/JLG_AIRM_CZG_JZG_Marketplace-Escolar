@@ -17,6 +17,7 @@ import {
 import { db } from '@/config/firebase';
 import { Report, ReportReason, ReportStatus, ReportTargetType } from '@/types/report';
 import { updateProductStatus } from './productService';
+import { logger } from '@/utils/logger';
 
 const COL = 'reports';
 
@@ -59,7 +60,7 @@ export async function createReport(params: CreateReportParams): Promise<{ succes
         await addDoc(collection(db, COL), raw);
         return { success: true };
     } catch (err) {
-        console.error('createReport error');
+        logger.error('createReport error');
         return { success: false, error: 'No se pudo enviar el reporte' };
     }
 }
@@ -82,7 +83,7 @@ export async function getReports(status?: ReportStatus): Promise<Report[]> {
         });
         return reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (err) {
-        console.error('getReports error');
+        logger.error('getReports error');
         return [];
     }
 }
@@ -99,7 +100,7 @@ export async function updateReportStatus(
         });
         return { success: true };
     } catch (err) {
-        console.error('updateReportStatus error');
+        logger.error('updateReportStatus error');
         return { success: false, error: 'No se pudo actualizar el reporte' };
     }
 }
@@ -112,7 +113,7 @@ export async function adminDeleteProduct(productId: string): Promise<{ success: 
         if (error) return { success: false, error };
         return { success: true };
     } catch (err) {
-        console.error('adminDeleteProduct error');
+        logger.error('adminDeleteProduct error');
         return { success: false, error: 'No se pudo eliminar el producto' };
     }
 }

@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Transaction, TransactionStatus } from '@/types/transaction';
+import { logger } from '@/utils/logger';
 
 const TRANSACTIONS = 'transactions';
 
@@ -78,7 +79,7 @@ export async function createTransaction(
         const ref = await addDoc(collection(db, TRANSACTIONS), payload);
         return { txId: ref.id };
     } catch (err) {
-        console.error('createTransaction error');
+        logger.error('createTransaction error');
         return { txId: '', error: 'No se pudo registrar la transacción' };
     }
 }
@@ -95,7 +96,7 @@ export async function updateTransactionStatus(
         await updateDoc(doc(db, TRANSACTIONS, txId), update);
         return { success: true };
     } catch (err) {
-        console.error('updateTransactionStatus error');
+        logger.error('updateTransactionStatus error');
         return { success: false, error: 'No se pudo actualizar la transacción' };
     }
 }
@@ -112,7 +113,7 @@ export async function getSellerTransactions(sellerId: string): Promise<Transacti
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (err) {
-        console.error('getSellerTransactions error');
+        logger.error('getSellerTransactions error');
         return [];
     }
 }
@@ -127,7 +128,7 @@ export async function getBuyerTransactions(buyerId: string): Promise<Transaction
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (err) {
-        console.error('getBuyerTransactions error');
+        logger.error('getBuyerTransactions error');
         return [];
     }
 }
@@ -172,7 +173,7 @@ export async function getChatBuyersForProduct(
 
         return acc;
     } catch (err: any) {
-        console.error('getChatBuyersForProduct error:', err);
+        logger.error('getChatBuyersForProduct error:', err);
         return [];
     }
 }
@@ -193,7 +194,7 @@ export async function getPendingTransaction(
         if (snap.empty) return null;
         return mapTx(snap.docs[0]);
     } catch (err) {
-        console.error('getPendingTransaction error');
+        logger.error('getPendingTransaction error');
         return null;
     }
 }

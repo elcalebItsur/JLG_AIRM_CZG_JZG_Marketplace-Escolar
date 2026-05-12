@@ -22,6 +22,7 @@ import {
 import { db } from '@/config/firebase';
 import { Chat, ChatMessage } from '@/types/chat';
 import { createNotification } from './notificationService';
+import { logger } from '@/utils/logger';
 
 const CHATS = 'chats';
 const MESSAGES = 'messages';
@@ -63,55 +64,70 @@ export interface GetOrCreateChatParams {
  * When a new product is discussed, the productId/title are updated on the chat.
  */
 export async function getOrCreateChat(params: GetOrCreateChatParams): Promise<{ chatId: string; isNew: boolean; error?: string }> {
-    try {
-        const chatId = buildChatId(params.buyerId, params.sellerId);
-        const ref = doc(db, CHATS, chatId);
-        const snap = await getDoc(ref);
+    const chatId = buildChatId(params.buyerId, params.sellerId);
+    const ref = doc(db, CHATS, chatId);
 
-        if (!snap.exists()) {
-            // Create brand-new chat
-            const raw: Record<string, unknown> = {
-                productId: params.productId,
-                productTitle: params.productTitle,
-                productPrice: params.productPrice,
-                discussedProductIds: [params.productId],
-                participants: [params.buyerId, params.sellerId],
-                participantsMap: {
-                    [params.buyerId]: params.buyerName,
-                    [params.sellerId]: params.sellerName,
-                },
-                participantsPhotosMap: {
-                    [params.buyerId]: params.buyerPhoto || null,
-                    [params.sellerId]: params.sellerPhoto || null,
-                },
-                buyerId: params.buyerId,
-                sellerId: params.sellerId,
-                lastMessage: '',
-                lastMessageAt: serverTimestamp(),
-                unreadCount: 0,
-            };
-            if (params.productImage !== undefined) raw.productImage = params.productImage;
-            await setDoc(ref, raw);
-            return { chatId, isNew: true };
-        } else {
-            // Chat exists — update the product context so the header reflects
-            const update: Record<string, unknown> = {
-                productId: params.productId,
-                productTitle: params.productTitle,
-                productPrice: params.productPrice,
-                discussedProductIds: arrayUnion(params.productId),
-            };
-            if (params.productImage !== undefined) update.productImage = params.productImage;
-            
-            // Always sync photos when a chat is "opened" from product detail
-            update[`participantsPhotosMap.${params.buyerId}`] = params.buyerPhoto || null;
-            update[`participantsPhotosMap.${params.sellerId}`] = params.sellerPhoto || null;
-            
-            await updateDoc(ref, update);
-            return { chatId, isNew: false };
+    try {
+        // Try to read the existing chat first
+        let exists = false;
+        try {
+            const snap = await getDoc(ref);
+            exists = snap.exists();
+
+            if (exists) {
+                // Chat exists — update the product context so the header reflects
+                const update: Record<string, unknown> = {
+                    productId: params.productId,
+                    productTitle: params.productTitle,
+                    productPrice: params.productPrice,
+                    discussedProductIds: arrayUnion(params.productId),
+                };
+                if (params.productImage !== undefined) update.productImage = params.productImage;
+                
+                // Always sync photos when a chat is "opened" from product detail
+                update[`participantsPhotosMap.${params.buyerId}`] = params.buyerPhoto || null;
+                update[`participantsPhotosMap.${params.sellerId}`] = params.sellerPhoto || null;
+                
+                await updateDoc(ref, update);
+                return { chatId, isNew: false };
+            }
+        } catch (readErr: any) {
+            // If we get permission-denied on read, the document likely doesn't exist yet.
+            // Firestore rules that check participants can't verify a non-existent doc.
+            // We'll fall through to create the chat below.
+            if (readErr?.code !== 'permission-denied') {
+                throw readErr; // Re-throw non-permission errors
+            }
+            logger.info('Chat does not exist yet, creating new one...');
         }
-    } catch (err) {
-        console.error('getOrCreateChat error');
+
+        // Document doesn't exist (or was denied on read) — create brand-new chat
+        const raw: Record<string, unknown> = {
+            productId: params.productId,
+            productTitle: params.productTitle,
+            productPrice: params.productPrice,
+            discussedProductIds: [params.productId],
+            participants: [params.buyerId, params.sellerId],
+            participantsMap: {
+                [params.buyerId]: params.buyerName,
+                [params.sellerId]: params.sellerName,
+            },
+            participantsPhotosMap: {
+                [params.buyerId]: params.buyerPhoto || null,
+                [params.sellerId]: params.sellerPhoto || null,
+            },
+            buyerId: params.buyerId,
+            sellerId: params.sellerId,
+            lastMessage: '',
+            lastMessageAt: serverTimestamp(),
+            unreadCount: 0,
+        };
+        if (params.productImage !== undefined) raw.productImage = params.productImage;
+        await setDoc(ref, raw);
+        return { chatId, isNew: true };
+
+    } catch (err: any) {
+        logger.error('getOrCreateChat error:', err?.code, err?.message, err);
         return { chatId: '', isNew: false, error: 'No se pudo abrir el chat' };
     }
 }
@@ -167,7 +183,7 @@ export async function sendMessage(
 
         return { success: true };
     } catch (err) {
-        console.error('sendMessage error');
+        logger.error('sendMessage error');
         return { success: false, error: 'No se pudo enviar el mensaje' };
     }
 }
@@ -200,7 +216,7 @@ export function subscribeToChats(
             );
         callback(chats);
     }, (err) => {
-        console.error('subscribeToChats error');
+        logger.error('subscribeToChats error');
         callback([]);
     });
 }
@@ -226,7 +242,7 @@ export function subscribeToMessages(
         });
         callback(messages);
     }, (err) => {
-        console.error('subscribeToMessages error');
+        logger.error('subscribeToMessages error');
         callback([]);
     });
 }

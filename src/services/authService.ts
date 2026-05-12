@@ -15,6 +15,7 @@ import { deriveRoleFromEmail, validateEmailDomainForRegistration } from '../util
 import { User } from '../types/user';
 import { Role } from '../types/role';
 import { Platform } from 'react-native';
+import { logger } from '../utils/logger';
 
 export async function registerUser(email: string, password: string, displayName: string): Promise<{ user?: User; error?: string }> {
   const validation = validateEmailDomainForRegistration(email);
@@ -43,7 +44,7 @@ export async function registerUser(email: string, password: string, displayName:
     let errorMessage = 'Error al registrarse';
     if (e.code === 'auth/email-already-in-use') errorMessage = 'El correo ya está registrado';
     if (e.code === 'auth/weak-password') errorMessage = 'La contraseña es muy débil';
-    console.error('registerUser error:', e.code || 'unknown');
+    logger.error('registerUser error:', e.code || 'unknown');
     return { error: errorMessage };
   }
 }
@@ -70,7 +71,7 @@ export async function registerAdmin(email: string, password: string, displayName
     await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
     return { user: newUser };
   } catch (e: any) {
-    console.error('registerAdmin error:', e.code || 'unknown');
+    logger.error('registerAdmin error:', e.code || 'unknown');
     return { error: 'Error al crear administrador' };
   }
 }
@@ -112,7 +113,7 @@ export async function loginUser(email: string, password: string): Promise<{ user
     if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
       errorMessage = 'Credenciales inválidas';
     }
-    console.error('loginUser error:', e.code || 'unknown');
+    logger.error('loginUser error:', e.code || 'unknown');
     return { error: errorMessage };
   }
 }
@@ -148,7 +149,7 @@ export async function loginAdmin(email: string, password: string): Promise<{ use
     if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
       errorMessage = 'Credenciales inválidas';
     }
-    console.error('loginAdmin error:', e.code || 'unknown');
+    logger.error('loginAdmin error:', e.code || 'unknown');
     return { error: errorMessage };
   }
 }
@@ -166,7 +167,7 @@ export async function loginWithGoogleWeb(): Promise<{ user?: User; error?: strin
     return await _processGoogleUser(result.user);
 
   } catch (e: any) {
-    console.error('loginWithGoogleWeb error:', e.code || 'unknown');
+    logger.error('loginWithGoogleWeb error:', e.code || 'unknown');
     if (e.code === 'auth/popup-closed-by-user') {
       return { error: 'Inicio de sesión cancelado' };
     }
@@ -185,7 +186,7 @@ export async function loginWithGoogleNative(idToken: string): Promise<{ user?: U
     return await _processGoogleUser(result.user);
 
   } catch (e: any) {
-    console.error('loginWithGoogleNative error:', e.code || 'unknown');
+    logger.error('loginWithGoogleNative error:', e.code || 'unknown');
     return { error: 'Error al iniciar sesión con Google' };
   }
 }
@@ -261,7 +262,7 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
           // Self-healing: Update Firestore if Auth has photo but Firestore doesn't
           if (!userData.photoURL && firebaseUser.photoURL) {
             setDoc(userDocRef, { photoURL: firebaseUser.photoURL }, { merge: true })
-              .catch(() => console.error("Error auto-syncing photo"));
+              .catch(() => logger.error("Error auto-syncing photo"));
             callback({ ...userData, photoURL: firebaseUser.photoURL });
           } else {
             callback(userData);
@@ -287,7 +288,7 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
           });
         }
       }, (err) => {
-        console.error("Error subscribing to user doc:", err);
+        logger.error("Error subscribing to user doc:", err);
         callback(null);
       });
     } else {

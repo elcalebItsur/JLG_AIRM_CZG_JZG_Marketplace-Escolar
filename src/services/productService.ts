@@ -13,10 +13,12 @@ import {
     onSnapshot,
     runTransaction,
     Timestamp,
+    limit,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product, ProductStatus } from '@/types/product';
 import { uploadImage, deleteImageByUrl } from './storageService';
+import { logger } from '@/utils/logger';
 
 const COLLECTION = 'products';
 
@@ -44,7 +46,8 @@ export const getProducts = async (): Promise<Product[]> => {
     try {
         const q = query(
             collection(db, COLLECTION),
-            where('status', '==', 'active')
+            where('status', '==', 'active'),
+            limit(200)
         );
         const snap = await getDocs(q);
         const products = snap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
@@ -53,7 +56,7 @@ export const getProducts = async (): Promise<Product[]> => {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (error) {
-        console.error('getProducts error');
+        logger.error('getProducts error');
         return [];
     }
 };
@@ -68,7 +71,7 @@ export const getProductById = async (id: string): Promise<Product | undefined> =
         updateDoc(ref, { viewCount: increment(1) }).catch(() => { });
         return { id: snap.id, ...snap.data() } as Product;
     } catch (error) {
-        console.error('getProductById error');
+        logger.error('getProductById error');
         return undefined;
     }
 };
@@ -87,7 +90,7 @@ export const getMyProducts = async (userId: string): Promise<Product[]> => {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (error) {
-        console.error('getMyProducts error');
+        logger.error('getMyProducts error');
         return [];
     }
 };
@@ -100,7 +103,8 @@ export const subscribeToProducts = (
 ): () => void => {
     const q = query(
         collection(db, COLLECTION),
-        where('status', '==', 'active')
+        where('status', '==', 'active'),
+        limit(200)
     );
 
     return onSnapshot(q, (snap) => {
@@ -110,7 +114,7 @@ export const subscribeToProducts = (
         );
         callback(sorted);
     }, (err) => {
-        console.error('subscribeToProducts error');
+        logger.error('subscribeToProducts error');
         callback([]);
     });
 };
@@ -130,7 +134,7 @@ export const subscribeToProductById = (
         // but for real-time we just map the data.
         callback(mapProduct(snap));
     }, (err) => {
-        console.error('subscribeToProductById error');
+        logger.error('subscribeToProductById error');
         callback(undefined);
     });
 };
@@ -152,7 +156,7 @@ export const subscribeToMyProducts = (
         );
         callback(sorted);
     }, (err) => {
-        console.error('subscribeToMyProducts error');
+        logger.error('subscribeToMyProducts error');
         callback([]);
     });
 };
@@ -202,7 +206,7 @@ export const createProduct = async (
         const newProduct = { id: ref.id, ...payload, createdAt: new Date().toISOString() } as unknown as Product;
         return { success: true, product: newProduct };
     } catch (error) {
-        console.error('createProduct error');
+        logger.error('createProduct error');
         return { success: false, error: 'No se pudo guardar el producto' };
     }
 };
@@ -216,7 +220,7 @@ export const updateProduct = async (
         await updateDoc(doc(db, COLLECTION, id), data);
         return { success: true };
     } catch (error) {
-        console.error('updateProduct error');
+        logger.error('updateProduct error');
         return { success: false, error: 'No se pudo actualizar el producto' };
     }
 };
@@ -251,7 +255,7 @@ export const deleteProduct = async (
         await deleteDoc(ref);
         return { success: true };
     } catch (error) {
-        console.error('deleteProduct error');
+        logger.error('deleteProduct error');
         return { success: false, error: 'No se pudo eliminar el producto' };
     }
 };
@@ -286,7 +290,7 @@ export const reduceProductStock = async (
             return { success: true, newStock };
         });
     } catch (error: any) {
-        console.error('reduceProductStock error:', error);
+        logger.error('reduceProductStock error:', error);
         return { success: false, newStock: 0, error: error.message || 'No se pudo actualizar el stock' };
     }
 };

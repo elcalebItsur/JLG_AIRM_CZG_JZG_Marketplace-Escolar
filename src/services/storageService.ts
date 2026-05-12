@@ -1,4 +1,5 @@
 import * as ImageManipulator from 'expo-image-manipulator';
+import { logger } from '@/utils/logger';
 
 const MAX_WIDTH = 800;
 const COMPRESS_QUALITY = 0.7; // 70 % JPEG
@@ -26,7 +27,7 @@ export const uploadImage = async (uri: string, _path?: string): Promise<string |
         );
 
         if (!compressed || !compressed.base64) {
-            console.error('[storageService] ImageManipulator failed to return base64');
+            logger.error('[storageService] ImageManipulator failed to return base64');
             // On some platforms, if base64 fails, we could try to fetch the uri as a fallback
             // but for now let's just log and return null.
             return null;
@@ -40,7 +41,7 @@ export const uploadImage = async (uri: string, _path?: string): Promise<string |
 
         return dataUri;
     } catch (error) {
-        console.error('[storageService] Error processing image');
+        logger.error('[storageService] Error processing image');
         return null;
     }
 };

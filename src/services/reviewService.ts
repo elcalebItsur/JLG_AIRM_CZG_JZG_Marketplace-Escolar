@@ -24,6 +24,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Review } from '@/types/review';
+import { logger } from '@/utils/logger';
 
 const REVIEWS = 'reviews';
 const USERS = 'users';
@@ -85,7 +86,7 @@ export async function addReview(
 
         return { success: true };
     } catch (err) {
-        console.error('addReview error');
+        logger.error('addReview error');
         return { success: false, error: 'No se pudo guardar la reseña' };
     }
 }
@@ -105,7 +106,7 @@ async function _updateSellerRating(sellerId: string): Promise<void> {
         });
     } catch (err) {
         // Non-fatal — rating update is best-effort
-        console.warn('_updateSellerRating error');
+        logger.warn('_updateSellerRating error');
     }
 }
 
@@ -121,7 +122,7 @@ export async function getSellerReviews(sellerId: string): Promise<Review[]> {
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     } catch (err) {
-        console.error('getSellerReviews error');
+        logger.error('getSellerReviews error');
         return [];
     }
 }
@@ -156,7 +157,7 @@ export function subscribeToSellerReviews(
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         callback(reviews);
     }, (err) => {
-        console.error('subscribeToSellerReviews error');
+        logger.error('subscribeToSellerReviews error');
         callback([]);
     });
 }

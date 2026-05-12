@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, ViewStyle, TextStyle } from 'react-nativ
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { colors } from '@/theme/colors';
+import { logger } from '@/utils/logger';
 
 // In-memory cache to avoid duplicate fetches in the same session
 const photoCache: Record<string, string | null> = {};
@@ -48,7 +49,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
                     setPhoto(url);
                 }
             } catch (error) {
-                console.error('Error fetching UserAvatar');
+                logger.error('Error fetching UserAvatar');
             } finally {
                 setLoading(false);
             }

@@ -10,6 +10,7 @@ import {
     getCountFromServer,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+import { logger } from '@/utils/logger';
 
 export interface AdminStats {
     totalUsers: number;
@@ -47,7 +48,7 @@ export async function getAdminStats(): Promise<AdminStats> {
             completedTransactions: completedTxSnap.data().count,
         };
     } catch (err) {
-        console.error('getAdminStats error:', err);
+        logger.error('getAdminStats error:', err);
         return {
             totalUsers: 0,
             activeProducts: 0,
