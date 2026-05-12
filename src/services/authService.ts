@@ -288,8 +288,17 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
           });
         }
       }, (err) => {
-        logger.error("Error subscribing to user doc:", err);
-        callback(null);
+        logger.error("Error subscribing to user doc (falling back to auth data):", err);
+        // Fallback: use basic auth data if firestore doc is restricted
+        const email = firebaseUser.email || '';
+        callback({
+          id: firebaseUser.uid,
+          displayName: firebaseUser.displayName || 'Usuario',
+          email: email,
+          role: deriveRoleFromEmail(email) as Role,
+          createdAt: new Date().toISOString(),
+          photoURL: firebaseUser.photoURL || undefined
+        });
       });
     } else {
       callback(null);

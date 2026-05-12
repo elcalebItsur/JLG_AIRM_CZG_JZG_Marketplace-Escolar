@@ -19,6 +19,7 @@ import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
 import { useDebounce } from '@/utils/useDebounce';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
+import { logger } from '@/utils/logger';
 
 import type { ComponentProps } from 'react';
 
@@ -54,6 +55,10 @@ export default function HomeScreen() {
     const isMobileWeb = Platform.OS === 'web' && width <= 800;
 
     // Responsive columns logic
+    const handleLoadMore = () => {
+        // No manual pagination needed in real-time mode
+    };
+
     const getColumns = () => {
         if (width >= 1400) return 6;
         if (width >= 1100) return 4;

@@ -114,7 +114,7 @@ export const subscribeToProducts = (
         );
         callback(sorted);
     }, (err) => {
-        logger.error('subscribeToProducts error');
+        logger.error('subscribeToProducts error:', err);
         callback([]);
     });
 };

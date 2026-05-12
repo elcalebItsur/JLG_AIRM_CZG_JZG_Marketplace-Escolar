@@ -216,7 +216,7 @@ export function subscribeToChats(
             );
         callback(chats);
     }, (err) => {
-        logger.error('subscribeToChats error');
+        logger.error('subscribeToChats error:', err);
         callback([]);
     });
 }
@@ -242,7 +242,7 @@ export function subscribeToMessages(
         });
         callback(messages);
     }, (err) => {
-        logger.error('subscribeToMessages error');
+        logger.error('subscribeToMessages error:', err);
         callback([]);
     });
 }
