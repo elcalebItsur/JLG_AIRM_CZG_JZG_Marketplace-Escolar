@@ -18,11 +18,12 @@ interface AppInputProps extends TextInputProps {
     rightIcon?: React.ReactNode;
     containerStyle?: ViewStyle;
     onRightIconPress?: () => void;
+    helperText?: string;
 }
 
 // forwardRef so Login/Register can chain focus between inputs
 export const AppInput = forwardRef<TextInput, AppInputProps>(
-    ({ label, error, leftIcon, rightIcon, containerStyle, onRightIconPress, style, ...props }, ref) => {
+    ({ label, error, leftIcon, rightIcon, containerStyle, onRightIconPress, helperText, style, ...props }, ref) => {
         return (
             <View style={[styles.container, containerStyle]}>
                 {label ? (
@@ -60,7 +61,9 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(
                     )}
                 </View>
 
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                {error ? <Text style={styles.errorText}>{error}</Text> : (
+                    helperText ? <Text style={styles.helperText}>{helperText}</Text> : null
+                )}
             </View>
         );
     }
@@ -114,6 +117,11 @@ const styles = StyleSheet.create({
     errorText: {
         ...typography.presets.caption,
         color: colors.error,
+        marginTop: 4,
+    },
+    helperText: {
+        ...typography.presets.caption,
+        color: colors.textMuted,
         marginTop: 4,
     },
 });

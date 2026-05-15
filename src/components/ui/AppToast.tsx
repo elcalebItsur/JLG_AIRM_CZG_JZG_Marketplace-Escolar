@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Text, StyleSheet, View, Platform, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/theme/colors';
@@ -21,12 +21,14 @@ const TYPE_CONFIG = {
 };
 
 export function AppToast({ visible, message, type = 'success', onHide, duration = 3000 }: AppToastProps) {
+    const [shouldRender, setShouldRender] = useState(visible);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(-20)).current;
     const { width } = useWindowDimensions();
 
     useEffect(() => {
         if (visible) {
+            setShouldRender(true);
             Animated.parallel([
                 Animated.timing(fadeAnim, {
                     toValue: 1,
@@ -61,11 +63,12 @@ export function AppToast({ visible, message, type = 'success', onHide, duration 
                 useNativeDriver: true,
             })
         ]).start(() => {
+            setShouldRender(false);
             onHide();
         });
     };
 
-    if (!visible && fadeAnim._value === 0) return null;
+    if (!shouldRender) return null;
 
     const config = TYPE_CONFIG[type];
 

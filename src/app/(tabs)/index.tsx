@@ -19,6 +19,7 @@ import { AdminDashboardView } from '@/components/admin/AdminDashboardView';
 import { useDebounce } from '@/utils/useDebounce';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
+import { filterProducts } from '@/utils/productFilters';
 import { logger } from '@/utils/logger';
 
 import type { ComponentProps } from 'react';
@@ -94,27 +95,12 @@ export default function HomeScreen() {
         s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
     // Combined filter: category + search text + price + condition
-    const filteredProducts = products.filter(p => {
-        // Category
-        if (activeCategory !== 'Todos') {
-            if (normalize(p.category ?? '') !== normalize(activeCategory)) return false;
-        }
-        // Search text
-        if (debouncedSearch.trim()) {
-            const q = normalize(debouncedSearch.trim());
-            const inTitle = normalize(p.title ?? '').includes(q);
-            const inDesc = normalize(p.description ?? '').includes(q);
-            const inSeller = normalize(p.sellerName ?? '').includes(q);
-            if (!inTitle && !inDesc && !inSeller) return false;
-        }
-        // Min Price
-        if (minPrice && p.price < parseFloat(minPrice)) return false;
-        // Max Price
-        if (maxPrice && p.price > parseFloat(maxPrice)) return false;
-        // Condition
-        if (selectedCondition && p.condition !== selectedCondition) return false;
-
-        return true;
+    const filteredProducts = filterProducts(products, {
+        category: activeCategory,
+        searchText: debouncedSearch,
+        minPrice,
+        maxPrice,
+        condition: selectedCondition
     });
 
     const firstName = user?.displayName?.split(' ')[0] || 'Estudiante';
@@ -208,7 +194,7 @@ export default function HomeScreen() {
                                     activeOpacity={0.7}
                                 >
                                     {user?.photoURL ? (
-                                        <Image source={{ uri: user.photoURL }} style={styles.profileHeaderImage} />
+                                        <Image source={{ uri: user.photoURL }} style={styles.profileHeaderImage as any} />
                                     ) : (
                                         <View style={styles.profileHeaderFallback}>
                                             <Text style={styles.profileHeaderFallbackText}>
@@ -398,7 +384,7 @@ export default function HomeScreen() {
                                             style={styles.recentItem}
                                             onPress={() => router.push(`/products/${p.id}`)}
                                         >
-                                            <Image source={{ uri: p.images?.[0] }} style={styles.recentThumb} />
+                                            <Image source={{ uri: p.images?.[0] }} style={styles.recentThumb as any} />
                                             <View style={styles.recentInfo}>
                                                 <Text style={styles.recentTitle} numberOfLines={1}>{p.title}</Text>
                                                 <Text style={styles.recentPrice}>${p.price}</Text>
@@ -604,6 +590,53 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
     },
+    topBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingBottom: 15,
+        backgroundColor: colors.primary,
+    },
+    topBarWeb: {
+        backgroundColor: 'transparent',
+        paddingHorizontal: 0,
+        paddingTop: 40,
+        paddingBottom: 20,
+    },
+    marketplaceToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: colors.surface,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+    },
+    toggleText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.primary,
+    },
+    brandRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+    },
+    brandLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    brandIconWrap: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     sidebarSectionTitle: {
         fontSize: 16,
         fontWeight: '800',
@@ -666,37 +699,6 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         lineHeight: 18,
         fontWeight: '500',
-    },
-    topBar: {
-        backgroundColor: colors.primary,
-        paddingHorizontal: 20,
-        paddingTop: 14,
-        paddingBottom: 14,
-        gap: 4,
-    },
-    topBarWeb: {
-        backgroundColor: 'transparent',
-        paddingHorizontal: 0,
-        paddingBottom: 10,
-    },
-    brandRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 2,
-    },
-    brandLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-    },
-    brandIconWrap: {
-        width: 32,
-        height: 32,
-        borderRadius: 10,
-        backgroundColor: 'rgba(255,255,255,0.18)',
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     brandTitle: {
         color: '#fff',
@@ -902,20 +904,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         paddingHorizontal: 40,
         maxWidth: 400,
-    },
-    marketplaceToggle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        gap: 6,
-    },
-    toggleText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: colors.primary,
     },
 
     // ─── Filter & Search Phase 2 Styles ─────────────────────────────────

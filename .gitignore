@@ -43,3 +43,20 @@ yarn-error.*
 
 #word
 *.docx
+
+# Backups locales
+*_backup/
+.gitignore_backup
+
+# Logs de Firebase
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Configuración de editores
+.vscode/
+.idea/
+
+# Otros archivos temporales
+*.log
+.temp/

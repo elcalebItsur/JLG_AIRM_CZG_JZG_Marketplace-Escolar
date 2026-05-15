@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
         borderColor: colors.background,
     },
 
-    infoTitle: { ...typography.presets.h3, color: colors.text, marginBottom: 4 },
+    infoTitle: { ...typography.presets.screenTitle, color: colors.text, marginBottom: 4 },
     infoSubtitle: { ...typography.presets.body, color: colors.textSecondary, marginBottom: 12 },
     readOnlyBadge: {
         flexDirection: 'row',

@@ -75,10 +75,10 @@ export const AppButton: React.FC<AppButtonProps> = ({
             <TouchableOpacity
                 style={[
                     styles.base,
-                    styles[variant],
+                    styles[variant] as ViewStyle,
                     isDisabled && styles.disabled,
                     !fullWidth && styles.inline,
-                    isHovered && styles[`${variant}Hover` as keyof typeof styles],
+                    isHovered && (styles[`${variant}Hover` as keyof typeof styles] as ViewStyle),
                     style,
                 ]}
                 onPress={onPress}

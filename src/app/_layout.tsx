@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { useEffect } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Head from 'expo-router/head';
 
 function RootLayoutNav() {
@@ -152,10 +153,12 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
     return (
-        <AuthProvider>
-            <ToastProvider>
-                <RootLayoutNav />
-            </ToastProvider>
-        </AuthProvider>
+        <SafeAreaProvider>
+            <AuthProvider>
+                <ToastProvider>
+                    <RootLayoutNav />
+                </ToastProvider>
+            </AuthProvider>
+        </SafeAreaProvider>
     );
 }

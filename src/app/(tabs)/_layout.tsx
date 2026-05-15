@@ -66,7 +66,9 @@ export default function TabLayout() {
     );
 
     // ─── iOS: Native Liquid Glass Tab Bar ─────────────────────────────────────
-    if (Platform.OS === 'ios') {
+    // Note: NativeTabs is an experimental feature (unstable-native-tabs).
+    // We check for its existence to prevent crashes on iOS.
+    if (Platform.OS === 'ios' && typeof NativeTabs !== 'undefined') {
         return (
             <NativeTabs 
                 minimizeBehavior="onScrollDown"
