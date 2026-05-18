@@ -142,25 +142,24 @@ export default function TabLayout() {
                         android: { elevation: 8 },
                         web: { boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' },
                     }),
-                    paddingTop: 4,
-                    // For native: use the system insets directly
-                    // For web: use CSS env() so it works in both PWA and browser
-                    ...(Platform.OS === 'web' ? {
-                        paddingBottom: isMobileWeb
-                            ? 'env(safe-area-inset-bottom, 20px)' as any
-                            : 0,
-                    } : {
-                        paddingBottom: insets.bottom,
-                    }),
+                    paddingTop: 8,
+                    // Explicit height calculation is critical so React Navigation doesn't clip our labels
+                    height: Platform.OS === 'web'
+                        ? (62 + (isMobileWeb ? getSafeBottomInset(insets.bottom) : 0))
+                        : (62 + insets.bottom),
+                    paddingBottom: Platform.OS === 'web'
+                        ? (isMobileWeb ? getSafeBottomInset(insets.bottom) : 0)
+                        : insets.bottom,
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
                     fontWeight: '600',
-                    marginTop: 1,
+                    marginTop: 3,
+                    marginBottom: Platform.OS === 'ios' ? 0 : 4,
                     letterSpacing: 0.1,
                 },
                 tabBarIconStyle: {
-                    marginTop: 2,
+                    marginTop: 0,
                 },
             }}
         >
