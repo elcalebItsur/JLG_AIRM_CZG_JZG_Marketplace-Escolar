@@ -142,22 +142,25 @@ export default function TabLayout() {
                         android: { elevation: 8 },
                         web: { boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' },
                     }),
-                    // PWA safe area: on mobile web (standalone), the safe area context
-                    // may report 0 for bottom. Use a sensible default that clears the
-                    // iOS home indicator and Android nav gestures.
-                    paddingBottom: isMobileWeb
-                        ? getSafeBottomInset(insets.bottom)
-                        : Math.max(insets.bottom, 6),
-                    paddingTop: 8,
-                    height: isMobileWeb
-                        ? (56 + getSafeBottomInset(insets.bottom))
-                        : (60 + Math.max(insets.bottom, 6)),
+                    paddingTop: 4,
+                    // For native: use the system insets directly
+                    // For web: use CSS env() so it works in both PWA and browser
+                    ...(Platform.OS === 'web' ? {
+                        paddingBottom: isMobileWeb
+                            ? 'env(safe-area-inset-bottom, 20px)' as any
+                            : 0,
+                    } : {
+                        paddingBottom: insets.bottom,
+                    }),
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
                     fontWeight: '600',
-                    marginTop: 2,
+                    marginTop: 1,
                     letterSpacing: 0.1,
+                },
+                tabBarIconStyle: {
+                    marginTop: 2,
                 },
             }}
         >
@@ -458,18 +461,18 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     publishIcon: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
         backgroundColor: colors.accent,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: -10,
+        marginTop: -6,
         shadowColor: colors.accent,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+        elevation: 5,
     },
     publishIconActive: {
         backgroundColor: colors.accentLight,

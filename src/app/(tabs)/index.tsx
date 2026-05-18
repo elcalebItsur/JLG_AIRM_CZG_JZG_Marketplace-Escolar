@@ -119,7 +119,7 @@ export default function HomeScreen() {
     if (user?.role === Role.ADMIN && !showMarketplace) {
         return (
             <View style={styles.root}>
-                <View style={[styles.topBar, { paddingTop: insets.top + 10, paddingBottom: 10 }]}>
+                <View style={[styles.topBar, { paddingTop: insets.top + 10, paddingBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
                     <View>
                         <Text style={styles.greetingSmall}>Vista de Administrador</Text>
                         <Text style={styles.greetingBig}>Dashboard Global</Text>
@@ -591,11 +591,8 @@ const styles = StyleSheet.create({
         borderColor: colors.border,
     },
     topBar: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingBottom: 14,
         backgroundColor: colors.primary,
     },
     topBarWeb: {
@@ -724,10 +721,11 @@ const styles = StyleSheet.create({
     },
     greetingBig: {
         color: '#fff',
-        fontSize: 17,
-        fontWeight: '600',
-        marginTop: 2,
-        opacity: 0.9,
+        fontSize: 18,
+        fontWeight: '700',
+        marginTop: 8,
+        opacity: 0.95,
+        letterSpacing: -0.2,
     },
     notificationBtn: {
         width: 36,
@@ -1082,11 +1080,14 @@ const styles = StyleSheet.create({
         top: 0,
         zIndex: 100,
         backgroundColor: colors.primary,
+        // When sticky activates, we need top padding to clear the Dynamic Island / status bar.
+        // This padding is only visible when the bar is stuck to the top.
+        paddingTop: Platform.OS === 'web' ? 'env(safe-area-inset-top, 0px)' as any : 0,
         paddingBottom: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
     },
     searchBarMobileWeb: {
         height: 48,
