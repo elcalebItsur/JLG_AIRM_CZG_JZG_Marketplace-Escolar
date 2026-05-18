@@ -51,6 +51,9 @@ function RootLayoutNav() {
                     <link rel="apple-touch-icon" sizes="192x192" href="/icon.png" />
                     <link rel="apple-touch-icon" sizes="512x512" href="/icon.png" />
                     
+                    {/* Web App Manifest — critical for PWA install + icon */}
+                    <link rel="manifest" href="/manifest.json" />
+                    
                     {/* Metadatos PWA para Safari */}
                     <meta name="apple-mobile-web-app-capable" content="yes" />
                     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

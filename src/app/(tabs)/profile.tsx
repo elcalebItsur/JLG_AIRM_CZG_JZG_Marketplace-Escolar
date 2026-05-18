@@ -131,7 +131,7 @@ export default function ProfileScreen() {
             style={styles.root} 
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-                paddingBottom: isMobileWeb ? (40 + getSafeBottomInset(insets.bottom)) : 40
+                paddingBottom: isMobileWeb ? (30 + getSafeBottomInset(insets.bottom)) : 40
             }}
         >
             {/* Header banner */}

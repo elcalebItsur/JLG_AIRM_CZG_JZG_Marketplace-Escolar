@@ -144,13 +144,13 @@ export default function HomeScreen() {
                 style={{ backgroundColor: colors.background }}
                 contentContainerStyle={[
                     isLargeScreen && styles.scrollContentWeb,
-                    !isLargeScreen && { paddingBottom: isMobileWeb ? (80 + getSafeBottomInset(insets.bottom)) : Math.max(insets.bottom + 100, 120) }
+                    !isLargeScreen && { paddingBottom: isMobileWeb ? (70 + getSafeBottomInset(insets.bottom)) : Math.max(insets.bottom + 80, 100) }
                 ]}
             >
                 <View style={[isLargeScreen && styles.mainContentWrapperWeb]}>
                     <View style={[
                         styles.topBar,
-                        { paddingTop: getSafeTopInset(insets.top) + 8 },
+                        { paddingTop: getSafeTopInset(insets.top) + 6 },
                         isLargeScreen && styles.topBarWeb,
                         isMobileWeb && styles.topBarMobileWeb
                     ]}>
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingBottom: 15,
+        paddingBottom: 12,
         backgroundColor: colors.primary,
     },
     topBarWeb: {

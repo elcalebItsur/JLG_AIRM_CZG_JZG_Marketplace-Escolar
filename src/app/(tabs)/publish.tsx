@@ -199,7 +199,7 @@ export default function PublishScreen() {
                     styles.scrollContent,
                     {
                         paddingTop: getSafeTopInset(insets.top) + 16,
-                        paddingBottom: isMobileWeb ? (80 + getSafeBottomInset(insets.bottom)) : Math.max(insets.bottom + 80, 100)
+                        paddingBottom: isMobileWeb ? (70 + getSafeBottomInset(insets.bottom)) : Math.max(insets.bottom + 80, 100)
                     }
                 ]}
                 keyboardShouldPersistTaps="handled"
