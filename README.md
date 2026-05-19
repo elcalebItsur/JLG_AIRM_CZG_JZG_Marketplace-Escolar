@@ -1,5 +1,10 @@
 # Campus Marketplace 🎓🛒
 
+> [!WARNING]
+> **ADVERTENCIA DE LICENCIA Y PROTECCIÓN LEGAL**
+> Este proyecto es de **Código Disponible (Source-Available) únicamente para fines académicos, educativos y de aprendizaje**. 
+> Queda **ESTRICTAMENTE PROHIBIDO** el uso comercial, lucro, distribución comercial, venta, sublicenciamiento o incorporación de este software (o cualquiera de sus partes) en productos propietarios o de pago. Consulte el archivo [`LICENSE`](./LICENSE) para conocer todos los detalles legales y restricciones aplicables.
+
 
 <p align="center">
   <img src="https://img.shields.io/badge/React_Native-19.1.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React Native" />
